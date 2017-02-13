@@ -51,8 +51,8 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 		{
 			thisy += slope;
 			ty = thisy;
-			if( tx < 0 || ty < 0 || ty > buffery ) continue;
-			if( tx > bufferx ) break;
+			if( tx < 0 || ty < 0 || ty >= buffery ) continue;
+			if( tx >= bufferx ) break;
 			buffer[ty * bufferx + tx] = CNFGLastColor;
 		}
 	}
@@ -69,8 +69,8 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 		{
 			thisx += slope;
 			tx = thisx;
-			if( ty < 0 || tx < 0 || tx > bufferx ) continue;
-			if( ty > buffery ) break;
+			if( ty < 0 || tx < 0 || tx >= bufferx ) continue;
+			if( ty >= buffery ) break;
 			buffer[ty * bufferx + tx] = CNFGLastColor;
 		}
 	}
