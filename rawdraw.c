@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "DrawFunctions.h"
+#include "RDFunctions.h"
 #include "os_generic.h"
-#include "3d.h"
+#include "RD3D.h"
 
 unsigned frames = 0;
 unsigned long iframeno = 0;
@@ -35,9 +35,9 @@ void DrawFrame()
 {
 	int x, y;
 	float fdt = ((iframeno++)%(360*10))/10.0;
-	float eye[3] = { (float)sin(fdt*(3.14159/180.0))*50, (float)cos(fdt*(3.14159/180.0))*50, 30 };
-	float at[3] = { 0, 0, 0 };
-	float up[3] = { 0, 0, 1 };
+	float eye[3] = { (float)sin(fdt*(3.14159/180.0))*1, (float)cos(fdt*(3.14159/180.0))*1, 1 };
+	float at[3] = { 0,0, 0 };
+	float up[3] = { 0,0, 1 };
 
 	tdSetViewport( -1, -1, 1, 1, screenx, screeny );
 
@@ -47,8 +47,8 @@ void DrawFrame()
 
 	tdMode( tdMODELVIEW );
 	tdIdentity( gSMatrix );
-	tdTranslate( gSMatrix, 0, 0, -100 );
-//	tdLookAt( gSMatrix, eye, at, up );
+	tdTranslate( gSMatrix, 0, 0, -40 );
+	tdLookAt( gSMatrix, eye, at, up );
 
 
 	for( x = 0; x < HMX-1; x++ )
@@ -148,6 +148,10 @@ void DrawFrame()
 }
 
 
+void HandleDestroy()
+{
+	printf( "Destroying\n" );
+}
 
 
 int main()
@@ -200,13 +204,13 @@ int main()
 		CNFGTackSegment( pto[1].x, pto[1].y, pto[2].x, pto[2].y );
 		CNFGTackSegment( pto[2].x, pto[2].y, pto[0].x, pto[0].y );
 */
-/*
+
 		CNFGDrawBox( 0, 0, 260, 260 );
 
 		CNFGPenX = 10; CNFGPenY = 10;
 
 		pos = 0;
-
+		CNFGColor( 0xffffff );
 		for( i = 0; i < 1; i++ )
 		{
 			int c;
@@ -235,7 +239,9 @@ int main()
 			pp[2].x = (short)(10*sin((float)(i+iframeno)*.01) + (i%20)*30);
 			pp[2].y = (short)(30*cos((float)(i+iframeno)*.01) + (i/20)*20);
 			CNFGTackPoly( pp, 3 );
-		}*/
+		}
+
+
 		frames++;
 		CNFGSwapBuffers();
 

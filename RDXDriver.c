@@ -2,9 +2,9 @@
 //portions from 
 //http://www.xmission.com/~georgeps/documentation/tutorials/Xlib_Beginner.html
 
-#define HAS_XINERAMA
+//#define HAS_XINERAMA
 
-#include "DrawFunctions.h"
+#include "RDFunctions.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 XWindowAttributes CNFGWinAtt;
+XClassHint *CNFGClassHint;
 Display *CNFGDisplay;
 Window CNFGWindow;
 Pixmap CNFGPixmap;
@@ -28,13 +29,37 @@ int FullScreen = 0;
 
 void CNFGGetDimensions( short * x, short * y )
 {
+	static int lastx;
+	static int lasty;
+
 	*x = CNFGWinAtt.width;
 	*y = CNFGWinAtt.height;
+
+	if( lastx != *x || lasty != *y )
+	{
+		lastx = *x;
+		lasty = *y;
+		CNFGInternalResize( lastx, lasty );
+	}
 }
 
 static void InternalLinkScreenAndGo( const char * WindowName )
 {
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
+
+	XGetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
+	if (!CNFGClassHint) {
+		CNFGClassHint = XAllocClassHint();
+		if (CNFGClassHint) {
+			CNFGClassHint->res_name = "cnping";
+			CNFGClassHint->res_class = "cnping";
+			XSetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
+		} else {
+			fprintf( stderr, "Failed to allocate XClassHint!\n" );
+		}
+	} else {
+		fprintf( stderr, "Pre-existing XClassHint\n" );
+	}
 
 	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
 	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, WindowName, None, NULL, 0, NULL );
@@ -112,9 +137,21 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 }
 
 
+void CNFGTearDown()
+{
+	if ( CNFGClassHint ) XFree( CNFGClassHint );
+	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
+	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
+	if ( CNFGDisplay ) XCloseDisplay( CNFGDisplay );
+	CNFGDisplay = NULL;
+	CNFGWindowGC = CNFGGC = NULL;
+	CNFGClassHint = NULL;
+}
+
 void CNFGSetup( const char * WindowName, int w, int h )
 {
 	CNFGDisplay = XOpenDisplay(NULL);
+	atexit( CNFGTearDown );
 	XGetWindowAttributes( CNFGDisplay, RootWindow(CNFGDisplay, 0), &CNFGWinAtt );
 
 	int depth = CNFGWinAtt.depth;
@@ -123,6 +160,10 @@ void CNFGSetup( const char * WindowName, int w, int h )
 	XFlush(CNFGDisplay);
 
 	InternalLinkScreenAndGo( WindowName );
+
+	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
+	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
+	XSelectInput( CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
 }
 
 void CNFGHandleInput()
@@ -132,13 +173,9 @@ void CNFGHandleInput()
 
 	int bKeyDirection = 1;
 	int r;
-	while( (r=XCheckMaskEvent( CNFGDisplay, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask , &report )) )
+	while( XPending( CNFGDisplay ) )
 	{
-//		XEvent nev;
-//		XPeekEvent(CNFGDisplay, &nev);
-
-		//printf( "EVENT %d\n", report.type );
-		//XMaskEvent(CNFGDisplay, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask, &report);
+		r=XNextEvent( CNFGDisplay, &report );
 
 		bKeyDirection = 1;
 		switch  (report.type)
@@ -166,6 +203,10 @@ void CNFGHandleInput()
 			//Intentionall fall through -- we want to send a motion in event of a button as well.
 		case MotionNotify:
 			HandleMotion( report.xmotion.x, report.xmotion.y, ButtonsDown>>1 );
+			break;
+		case ClientMessage:
+			// Only subscribed to WM_DELETE_WINDOW, so just exit
+			exit( 0 );
 			break;
 		default:
 			printf( "Event: %d\n", report.type );
@@ -255,5 +296,7 @@ void CNFGTackPoly( RDPoint * points, int verts )
 	XFillPolygon(CNFGDisplay, CNFGPixmap, CNFGGC, (XPoint *)points, 3, Convex, CoordModeOrigin );
 }
 
+#else
+#include "RDRasterizer.h"
 #endif
 

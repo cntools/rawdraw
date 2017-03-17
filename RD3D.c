@@ -1,6 +1,6 @@
 //Public domain 3D library originally 2012 <>< Charles Lohr
 
-#include "3d.h"
+#include "RD3D.h"
 #include <string.h>
 #include <stdio.h>
 

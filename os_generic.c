@@ -1,6 +1,5 @@
 #include "os_generic.h"
 
-
 #ifdef USE_WINDOWS
 
 #include <windows.h>
@@ -56,6 +55,7 @@ void * OGJoinThread( og_thread_t ot )
 {
 	WaitForSingleObject( ot, INFINITE );
 	CloseHandle( ot );
+	return 0;
 }
 
 void OGCancelThread( og_thread_t ot )
@@ -159,6 +159,7 @@ void OGDeleteSema( og_sema_t os )
 #include <pthread.h>
 #include <sys/time.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 pthread_mutex_t g_RawMutexStart = PTHREAD_MUTEX_INITIALIZER;
 

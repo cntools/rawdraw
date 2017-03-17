@@ -43,6 +43,11 @@ void CNFGHandleInput();
 void HandleKey( int keycode, int bDown );
 void HandleButton( int x, int y, int button, int bDown );
 void HandleMotion( int x, int y, int mask );
+void HandleDestroy();
+
+
+//Internal function for resizing rasterizer for rasterizer-mode.
+void CNFGInternalResize( int x, int y ); //don't call this.
 
 
 #ifdef __cplusplus

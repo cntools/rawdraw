@@ -1,6 +1,7 @@
+//Don't call this file yourself.  It is intended to be included in any drivers which want to support the rasterizer plugin.
+
 #ifdef RASTERIZER
-#include "Rasterizer.h"
-#include "DrawFunctions.h"
+#include "RDFunctions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,6 +9,15 @@
 static uint32_t * buffer = 0;
 static short bufferx;
 static short buffery;
+
+
+void CNFGInternalResize( int x, int y )
+{
+	bufferx = x;
+	buffery = y;
+	if( buffer ) free( buffer );
+	buffer = malloc( bufferx * buffery * 4 );
+}
 
 static uint32_t SWAPS( uint32_t r )
 {
@@ -212,7 +222,6 @@ void CNFGClearFrame()
 	{
 		bufferx = x;
 		buffery = y;
-		printf( "MALLOCING: %d\n", x * y );
 		buffer = malloc( x * y * 8 );
 	}
 
@@ -225,9 +234,15 @@ void CNFGClearFrame()
 	}
 }
 
+void CNFGTackPixel( short x, short y )
+{
+	if( x < 0 || y < 0 || x >= bufferx || y >= buffery ) return;
+	buffer[x+bufferx*y] = CNFGLastColor;
+}
+
 void CNFGSwapBuffers()
 {
-	CNFGUpdateScreenWithBitmap( buffer, bufferx, buffery );
+	CNFGUpdateScreenWithBitmap( (long unsigned int*)buffer, bufferx, buffery );
 }
 
 
