@@ -12,9 +12,13 @@
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl3.h>
 #include "CNFGFunctions.h"
+#include "CNFGRasterizer.h"
 
-
-
+// NSEvent enum types
+#define EVENT_KEY_DOWN        10
+#define EVENT_KEY_UP          11
+#define EVENT_LEFT_MOUSE_DOWN 1
+#define EVENT_LEFT_MOUSE_UP   2
 
 
 
@@ -369,9 +373,9 @@ id app_menubar, app_appMenuItem, app_appMenu, app_appName, app_quitMenuItem, app
 id app_oglView;
 NSAutoreleasePool *app_pool;
 NSDate *app_currDate; 
-
 int app_sw=-999, app_sh=-999;
-
+int app_mouseX=0, app_mouseY=0;
+char app_mouseDown[3] = {0,0,0};
 
 //------------------------
 // ToDo: It may be possible to programmatically use
@@ -433,6 +437,8 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
     app_sw=sw;
     app_sh=sh;
     printf("CNFGSetup\n");
+    
+    const char * winName = (WindowName!=NULL) ? WindowName : winName;
         
     //----------------------------------
     // Create a programmatic Cocoa OpenGL window
@@ -468,53 +474,10 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
     oglCompatibilityInit(sw*sh);       // Initialize the OpenGL compatibility layer
 
 
-        //--------------------
-        // Clear the screen to black
-        //--------------------
-
-        [app_pool release];
-        //[currDate release];
-        app_pool = [[NSAutoreleasePool alloc] init];
-
-        // Peek at the next event
-        app_currDate = [[NSDate alloc] init];
-        NSEvent *event =
-            [NSApp
-                nextEventMatchingMask:NSAnyEventMask
-                untilDate:app_currDate
-                inMode:NSEventTrackingRunLoopMode
-                dequeue:YES];
-        [app_currDate release];
-
-        [NSApp updateWindows];
-
-        glClearColor(0.0,0.0,0.0,0.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        [app_oglContext flushBuffer];
-
-
-    // Set up a 2D projection
-    //oglMatrixMode(OGL_PROJECTION);						// Select The Projection Matrix
-    //oglLoadIdentity();									// Reset The Projection Matrix
-    //oglOrtho(0.0, WIDTH, 0.0, HEIGHT, -10.0, 10.0);
-    //oglMatrixMode(OGL_MODELVIEW);							// Select The Modelview Matrix
-    //oglLoadIdentity();									// Reset The Modelview Matrix
-    //glDisable(GL_DEPTH_TEST);
-}
-
-void CNFGHandleInput()
-{
-}
-
-
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
-{
-    unsigned char *rgba=data;
-
-        printf("data %p w %d h %d sw %d sh %d\n", data, w, h, app_sw, app_sh);
-//    exit(1);
-
+    //--------------------
+    // Clear the screen to black
+    //--------------------
+        
     [app_pool release];
     //[currDate release];
     app_pool = [[NSAutoreleasePool alloc] init];
@@ -528,56 +491,124 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
             inMode:NSEventTrackingRunLoopMode
             dequeue:YES];
     [app_currDate release];
-/*
-        // If we have an event, handle it!
-        if (event)
+
+    [NSApp updateWindows];
+        
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    [app_oglContext flushBuffer];
+
+
+    // Set up a 2D projection
+    //oglMatrixMode(OGL_PROJECTION);						// Select The Projection Matrix
+    //oglLoadIdentity();									// Reset The Projection Matrix
+    //oglOrtho(0.0, WIDTH, 0.0, HEIGHT, -10.0, 10.0);
+    //oglMatrixMode(OGL_MODELVIEW);							// Select The Modelview Matrix
+    //oglLoadIdentity();									// Reset The Modelview Matrix
+    //glDisable(GL_DEPTH_TEST);
+}
+
+#define XK_Left                          0xff51  /* Move left, left arrow */
+#define XK_Up                            0xff52  /* Move up, up arrow */
+#define XK_Right                         0xff53  /* Move right, right arrow */
+#define XK_Down                          0xff54  /* Move down, down arrow */
+#define KEY_UNDEFINED 255
+#define KEY_LEFT_MOUSE 0
+
+static int keycode(key)
+{
+    if (key < 256) return key;
+    switch(key) {
+        case 63232: return XK_Up;
+        case 63233: return XK_Down;
+        case 63234: return XK_Left;
+        case 63235: return XK_Right;
+    }
+    return KEY_UNDEFINED;
+}
+
+void CNFGHandleInput()
+{
+    int i;
+
+    [app_pool release];
+    //[currDate release];
+    app_pool = [[NSAutoreleasePool alloc] init];
+
+    //----------------------
+    // Check for mouse motion (NOTE: the mouse move event
+    //  has complex behavior after a mouse click.
+    //  we can work around this by checking mouse motion explicitly)
+    //----------------------
+    NSPoint location = [app_window mouseLocationOutsideOfEventStream];
+    if ((int)location.x != app_mouseX || (int)location.y != app_mouseY) {
+        app_mouseX = (int)location.x;
+        app_mouseY = (int)location.y;
+        if (app_mouseX >= 0 && app_mouseX < app_sw &&
+            app_mouseY >= 0 && app_mouseY < app_sh)
         {
-            NSEventType type = [event type];
-            switch (type)
-            {
-                case EVENT_KEY_DOWN:
-                    for (i=0; i<[event.characters length]; i++) {
-                        unichar ch = [event.characters characterAtIndex: i];
-                        Keyboard(keycode(ch), 1);
-                    }
-                    break;
-                    
-                case EVENT_KEY_UP:
-                    for (i=0; i<[event.characters length]; i++) {
-                        unichar ch = [event.characters characterAtIndex: i];
-                        Keyboard(keycode(ch), 0);
-                    }
-                    break;
-                    
-                case EVENT_LEFT_MOUSE_DOWN:
-                    Keyboard(KEY_LEFT_MOUSE, 1);
-                    break;
-                    
-                case EVENT_LEFT_MOUSE_UP:
-                    Keyboard(KEY_LEFT_MOUSE, 0);
-                    break;
-
-                default:
-                    break;
-            }
-            //printf("type %d\n", (int)type);
+            HandleMotion(app_mouseX, app_mouseY, app_mouseDown[0]||app_mouseDown[1]||app_mouseDown[2]);
         }
+    }
 
-        //----------------------
-        // Check for mouse motion (NOTE: the mouse move event
-        //  has complex behavior after a mouse click.
-        //  we can work around this by checking mouse motion explicitly)
-        //----------------------
-        NSPoint location = [app_window mouseLocationOutsideOfEventStream];
-        if ((int)location.x != mouseX || (int)location.y != mouseY) {
-            mouseX = (int)location.x;
-            mouseY = (int)location.y;
-            if (mouseX >= 0 && mouseX < WIDTH &&
-                mouseY >= 0 && mouseY < HEIGHT)
-            {
-                MouseMove(mouseX, mouseY);
-            }
+    //----------------------
+    // Peek at the next event
+    //----------------------
+    app_currDate = [[NSDate alloc] init];
+    NSEvent *event =
+        [NSApp
+            nextEventMatchingMask:NSAnyEventMask
+            untilDate:app_currDate
+            inMode:NSEventTrackingRunLoopMode
+            dequeue:YES];
+    [app_currDate release];
+
+    // If we have an event, handle it!
+    if (event)
+    {
+        NSEventType type = [event type];
+        switch (type)
+        {
+            case EVENT_KEY_DOWN:
+                for (i=0; i<[event.characters length]; i++) {
+                    unichar ch = [event.characters characterAtIndex: i];
+                    HandleKey(keycode(ch), 1);
+                }
+                break;
+                
+            case EVENT_KEY_UP:
+                for (i=0; i<[event.characters length]; i++) {
+                    unichar ch = [event.characters characterAtIndex: i];
+                    HandleKey(keycode(ch), 0);
+                }
+                break;
+                    
+            case EVENT_LEFT_MOUSE_DOWN:
+                HandleButton(app_mouseX, app_mouseY, KEY_LEFT_MOUSE, 1);
+                app_mouseDown[0]=1;
+                break;
+                    
+            case EVENT_LEFT_MOUSE_UP:
+                HandleButton(app_mouseX, app_mouseY, KEY_LEFT_MOUSE, 0);
+                app_mouseDown[0]=0;
+                break;
+
+            default:
+                break;
         }
+        //printf("type %d\n", (int)type);
+    }
+}
+
+
+void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+{
+    unsigned char *rgba=data;
+
+//        printf("data %p w %d h %d sw %d sh %d\n", data, w, h, app_sw, app_sh);
+//    exit(1);
+/*
 */
 
     [NSApp updateWindows];
@@ -599,7 +630,7 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
     for (y=0; y<app_sh; y++) {
         for (x=0; x<app_sw; x++) {
             //oglColor3f(scale*(data[i]>>24), scale*((data[i]>>16)&0xff), scale*((data[i]>>8)&0xff));
-            oglColor3f(scale*rgba[4*i],scale*rgba[4*i+1],scale*rgba[4*i+2]);
+            oglColor3f(scale*rgba[4*i+2],scale*rgba[4*i+1],scale*rgba[4*i+0]);
             oglVertex2f(x,y);
             i++;
         }
