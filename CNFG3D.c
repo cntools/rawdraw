@@ -1,6 +1,6 @@
 //Public domain 3D library originally 2012 <>< Charles Lohr
 
-#include "RD3D.h"
+#include "CNFG3D.h"
 #include <string.h>
 #include <stdio.h>
 

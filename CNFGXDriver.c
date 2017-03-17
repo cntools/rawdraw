@@ -297,6 +297,6 @@ void CNFGTackPoly( RDPoint * points, int verts )
 }
 
 #else
-#include "RDRasterizer.h"
+#include "CNFGRasterizer.h"
 #endif
 
