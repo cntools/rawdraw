@@ -47,7 +47,7 @@ void HandleDestroy();
 
 
 //Internal function for resizing rasterizer for rasterizer-mode.
-void CNFGInternalResize( int x, int y ); //don't call this.
+void CNFGInternalResize( short x, short y ); //don't call this.
 
 
 #ifdef __cplusplus

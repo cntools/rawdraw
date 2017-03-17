@@ -296,6 +296,8 @@ void CNFGTackPoly( RDPoint * points, int verts )
 	XFillPolygon(CNFGDisplay, CNFGPixmap, CNFGGC, (XPoint *)points, 3, Convex, CoordModeOrigin );
 }
 
+void CNFGInternalResize( short x, short y ) { }
+
 #else
 #include "CNFGRasterizer.h"
 #endif

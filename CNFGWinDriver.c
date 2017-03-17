@@ -16,7 +16,6 @@ static HDC lsHDC;
 
 #ifdef RASTERIZER
 #include "CNFGRasterizer.h"
-#endif
 
 void InternalHandleResize()
 {
@@ -26,6 +25,11 @@ void InternalHandleResize()
 	lsBitmap = CreateBitmap( bufferx, buffery, 1, 32, buffer );
 	SelectObject( lsHDC, lsBitmap );
 }
+#else
+
+static int bufferx, buffery;
+void InternalHandleResize();
+#endif
 
 
 void CNFGGetDimensions( short * x, short * y )
@@ -39,8 +43,8 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
 	int thisw, thish;
 	RECT r;
 
-	int a = SetBitmapBits(lsBitmap,bufferx*buffery*4,buffer);
-	a = BitBlt(lsWindowHDC, 0, 0, bufferx, buffery, lsHDC, 0, 0, SRCCOPY);
+	int a = SetBitmapBits(lsBitmap,w*h*4,data);
+	a = BitBlt(lsWindowHDC, 0, 0, w, h, lsHDC, 0, 0, SRCCOPY);
 	UpdateWindow( lsHWND );
 
 
@@ -190,7 +194,6 @@ static void InternalHandleResize()
 	DeleteObject( lsBackBitmap );
 	lsBackBitmap = CreateCompatibleBitmap( lsHDC, lsLastWidth, lsLastHeight );
 	SelectObject( lsHDC, lsBackBitmap );
-
 }
 
 uint32_t CNFGColor( uint32_t RGB )
@@ -253,5 +256,7 @@ void CNFGTackPixel( short x1, short y1 )
 {
 	SetPixel( lsHDC, x1, y1, CNFGLastColor );
 }
+
+void CNFGInternalResize( short bufferx, short  buffery ) { }
 #endif
 

@@ -10,7 +10,7 @@ static short bufferx;
 static short buffery;
 
 
-void CNFGInternalResize( int x, int y )
+void CNFGInternalResize( short x, short y )
 {
 	bufferx = x;
 	buffery = y;
@@ -58,11 +58,11 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 		for( tx = minx; tx <= maxx; tx++ )
 		{
-			thisy += slope;
 			ty = thisy;
 			if( tx < 0 || ty < 0 || ty >= buffery ) continue;
 			if( tx >= bufferx ) break;
 			buffer[ty * bufferx + tx] = CNFGLastColor;
+			thisy += slope;
 		}
 	}
 	else
@@ -76,15 +76,14 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 		for( ty = miny; ty <= maxy; ty++ )
 		{
-			thisx += slope;
 			tx = thisx;
 			if( ty < 0 || tx < 0 || tx >= bufferx ) continue;
 			if( ty >= buffery ) break;
 			buffer[ty * bufferx + tx] = CNFGLastColor;
+			thisx += slope;
 		}
 	}
 }
-
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
 	short minx = (x1<x2)?x1:x2;
