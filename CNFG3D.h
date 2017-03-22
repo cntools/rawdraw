@@ -1,4 +1,8 @@
-//Public domain 3D library originally 2012 <>< Charles Lohr
+//Copyright 2012-2017 <>< Charles Lohr
+//You may license this file under the MIT/x11, NewBSD, or any GPL license.
+
+//This is a series of tools useful for software rendering.
+//Use of this file with OpenGL is untested.
 
 #ifndef _3D_H
 #define _3D_H

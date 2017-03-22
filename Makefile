@@ -1,23 +1,36 @@
-all : rawdraw
+all : rawdraw ogltest
 
-CFLAGS:=$(CFLAGS) -g -O0 -DRASTERIZER
-CXXFLAGS:=$(CFLAGS)
-LDFLAGS:=-g
+#for X11 consider:             xorg-dev
+#for X11, you will need:       libx-dev
+#for full screen you'll need:  libxinerama-dev libxext-dev
+#for OGL You'll need:          mesa-common-dev libglu1-mesa-dev
+
+#-DRASTERIZER
+#  and
+#-CNFGOGL
+#  are incompatible.
+
 
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
 rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c os_generic.c
-	$(MINGW32)gcc -m32 $(CFLAGS) -o $@ $^  -lgdi32 
+	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
-rawdraw : rawdraw.o CNFGFunctions.o CNFGXDriver.o os_generic.o CNFG3D.o
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext $(LDFLAGS) 
+rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -DCNFGOGL
 
-ontop : ontop.o CNFGFunctions.o CNFGXDriver.o os_generic.o
-	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext
+ontop : ontop.c CNFGFunctions.c CNFGXDriver.c os_generic.c
+	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
 
 rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m os_generic.c CNFG3D.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread $(CFLAGS) $(LDFLAGS) 
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread
+
+ogltest : ogltest.c CNFGFunctions.c CNFGXDriver.c
+	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
+
+ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
+	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw ontop rawdraw.exe
+	rm -rf *.o *~ rawdraw ontop rawdraw.exe ogltest.exe ogltest
 

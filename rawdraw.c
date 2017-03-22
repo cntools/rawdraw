@@ -151,6 +151,7 @@ void DrawFrame()
 void HandleDestroy()
 {
 	printf( "Destroying\n" );
+	exit(10);
 }
 
 
