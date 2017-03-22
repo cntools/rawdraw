@@ -17,7 +17,7 @@ rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c os_generic.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
 rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -DCNFGOGL
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -RASTERIZER
 
 ontop : ontop.c CNFGFunctions.c CNFGXDriver.c os_generic.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
