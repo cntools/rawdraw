@@ -12,7 +12,6 @@ id app_menubar, app_appMenuItem, app_appMenu, app_appName, app_quitMenuItem, app
 id app_imageView;
 
 NSAutoreleasePool *app_pool;
-NSDate *app_currDate;
 int app_sw=0, app_sh=0;
 int app_mouseX=0, app_mouseY=0;
 char app_mouseDown[3] = {0,0,0};
@@ -77,6 +76,7 @@ static int keycode(key)
 
 void CNFGHandleInput()
 {
+    // Quit if no open windows left
     if ([[NSApp windows] count] == 0) [NSApp terminate: nil];
     //----------------------
     // Check for mouse motion (NOTE: the mouse move event
@@ -97,7 +97,7 @@ void CNFGHandleInput()
     //----------------------
     // Peek at the next event
     //----------------------
-    app_currDate = [NSDate new];
+    NSDate *app_currDate = [NSDate new];
 
     // If we have events, handle them!
     NSEvent *event;
@@ -142,20 +142,8 @@ void CNFGHandleInput()
     [app_currDate release];
 }
 
-void swap(uint8_t* a, uint8_t* b)
-{
-    uint8_t temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
 void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
 {
-    // for (int i=0; i<w*h; i++){
-    //     ((uint32_t*)data)[i] = ((uint32_t*)data)[i]<<8;
-    //     // swap(&((uint8_t*)data)[i*4],&((uint8_t*)data)[i*4+2]);
-    // }
-
     [app_pool release];
     app_pool = [NSAutoreleasePool new];
 
