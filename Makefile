@@ -17,13 +17,13 @@ rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c os_generic.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
 rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -RASTERIZER
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -DRASTERIZER
 
 ontop : ontop.c CNFGFunctions.c CNFGXDriver.c os_generic.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
 
 rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m os_generic.c CNFG3D.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
 
 rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m os_generic.c CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
@@ -35,5 +35,5 @@ ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw ontop rawdraw.exe ogltest.exe ogltest
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft ogltest ogltest.exe
 
