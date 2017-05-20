@@ -14,11 +14,6 @@
 #include "CNFGFunctions.h"
 #include "CNFGRasterizer.h"
 
-// NSEvent enum types
-#define EVENT_KEY_DOWN        10
-#define EVENT_KEY_UP          11
-#define EVENT_LEFT_MOUSE_DOWN 1
-#define EVENT_LEFT_MOUSE_UP   2
 
 
 
@@ -373,9 +368,9 @@ id app_menubar, app_appMenuItem, app_appMenu, app_appName, app_quitMenuItem, app
 id app_oglView;
 NSAutoreleasePool *app_pool;
 NSDate *app_currDate; 
+
 int app_sw=-999, app_sh=-999;
-int app_mouseX=0, app_mouseY=0;
-char app_mouseDown[3] = {0,0,0};
+
 
 //------------------------
 // ToDo: It may be possible to programmatically use
@@ -412,8 +407,8 @@ char app_mouseDown[3] = {0,0,0};
 static int w, h;
 void CNFGGetDimensions( short * x, short * y )
 {
-	*x = w;
-	*y = h;
+    *x = w;
+    *y = h;
 }
 
 static void InternalLinkScreenAndGo( const char * WindowName )
@@ -422,30 +417,27 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 
 void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 {
-	CNFGSetup( WindowName, 640, 480 );
+    CNFGSetup( WindowName, 640, 480 );
 }
 
 
-void CNFGTearDown()
-{
-}
+// void CNFGTearDown()
+// {
+// }
 
 void CNFGSetup( const char * WindowName, int sw, int sh )
 {
-	w = sw;
-	h = sh;
+    w = sw;
+    h = sh;
     app_sw=sw;
     app_sh=sh;
-    printf("CNFGSetup\n");
-    
-    const char * winName = (WindowName!=NULL) ? WindowName : winName;
+    // printf("CNFGSetup\n");
         
     //----------------------------------
     // Create a programmatic Cocoa OpenGL window
     // This code is slightly modified from
     // CocoaWithLove's Minimalist Cocoa tutorial
     //----------------------------------
-    [NSAutoreleasePool new];
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     app_menubar = [[NSMenu new] autorelease];
@@ -459,47 +451,31 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
         action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
     [app_appMenu addItem:app_quitMenuItem];
     [app_appMenuItem setSubmenu:app_appMenu];
-    app_window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, sw, sh)
-        styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
+    app_window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, app_sw, app_sh)
+        styleMask:NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable backing:NSBackingStoreBuffered defer:NO]
             autorelease];
+
+    NSString *title = [[[NSString alloc] initWithCString: WindowName encoding: NSUTF8StringEncoding] autorelease];
+    [app_window setTitle:title];
+
     app_oglView = [[[MyOpenGLView alloc] initWithFrame:NSMakeRect(0, 0, sw, sh) ] autorelease];
     [app_window setContentView:app_oglView];
     [app_window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
-    [app_window setTitle:app_appName];
     [app_window makeKeyAndOrderFront:nil];
     [NSApp activateIgnoringOtherApps:YES];
-    app_pool = [[NSAutoreleasePool alloc] init];
-    app_currDate = [[NSDate alloc] init];
-    
-    oglCompatibilityInit(sw*sh);       // Initialize the OpenGL compatibility layer
-
-
-    //--------------------
-    // Clear the screen to black
-    //--------------------
-        
-    [app_pool release];
-    //[currDate release];
-    app_pool = [[NSAutoreleasePool alloc] init];
-
-    // Peek at the next event
-    app_currDate = [[NSDate alloc] init];
-    NSEvent *event =
-        [NSApp
-            nextEventMatchingMask:NSAnyEventMask
-            untilDate:app_currDate
-            inMode:NSEventTrackingRunLoopMode
-            dequeue:YES];
-    [app_currDate release];
-
+    [NSApp finishLaunching];
     [NSApp updateWindows];
         
+    app_pool = [NSAutoreleasePool new];
+    oglCompatibilityInit(sw*sh);       // Initialize the OpenGL compatibility layer
     glClearColor(0.0,0.0,0.0,0.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     [app_oglContext flushBuffer];
+    [app_pool release];
 
 
+    app_pool = [NSAutoreleasePool new];
     // Set up a 2D projection
     //oglMatrixMode(OGL_PROJECTION);						// Select The Projection Matrix
     //oglLoadIdentity();									// Reset The Projection Matrix
@@ -516,6 +492,9 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
 #define KEY_UNDEFINED 255
 #define KEY_LEFT_MOUSE 0
 
+int app_mouseX=0, app_mouseY=0;
+char app_mouseDown[3] = {0,0,0};
+
 static int keycode(key)
 {
     if (key < 256) return key;
@@ -528,14 +507,14 @@ static int keycode(key)
     return KEY_UNDEFINED;
 }
 
+// void CNFGHandleInput()
+// {
+// }
+
 void CNFGHandleInput()
 {
-    int i;
-
-    [app_pool release];
-    //[currDate release];
-    app_pool = [[NSAutoreleasePool alloc] init];
-
+    // Quit if no open windows left
+    if ([[NSApp windows] count] == 0) [NSApp terminate: nil];
     //----------------------
     // Check for mouse motion (NOTE: the mouse move event
     //  has complex behavior after a mouse click.
@@ -555,41 +534,39 @@ void CNFGHandleInput()
     //----------------------
     // Peek at the next event
     //----------------------
-    app_currDate = [[NSDate alloc] init];
-    NSEvent *event =
-        [NSApp
-            nextEventMatchingMask:NSAnyEventMask
-            untilDate:app_currDate
-            inMode:NSEventTrackingRunLoopMode
-            dequeue:YES];
-    [app_currDate release];
+    NSDate *app_currDate = [NSDate new];
 
-    // If we have an event, handle it!
-    if (event)
+    // If we have events, handle them!
+    NSEvent *event;
+    for (;(event = [NSApp
+                    nextEventMatchingMask:NSEventMaskAny
+                    untilDate:app_currDate
+                    inMode:NSDefaultRunLoopMode
+                    dequeue:YES]);)
     {
         NSEventType type = [event type];
         switch (type)
         {
-            case EVENT_KEY_DOWN:
-                for (i=0; i<[event.characters length]; i++) {
+            case NSEventTypeKeyDown:
+                for (int i=0; i<[event.characters length]; i++) {
                     unichar ch = [event.characters characterAtIndex: i];
                     HandleKey(keycode(ch), 1);
                 }
                 break;
                 
-            case EVENT_KEY_UP:
-                for (i=0; i<[event.characters length]; i++) {
+            case NSEventTypeKeyUp:
+                for (int i=0; i<[event.characters length]; i++) {
                     unichar ch = [event.characters characterAtIndex: i];
                     HandleKey(keycode(ch), 0);
                 }
                 break;
                     
-            case EVENT_LEFT_MOUSE_DOWN:
+            case NSEventTypeLeftMouseDown:
                 HandleButton(app_mouseX, app_mouseY, KEY_LEFT_MOUSE, 1);
                 app_mouseDown[0]=1;
                 break;
                     
-            case EVENT_LEFT_MOUSE_UP:
+            case NSEventTypeLeftMouseUp:
                 HandleButton(app_mouseX, app_mouseY, KEY_LEFT_MOUSE, 0);
                 app_mouseDown[0]=0;
                 break;
@@ -597,21 +574,14 @@ void CNFGHandleInput()
             default:
                 break;
         }
-        //printf("type %d\n", (int)type);
+        [NSApp sendEvent:event];
     }
+    [app_currDate release];
 }
-
 
 void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
 {
     unsigned char *rgba=data;
-
-//        printf("data %p w %d h %d sw %d sh %d\n", data, w, h, app_sw, app_sh);
-//    exit(1);
-/*
-*/
-
-    [NSApp updateWindows];
 
     //--------------------
     // Draw the scene
@@ -620,7 +590,7 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
     glClear(GL_COLOR_BUFFER_BIT);
     oglMatrixMode(OGL_PROJECTION);						// Select The Projection Matrix
     oglLoadIdentity();									// Reset The Projection Matrix
-    oglOrtho(0.0, app_sw, app_sh-1, -1.0, -10.0, 10.0);
+    oglOrtho(-1.0, app_sw-1.0, app_sh, 0.0, 0.0, 1.0);
     oglMatrixMode(OGL_MODELVIEW);						// Select The Modelview Matrix
     oglLoadIdentity();									// Reset The Modelview Matrix
         
@@ -630,7 +600,7 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
     for (y=0; y<app_sh; y++) {
         for (x=0; x<app_sw; x++) {
             //oglColor3f(scale*(data[i]>>24), scale*((data[i]>>16)&0xff), scale*((data[i]>>8)&0xff));
-            oglColor3f(scale*rgba[4*i+2],scale*rgba[4*i+1],scale*rgba[4*i+0]);
+            oglColor3f(scale*rgba[4*i],scale*rgba[4*i+1],scale*rgba[4*i+2]);
             oglVertex2f(x,y);
             i++;
         }

@@ -167,6 +167,7 @@ int main()
 	CNFGBGColor = 0x800000;
 	CNFGDialogColor = 0x444444;
 	CNFGSetup( "Test Bench", 640, 480 );
+	// CNFGSetupFullscreen( "Test Bench", 0 );
 
 	for( x = 0; x < HMX; x++ )
 	for( y = 0; y < HMY; y++ )
