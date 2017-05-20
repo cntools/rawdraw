@@ -28,6 +28,9 @@ rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m os_generic.c CNFG3D.c
 rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m os_generic.c CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
 
+rawdraw_mac_cg : rawdraw.c CNFGFunctions.c CNFGCocoaCGDriver.m os_generic.c CNFG3D.c
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
+
 ogltest : ogltest.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
 
