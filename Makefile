@@ -38,5 +38,5 @@ ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft ogltest ogltest.exe
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg ogltest ogltest.exe
 
