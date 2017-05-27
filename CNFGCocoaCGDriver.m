@@ -96,7 +96,11 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-    CGContextFillRect(bufferContext, CGRectMake (x1, app_sh - y1 - 1, x2, app_sh - y2 - 1 ));
+    short minx = (x1<x2)?x1:x2;
+    short miny = (y1<y2)?y1:y2;
+    short maxx = (x1>=x2)?x1:x2;
+    short maxy = (y1>=y2)?y1:y2;
+    CGContextFillRect(bufferContext, CGRectMake (minx, app_sh - maxy - 1, maxx - minx, maxy - miny));
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
@@ -156,7 +160,6 @@ CGContextRef createBitmapContext (int pixelsWide,
     CGContextSetInterpolationQuality(context, kCGInterpolationNone);
     // CGContextSetShouldAntialias(context, NO);
     // CGContextSetLineWidth(context, 0.5);
-
     return context;
 }
 
@@ -187,13 +190,18 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
         [NSNumber numberWithInt: 
             (NSApplicationPresentationAutoHideMenuBar | NSApplicationPresentationAutoHideDock) ],
         NSFullScreenModeApplicationPresentationOptions, nil];
-    [app_imageView enterFullScreenMode:[[NSScreen screens] objectAtIndex:screen_number] withOptions:fullScreenOptions];
-    frameRect = [app_imageView frame];
+    
+    NSScreen *appScreen = [[NSScreen screens] objectAtIndex:screen_number];
+    frameRect = [appScreen frame];
+
+    [app_imageView enterFullScreenMode:appScreen withOptions:fullScreenOptions];
+    
     CGSize app_imageSize = frameRect.size;
     app_sw = app_imageSize.width; app_sh = app_imageSize.height;
     bufferContext = createBitmapContext (app_sw, app_sh);
     [NSApp finishLaunching];
     [NSApp updateWindows];
+
     app_pool = [NSAutoreleasePool new];
 }
 
@@ -323,7 +331,7 @@ void CNFGHandleInput()
 
 void CNFGGetDimensions( short * x, short * y )
 {
-    frameRect = [app_window frame];
+    frameRect = [app_imageView frame];
     CGSize app_imageSize = frameRect.size;
     if (app_imageSize.width != app_sw || app_imageSize.height != app_sh)
     {
