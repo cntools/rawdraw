@@ -31,6 +31,9 @@ rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m os_generic
 rawdraw_mac_cg : rawdraw.c CNFGFunctions.c CNFGCocoaCGDriver.m os_generic.c CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
 
+rawdraw_mac_ogl : rawdraw.c CNFGFunctions.c CNFGCocoaOGLDriver.m os_generic.c CNFG3D.c
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
+
 ogltest : ogltest.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
 
@@ -38,5 +41,5 @@ ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg ogltest ogltest.exe
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe
 
