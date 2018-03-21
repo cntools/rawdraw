@@ -233,6 +233,7 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
     oglInit();
 
     app_pool = [NSAutoreleasePool new];
+	return 0;
 }
 
 #define XK_Left                          0xff51  /* Move left, left arrow */

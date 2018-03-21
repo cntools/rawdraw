@@ -120,7 +120,6 @@ void DrawFrame()
 //		CNFGTackPoly( &pto[0], 3 );		CNFGTackPoly( &pto[3], 3 );
 
 
-		CNFGTackPixel( pta[0], pta[1] );
 		CNFGTackSegment( pta[0], pta[1], ptb[0], ptb[1] );
 //		CNFGTackSegment( ptb[0], ptb[1], ptc[0], ptc[1] );
 //		CNFGTackSegment( ptc[0], ptc[1], ptd[0], ptd[1] );

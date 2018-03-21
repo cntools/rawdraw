@@ -55,7 +55,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
     app_pool = [NSAutoreleasePool new];
 }
 
-void CNFGSetup( const char * WindowName, int sw, int sh )
+int CNFGSetup( const char * WindowName, int sw, int sh )
 {
     app_sw=sw; app_sh=sh;
     [NSApplication sharedApplication];
@@ -85,6 +85,7 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
     [NSApp finishLaunching];
     [NSApp updateWindows];
     app_pool = [[NSAutoreleasePool alloc] init];
+	return 0;
 }
 
 #define XK_Left                          0xff51  /* Move left, left arrow */

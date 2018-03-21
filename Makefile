@@ -16,6 +16,9 @@ MINGW32:=/usr/bin/i686-w64-mingw32-
 rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c os_generic.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
+rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c os_generic.c CNFG3D.c
+	gcc -o $@ $^ -lMali -lpthread -lm -O3
+
 rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -DRASTERIZER
 
@@ -41,5 +44,5 @@ ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl
 

@@ -425,7 +425,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 // {
 // }
 
-void CNFGSetup( const char * WindowName, int sw, int sh )
+int CNFGSetup( const char * WindowName, int sw, int sh )
 {
     w = sw;
     h = sh;
@@ -483,6 +483,8 @@ void CNFGSetup( const char * WindowName, int sw, int sh )
     //oglMatrixMode(OGL_MODELVIEW);							// Select The Modelview Matrix
     //oglLoadIdentity();									// Reset The Modelview Matrix
     //glDisable(GL_DEPTH_TEST);
+
+	return 0;
 }
 
 #define XK_Left                          0xff51  /* Move left, left arrow */

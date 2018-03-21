@@ -23,10 +23,11 @@ void CNFGTearDown()
 {
 }
 
-void CNFGSetup( const char * WindowName, int sw, int sh )
+int CNFGSetup( const char * WindowName, int sw, int sh )
 {
 	w = sw;
 	h = sh;
+	return 0;
 }
 
 void CNFGHandleInput()
