@@ -1,8 +1,10 @@
-//Copyright (c) 2011, 2017 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
+//Copyright (c) 2011, 2017, 2018 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
 //portions from 
 //http://www.xmission.com/~georgeps/documentation/tutorials/Xlib_Beginner.html
 
 //#define HAS_XINERAMA
+//#define HAS_XSHAPE
+//#define FULL_SCREEN_STEAL_FOCUS
 
 #include "CNFGFunctions.h"
 
@@ -11,12 +13,24 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
-#ifdef HAS_XINERAMA
-#include <X11/extensions/shape.h>
-#include <X11/extensions/Xinerama.h>
-#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef HAS_XINERAMA
+	#include <X11/extensions/shape.h>
+	#include <X11/extensions/Xinerama.h>
+#endif
+#ifdef HAS_XSHAPE
+	#include <X11/extensions/shape.h>
+	static    XGCValues xsval;
+	static    Pixmap xspixmap;
+	static    GC xsgc;
+
+	static	int taint_shape;
+	static	int prepare_xshape;
+#endif
+
 
 XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
@@ -26,6 +40,38 @@ Pixmap CNFGPixmap;
 GC     CNFGGC;
 GC     CNFGWindowGC;
 Visual * CNFGVisual;
+
+
+#ifdef HAS_XSHAPE
+void	CNFGPrepareForTransparency() { prepare_xshape = 1; }
+void	CNFGDrawToTransparencyMode( int transp )
+{
+	static Pixmap BackupCNFGPixmap;
+	static GC     BackupCNFGGC;
+	static int was_transp;
+	if( was_transp && ! transp )
+	{
+		CNFGGC = BackupCNFGGC;
+		CNFGPixmap = BackupCNFGPixmap;
+	}
+	if( !was_transp && transp )
+	{
+		BackupCNFGPixmap = CNFGPixmap;
+		BackupCNFGGC = CNFGGC;
+		taint_shape = 1;
+		CNFGGC = xsgc;
+		CNFGPixmap = xspixmap;
+	}
+	was_transp = transp;
+}
+void	CNFGClearTransparencyLevel()
+{
+	taint_shape = 1;
+	XSetForeground(CNFGDisplay, xsgc, 0);
+	XFillRectangle(CNFGDisplay, xspixmap, xsgc, 0, 0, CNFGWinAtt.width, CNFGWinAtt.height);
+	XSetForeground(CNFGDisplay, xsgc, 1);
+}
+#endif
 
 
 #ifdef CNFGOGL
@@ -62,8 +108,8 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	if (!CNFGClassHint) {
 		CNFGClassHint = XAllocClassHint();
 		if (CNFGClassHint) {
-			CNFGClassHint->res_name = "cnping";
-			CNFGClassHint->res_class = "cnping";
+			CNFGClassHint->res_name = "rawdraw";
+			CNFGClassHint->res_class = "rawdraw";
 			XSetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
 		} else {
 			fprintf( stderr, "Failed to allocate XClassHint!\n" );
@@ -73,12 +119,26 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	}
 
 	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
+
 	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, WindowName, None, NULL, 0, NULL );
 
 	CNFGWindowGC = XCreateGC(CNFGDisplay, CNFGWindow, 0, 0);
 
 	CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 	CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
+	XSetLineAttributes(CNFGDisplay, CNFGGC, 1, LineSolid, CapRound, JoinRound);
+
+#ifdef HAS_XSHAPE
+	if( prepare_xshape )
+	{
+	    xsval.foreground = 1;
+	    xsval.line_width = 1;
+	    xsval.line_style = LineSolid;
+	    xspixmap = XCreatePixmap(CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, 1);
+	    xsgc = XCreateGC(CNFGDisplay, xspixmap, 0, &xsval);
+		XSetLineAttributes(CNFGDisplay, xsgc, 1, LineSolid, CapRound, JoinRound);
+	}
+#endif
 }
 
 void CNFGSetupFullscreen( const char * WindowName, int screen_no )
@@ -90,12 +150,6 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	CNFGDisplay = XOpenDisplay(NULL);
 	int screen = XDefaultScreen(CNFGDisplay);
 	int xpos, ypos;
-
-	if (!XShapeQueryExtension(CNFGDisplay, &event_basep, &error_basep))
-	{
-    	fprintf( stderr, "X-Server does not support shape extension" );
-		exit( 1 );
-	}
 
  	CNFGVisual = DefaultVisual(CNFGDisplay, screen);
 	CNFGWinAtt.depth = DefaultDepth(CNFGDisplay, screen);
@@ -123,7 +177,18 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	XSetWindowAttributes setwinattr;
 	setwinattr.override_redirect = 1;
 	setwinattr.save_under = 1;
+#ifdef HAS_XSHAPE
+
+	if (prepare_xshape && !XShapeQueryExtension(CNFGDisplay, &event_basep, &error_basep))
+	{
+    	fprintf( stderr, "X-Server does not support shape extension" );
+		exit( 1 );
+	}
+
+	setwinattr.event_mask = 0;
+#else
 	setwinattr.event_mask = StructureNotifyMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | ButtonPressMask | PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask |KeyPressMask |KeyReleaseMask | SubstructureNotifyMask | FocusChangeMask;
+#endif
 	setwinattr.border_pixel = 0;
 
 	CNFGWindow = XCreateWindow(CNFGDisplay, XRootWindow(CNFGDisplay, screen),
@@ -330,15 +395,25 @@ void CNFGClearFrame()
 
 void CNFGSwapBuffers()
 {
+#ifdef HAS_XSHAPE
+	if( taint_shape )
+	{
+		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
+		taint_shape = 0;
+	}
+#endif
 	XCopyArea(CNFGDisplay, CNFGPixmap, CNFGWindow, CNFGWindowGC, 0,0,CNFGWinAtt.width,CNFGWinAtt.height,0,0);
 	XFlush(CNFGDisplay);
+#ifdef FULL_SCREEN_STEAL_FOCUS
 	if( FullScreen )
 		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
+#endif
 }
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
 	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2, y2 );
+	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
 }
 
 void CNFGTackPixel( short x1, short y1 )
@@ -357,6 +432,11 @@ void CNFGTackPoly( RDPoint * points, int verts )
 }
 
 void CNFGInternalResize( short x, short y ) { }
+
+void	CNFGSetLineWidth( short width )
+{
+	XSetLineAttributes(CNFGDisplay, CNFGGC, width, LineSolid, CapRound, JoinRound);
+}
 
 #else
 #include "CNFGRasterizer.h"

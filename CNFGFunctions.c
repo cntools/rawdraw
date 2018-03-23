@@ -355,4 +355,9 @@ void CNFGTackPoly( RDPoint * points, int verts )
 void CNFGInternalResize( short x, short y ) { }
 
 
+void CNFGSetLineWidth( short width )
+{
+	glLineWidth( width );
+}
+
 #endif

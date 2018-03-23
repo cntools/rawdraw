@@ -20,7 +20,11 @@ rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c os_generic.c CNFG3D.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
 rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -DRASTERIZER
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER
+
+osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c os_generic.c
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
+
 
 ontop : ontop.c CNFGFunctions.c CNFGXDriver.c os_generic.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL

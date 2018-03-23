@@ -55,6 +55,14 @@ void   CNFGSetVSync( int vson );
 void * CNFGGetExtension( const char * extname );
 #endif
 
+//Also not available on all systems.  Transparency.
+void	CNFGPrepareForTransparency();
+void	CNFGDrawToTransparencyMode( int transp );
+void	CNFGClearTransparencyLevel();
+
+//Only available on systems that support it.
+void	CNFGSetLineWidth( short width );
+
 #ifdef __cplusplus
 };
 #endif
