@@ -13,32 +13,32 @@ all : rawdraw ogltest
 
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
-rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c os_generic.c
+rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
-rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c os_generic.c CNFG3D.c
+rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c CNFG3D.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
-rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c os_generic.c CNFG3D.c
+rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER
 
-osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c os_generic.c
+osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
 
 
-ontop : ontop.c CNFGFunctions.c CNFGXDriver.c os_generic.c
+ontop : ontop.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
 
-rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m os_generic.c CNFG3D.c
+rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
 
-rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m os_generic.c CNFG3D.c
+rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
 
-rawdraw_mac_cg : rawdraw.c CNFGFunctions.c CNFGCocoaCGDriver.m os_generic.c CNFG3D.c
+rawdraw_mac_cg : rawdraw.c CNFGFunctions.c CNFGCocoaCGDriver.m CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
 
-rawdraw_mac_ogl : rawdraw.c CNFGFunctions.c CNFGCocoaOGLDriver.m os_generic.c CNFG3D.c
+rawdraw_mac_ogl : rawdraw.c CNFGFunctions.c CNFGCocoaOGLDriver.m CNFG3D.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
 
 ogltest : ogltest.c CNFGFunctions.c CNFGXDriver.c
