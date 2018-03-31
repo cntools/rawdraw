@@ -26,7 +26,7 @@ void tdScale( float * f, float x, float y, float z );			//Operates ON f
 void tdRotateAA( float * f, float angle, float x, float y, float z ); 	//Operates ON f
 void tdRotateEA( float * f, float x, float y, float z );		//Operates ON f
 void tdMultiply( float * fin1, float * fin2, float * fout );		//Operates ON f
-void tdPrint( float * f );
+void tdPrint( const float * f );
 void tdTransposeSelf( float * f );
 
 //Specialty Matrix Functions

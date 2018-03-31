@@ -7,6 +7,24 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef CNFG3D_USE_OGL_MAJOR
+#define m00 0
+#define m10 1
+#define m20 2
+#define m30 3
+#define m01 4
+#define m11 5
+#define m21 6
+#define m31 7
+#define m02 8
+#define m12 9
+#define m22 10
+#define m32 11
+#define m03 12
+#define m13 13
+#define m23 14
+#define m33 15
+#else
 #define m00 0
 #define m01 1
 #define m02 2
@@ -23,7 +41,7 @@
 #define m31 13
 #define m32 14
 #define m33 15
-
+#endif
 
 void tdIdentity( float * f )
 {
@@ -118,7 +136,7 @@ void tdRotateEA( float * f, float x, float y, float z )
 	float cz = tdCOS(Z);
 	float sz = tdSIN(Z);
 
-	//Row major
+	//Row major (unless CNFG3D_USE_OGL_MAJOR is selected)
 	//manually transposed
 	ftmp[m00] = cy*cz;
 	ftmp[m10] = (sx*sy*cz)-(cx*sz);
@@ -147,7 +165,7 @@ void tdMultiply( float * fin1, float * fin2, float * fout )
 {
 	float fotmp[16];
 	int i, j, k;
-/*
+#ifdef CNFG3D_USE_OGL_MAJOR
 	fotmp[m00] = fin1[m00] * fin2[m00] + fin1[m01] * fin2[m10] + fin1[m02] * fin2[m20] + fin1[m03] * fin2[m30];
 	fotmp[m01] = fin1[m00] * fin2[m01] + fin1[m01] * fin2[m11] + fin1[m02] * fin2[m21] + fin1[m03] * fin2[m31];
 	fotmp[m02] = fin1[m00] * fin2[m02] + fin1[m01] * fin2[m12] + fin1[m02] * fin2[m22] + fin1[m03] * fin2[m32];
@@ -167,8 +185,7 @@ void tdMultiply( float * fin1, float * fin2, float * fout )
 	fotmp[m31] = fin1[m30] * fin2[m01] + fin1[m31] * fin2[m11] + fin1[m32] * fin2[m21] + fin1[m33] * fin2[m31];
 	fotmp[m32] = fin1[m30] * fin2[m02] + fin1[m31] * fin2[m12] + fin1[m32] * fin2[m22] + fin1[m33] * fin2[m32];
 	fotmp[m33] = fin1[m30] * fin2[m03] + fin1[m31] * fin2[m13] + fin1[m32] * fin2[m23] + fin1[m33] * fin2[m33];
-*/
-
+#else
 	for( i = 0; i < 16; i++ )
 	{
 		int xp = i & 0x03;
@@ -179,18 +196,25 @@ void tdMultiply( float * fin1, float * fin2, float * fout )
 			fotmp[i] += fin1[yp+k] * fin2[(k<<2)|xp];
 		}
 	}
-
+#endif
 	tdMATCOPY( fout, fotmp );
 }
 
-void tdPrint( float * f )
+void tdPrint( const float * f )
 {
 	int i;
 	printf( "{\n" );
+#ifdef CNFG3D_USE_OGL_MAJOR
+	for( i = 0; i < 4; i++ )
+	{
+		printf( "  %f, %f, %f, %f\n", f[0+i], f[4+i], f[8+i], f[12+i] );
+	}
+#else
 	for( i = 0; i < 16; i+=4 )
 	{
 		printf( "  %f, %f, %f, %f\n", f[0+i], f[1+i], f[2+i], f[3+i] );
 	}
+#endif
 	printf( "}\n" );
 }
 
