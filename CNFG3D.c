@@ -351,8 +351,8 @@ float tdDot( float * va, float * vb )
 }
 
 //Stack functionality.
-static float gsMatricies[2][tdMATRIXMAXDEPTH];
-float * gSMatrix = &gsMatricies[0][0];
+static float gsMatricies[2][tdMATRIXMAXDEPTH][16];
+float * gSMatrix = gsMatricies[0][0];
 static int gsMMode;
 static int gsMPlace[2];
 
@@ -361,10 +361,10 @@ void tdPush()
 	if( gsMPlace[gsMMode] > tdMATRIXMAXDEPTH - 2 )
 		return;
 
-	tdMATCOPY( &gsMatricies[gsMMode][gsMPlace[gsMMode]], &gsMatricies[gsMMode][gsMPlace[gsMMode] + 1] );
+	tdMATCOPY( &gsMatricies[gsMMode][gsMPlace[gsMMode] + 1], &gsMatricies[gsMMode][gsMPlace[gsMMode]] );
 	gsMPlace[gsMMode]++;
 
-	gSMatrix = &gsMatricies[gsMMode][gsMPlace[gsMMode]];
+	gSMatrix = gsMatricies[gsMMode][gsMPlace[gsMMode]];
 }
 
 void tdPop()
@@ -374,7 +374,7 @@ void tdPop()
 
 	gsMPlace[gsMMode]--;
 
-	gSMatrix = &gsMatricies[gsMMode][gsMPlace[gsMMode]];
+	gSMatrix = gsMatricies[gsMMode][gsMPlace[gsMMode]];
 
 }
 
@@ -385,7 +385,7 @@ void tdMode( int mode )
 	
 	gsMMode = mode;
 
-	gSMatrix = &gsMatricies[gsMMode][gsMPlace[gsMMode]];
+	gSMatrix = gsMatricies[gsMMode][gsMPlace[gsMMode]];
 
 }
 
@@ -407,9 +407,9 @@ void tdFinalPoint( float * pin, float * pout )
 {
 	float tdin[4] = { pin[0], pin[1], pin[2], 1. };
 	float tmp[4];
-	td4Transform( tdin, &gsMatricies[0][gsMPlace[0]], tmp );
+	td4Transform( tdin, gsMatricies[0][gsMPlace[0]], tmp );
 //	printf( "XFORM1Out: %f %f %f %f\n", tmp[0], tmp[1], tmp[2], tmp[3] );
-	td4Transform(  tmp, &gsMatricies[1][gsMPlace[1]], tmp );
+	td4Transform(  tmp, gsMatricies[1][gsMPlace[1]], tmp );
 //	printf( "XFORM2Out: %f %f %f %f\n", tmp[0], tmp[1], tmp[2], tmp[3] );
 	pout[0] = (tmp[0]/tmp[3] - translateX) * scaleX;
 	pout[1] = (tmp[1]/tmp[3] - translateY) * scaleY;

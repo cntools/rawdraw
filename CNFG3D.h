@@ -31,8 +31,7 @@ void tdTransposeSelf( float * f );
 
 //Specialty Matrix Functions
 void tdPerspective( float fovy, float aspect, float zNear, float zFar, float * out ); //Sets, NOT OPERATES. (FOVX=degrees)
-void tdLookAt( float * m, float * eye, float * at, float * up );	//Operates ON f
-
+void tdLookAt( float * m, float * eye, float * at, float * up );	//Operates ON m
 //General point functions
 #define tdPSet( f, x, y, z ) { f[0] = x; f[1] = y; f[2] = z; }
 void tdPTransform( const float * pin, float * f, float * pout );
