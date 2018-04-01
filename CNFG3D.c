@@ -71,6 +71,7 @@ void tdTranslate( float * f, float x, float y, float z )
 
 void tdScale( float * f, float x, float y, float z )
 {
+#if 0
 	f[m00] *= x;
 	f[m01] *= x;
 	f[m02] *= x;
@@ -85,6 +86,16 @@ void tdScale( float * f, float x, float y, float z )
 	f[m21] *= z;
 	f[m22] *= z;
 	f[m23] *= z;
+#endif
+
+	float ftmp[16];
+	tdIdentity(ftmp);
+	ftmp[m00] *= x;
+	ftmp[m11] *= y;
+	ftmp[m22] *= z;
+
+	tdMultiply( f, ftmp, f );
+
 }
 
 void tdRotateAA( float * f, float angle, float ix, float iy, float iz )
