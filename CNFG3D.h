@@ -24,6 +24,7 @@ void tdZero( float * f );
 void tdTranslate( float * f, float x, float y, float z );		//Operates ON f
 void tdScale( float * f, float x, float y, float z );			//Operates ON f
 void tdRotateAA( float * f, float angle, float x, float y, float z ); 	//Operates ON f
+void tdRotateQuat( float * f, float qw, float qx, float qy, float qz ); 	//Operates ON f
 void tdRotateEA( float * f, float x, float y, float z );		//Operates ON f
 void tdMultiply( float * fin1, float * fin2, float * fout );		//Operates ON f
 void tdPrint( const float * f );

@@ -132,6 +132,38 @@ void tdRotateAA( float * f, float angle, float ix, float iy, float iz )
 	tdMultiply( f, ftmp, f );
 }
 
+void tdRotateQuat( float * f, float qw, float qx, float qy, float qz )
+{
+	float ftmp[16];
+	float qw2 = qw*qw;
+	float qx2 = qx*qx;
+	float qy2 = qy*qy;
+	float qz2 = qz*qz;
+
+	ftmp[m00] = 1 - 2*qy2 - 2*qz2;
+	ftmp[m01] = 2*qx*qy - 2*qz*qw;
+	ftmp[m02] = 2*qx*qz + 2*qy*qw;
+	ftmp[m03] = 0;
+
+	ftmp[m10] = 2*qx*qy + 2*qz*qw;
+	ftmp[m11] = 1 - 2*qx2 - 2*qz2;
+	ftmp[m12] = 2*qy*qz - 2*qx*qw;
+	ftmp[m13] = 0;
+
+	ftmp[m20] = 2*qx*qz - 2*qy*qw;
+	ftmp[m21] = 2*qy*qz + 2*qx*qw;
+	ftmp[m22] = 1 - 2*qx2 - 2*qy2;
+	ftmp[m23] = 0;
+
+	ftmp[m30] = 0;
+	ftmp[m31] = 0;
+	ftmp[m32] = 0;
+	ftmp[m33] = 1;
+
+	tdMultiply( f, ftmp, f );
+
+}
+
 void tdRotateEA( float * f, float x, float y, float z )
 {
 	float ftmp[16];
