@@ -272,7 +272,7 @@ void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
 }
 
 
-#ifdef CNFGOGL
+#if defined( CNFGOGL ) && !defined( HAS_XSHAPE )
 
 #ifdef _MSC_VER
 #include <windows.h>

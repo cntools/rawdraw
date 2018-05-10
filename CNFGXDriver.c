@@ -29,6 +29,8 @@
 
 	static	int taint_shape;
 	static	int prepare_xshape;
+	static int was_transp;
+
 #endif
 
 
@@ -48,7 +50,6 @@ void	CNFGDrawToTransparencyMode( int transp )
 {
 	static Pixmap BackupCNFGPixmap;
 	static GC     BackupCNFGGC;
-	static int was_transp;
 	if( was_transp && ! transp )
 	{
 		CNFGGC = BackupCNFGGC;
@@ -154,6 +155,20 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
  	CNFGVisual = DefaultVisual(CNFGDisplay, screen);
 	CNFGWinAtt.depth = DefaultDepth(CNFGDisplay, screen);
 
+#ifdef CNFGOGL
+	int attribs[] = { GLX_RGBA,
+		GLX_DOUBLEBUFFER, 
+		GLX_RED_SIZE, 1,
+		GLX_GREEN_SIZE, 1,
+		GLX_BLUE_SIZE, 1,
+		GLX_DEPTH_SIZE, 1,
+		None };
+	XVisualInfo * vis = glXChooseVisual(CNFGDisplay, screen, attribs);
+	CNFGVisual = vis->visual;
+	CNFGWinAtt.depth = vis->depth;
+	CNFGCtx = glXCreateContext( CNFGDisplay, vis, NULL, True );
+#endif
+
 	if (XineramaQueryExtension(CNFGDisplay, &a, &b ) &&
 		(screeninfo = XineramaQueryScreens(CNFGDisplay, &screens)) &&
 		XineramaIsActive(CNFGDisplay) && screen_no >= 0 &&
@@ -190,25 +205,26 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	setwinattr.event_mask = StructureNotifyMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | ButtonPressMask | PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask |KeyPressMask |KeyReleaseMask | SubstructureNotifyMask | FocusChangeMask;
 #endif
 	setwinattr.border_pixel = 0;
+	setwinattr.colormap = XCreateColormap( CNFGDisplay, RootWindow(CNFGDisplay, 0), CNFGVisual, AllocNone);
 
 	CNFGWindow = XCreateWindow(CNFGDisplay, XRootWindow(CNFGDisplay, screen),
 		xpos, ypos, CNFGWinAtt.width, CNFGWinAtt.height,
 		0, CNFGWinAtt.depth, InputOutput, CNFGVisual, 
-		CWBorderPixel | CWEventMask | CWOverrideRedirect | CWSaveUnder, 
+		CWBorderPixel | CWEventMask | CWOverrideRedirect | CWSaveUnder | CWColormap, 
 		&setwinattr);
 
 	XMapWindow(CNFGDisplay, CNFGWindow);
+#ifdef FULL_SCREEN_STEAL_FOCUS
 	XSetInputFocus( CNFGDisplay, CNFGWindow,   RevertToParent, CurrentTime );
+#endif
 	XFlush(CNFGDisplay);
 	FullScreen = 1;
-//printf( "%d %d %d %d\n", xpos, ypos, CNFGWinAtt.width, CNFGWinAtt.height );
 	InternalLinkScreenAndGo( WindowName );
-/*
-	setwinattr.override_redirect = 1;
-	XChangeWindowAttributes(
-		CNFGDisplay, CNFGWindow,
-		CWBorderPixel | CWEventMask | CWOverrideRedirect, &setwinattr);
-*/
+
+#ifdef CNFGOGL
+	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
+#endif
+
 #else
 	CNFGSetup( WindowName, 640, 480 );
 #endif
@@ -368,14 +384,33 @@ void CNFGSwapBuffers()
 {
 	glFlush();
 	glFinish();
+
+#ifdef HAS_XSHAPE
+	if( taint_shape )
+	{
+		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
+		taint_shape = 0;
+	}
+#endif
 	glXSwapBuffers( CNFGDisplay, CNFGWindow );
+
+#ifdef FULL_SCREEN_STEAL_FOCUS
+	if( FullScreen )
+		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
+#endif
 }
 #endif
 
-#if !defined( RASTERIZER ) && !defined( CNFGOGL)
+#if !defined( CNFGOGL)
+#define AGLF(x) x
+#else
+#define AGLF(x) static BACKEND_##x
+#if defined( RASTERIZER ) 
+#include "CNFGRasterizer.h"
+#endif
+#endif
 
-
-uint32_t CNFGColor( uint32_t RGB )
+uint32_t AGLF(CNFGColor)( uint32_t RGB )
 {
 	unsigned char red = RGB & 0xFF;
 	unsigned char grn = ( RGB >> 8 ) & 0xFF;
@@ -386,14 +421,14 @@ uint32_t CNFGColor( uint32_t RGB )
 	return color;
 }
 
-void CNFGClearFrame()
+void AGLF(CNFGClearFrame)()
 {
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
 	XSetForeground(CNFGDisplay, CNFGGC, CNFGColor(CNFGBGColor) );	
 	XFillRectangle(CNFGDisplay, CNFGPixmap, CNFGGC, 0, 0, CNFGWinAtt.width, CNFGWinAtt.height );
 }
 
-void CNFGSwapBuffers()
+void AGLF(CNFGSwapBuffers)()
 {
 #ifdef HAS_XSHAPE
 	if( taint_shape )
@@ -410,36 +445,154 @@ void CNFGSwapBuffers()
 #endif
 }
 
-void CNFGTackSegment( short x1, short y1, short x2, short y2 )
+void AGLF(CNFGTackSegment)( short x1, short y1, short x2, short y2 )
 {
 	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2, y2 );
 	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
 }
 
-void CNFGTackPixel( short x1, short y1 )
+void AGLF(CNFGTackPixel)( short x1, short y1 )
 {
 	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1 );
 }
 
-void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
+void AGLF(CNFGTackRectangle)( short x1, short y1, short x2, short y2 )
 {
 	XFillRectangle(CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2-x1, y2-y1 );
 }
 
-void CNFGTackPoly( RDPoint * points, int verts )
+void AGLF(CNFGTackPoly)( RDPoint * points, int verts )
 {
 	XFillPolygon(CNFGDisplay, CNFGPixmap, CNFGGC, (XPoint *)points, 3, Convex, CoordModeOrigin );
 }
 
-void CNFGInternalResize( short x, short y ) { }
+void AGLF(CNFGInternalResize)( short x, short y ) { }
 
-void	CNFGSetLineWidth( short width )
+void AGLF(CNFGSetLineWidth)( short width )
 {
 	XSetLineAttributes(CNFGDisplay, CNFGGC, width, LineSolid, CapRound, JoinRound);
 }
 
-#else
-#include "CNFGRasterizer.h"
+
+
+
+#if defined( CNFGOGL ) && defined( HAS_XSHAPE )
+
+#include <GL/gl.h>
+
+uint32_t CNFGColor( uint32_t RGB )
+{
+	if( was_transp )
+	{
+		return BACKEND_CNFGColor( RGB );
+	}
+
+	unsigned char red = RGB & 0xFF;
+	unsigned char grn = ( RGB >> 8 ) & 0xFF;
+	unsigned char blu = ( RGB >> 16 ) & 0xFF;
+	glColor3ub( red, grn, blu );
+}
+
+void CNFGClearFrame()
+{
+	printf( "CLEAR!\n" );
+	short w, h;
+	unsigned char red = CNFGBGColor & 0xFF;
+	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
+	unsigned char blu = ( CNFGBGColor >> 16 ) & 0xFF;
+	glClearColor( red/255.0, grn/255.0, blu/255.0, 1.0 );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	CNFGGetDimensions( &w, &h );
+	glMatrixMode( GL_PROJECTION );
+	glLoadIdentity();
+	glViewport( 0, 0, w, h );
+	glOrtho( 0, w, h, 0, 1, -1 );
+	glMatrixMode( GL_MODELVIEW );
+	glLoadIdentity();
+}
+
+
+void CNFGTackSegment( short x1, short y1, short x2, short y2 )
+{
+	if( was_transp )
+	{
+		BACKEND_CNFGTackSegment( x1,y1,x2,y2 );
+		return;
+	}
+
+	if( x1 == x2 && y1 == y2 )
+	{
+		glBegin( GL_POINTS );
+		glVertex2f( x1+.5, y1+.5 );
+		glEnd();		
+	}
+	else
+	{
+		glBegin( GL_POINTS );
+		glVertex2f( x1+.5, y1+.5 );
+		glVertex2f( x2+.5, y2+.5 );
+		glEnd();		
+		glBegin( GL_LINES );
+		glVertex2f( x1+.5, y1+.5 );
+		glVertex2f( x2+.5, y2+.5 );
+		glEnd();
+	}
+}
+
+void CNFGTackPixel( short x1, short y1 )
+{
+	if( was_transp )
+	{
+		BACKEND_CNFGTackPixel( x1,y1 );
+		return;
+	}
+
+	glBegin( GL_POINTS );
+	glVertex2f( x1, y1 );
+	glEnd();
+}
+
+void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
+{
+	if( was_transp )
+	{
+		BACKEND_CNFGTackRectangle( x1,y1,x2,y2 );
+		return;
+	}
+
+
+	glBegin( GL_QUADS );
+	glVertex2f( x1, y1 );
+	glVertex2f( x2, y1 );
+	glVertex2f( x2, y2 );
+	glVertex2f( x1, y2 );
+	glEnd();
+}
+
+void CNFGTackPoly( RDPoint * points, int verts )
+{
+	if( was_transp )
+	{
+		BACKEND_CNFGTackPoly( points,verts );
+		return;
+	}
+
+	int i;
+	glBegin( GL_TRIANGLE_FAN );
+	glVertex2f( points[0].x, points[0].y );
+	for( i = 1; i < verts; i++ )
+	{
+		glVertex2f( points[i].x, points[i].y );
+	}
+	glEnd();
+}
+
+void CNFGInternalResize( short x, short y ) { }
+
+
+void CNFGSetLineWidth( short width )
+{
+	glLineWidth( width );
+}
+
 #endif
-
-
