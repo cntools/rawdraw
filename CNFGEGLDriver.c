@@ -33,6 +33,25 @@
 #define EGL_ZBITS 16
 #define EGL_IMMEDIATE_SIZE 2048
 
+/*
+	Just FYI If running on the rpi, make sure you have the right mode set.
+
+		vcgencmd hdmi_timings 2160 1 40 20 46 1200 1 28 2 234 0 0 0 90 0 297000000 5 && tvservice -e "DMT 87"
+		sleep .5
+		fbset -depth 8 && fbset -depth 16
+		sleep .5
+*/
+
+
+#ifdef RASPI_GPU
+struct rpi_state_t
+{
+	int w, h;
+	DISPMANX_DISPLAY_HANDLE_T dispman_display;
+	DISPMANX_ELEMENT_HANDLE_T dispman_element;
+} rpi_state;
+#endif
+
 #ifdef USE_EGL_X
 	#error This feature has never been completed or tested.
 	Display *XDisplay;
@@ -68,9 +87,13 @@
 		unsigned short *data;
 		unsigned int format; /* extra format information in case rgbal is not enough, especially for YUV formats */
 	} fbdev_pixmap;
-
+#ifdef RASPI_GPU
+static EGL_DISPMANX_WINDOW_T native_window;
+#else
 struct fbdev_window native_window;
 #endif
+#endif
+
 
 
 static const char *default_vertex_shader_source =
@@ -107,7 +130,7 @@ static EGLint const config_attribute_list[] = {
 	EGL_BUFFER_SIZE, 32,
 	EGL_STENCIL_SIZE, 0,
 	EGL_DEPTH_SIZE, EGL_ZBITS,
-	EGL_SAMPLES, 4,
+	//EGL_SAMPLES, 1,
 	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 	EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PIXMAP_BIT,
 	EGL_NONE
@@ -282,6 +305,10 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	EGLContext context;
 	GLuint program;
 
+#ifdef RASPI_GPU
+	bcm_host_init();
+#endif
+
 #ifdef USE_EGL_X
 	XDisplay = XOpenDisplay(NULL);
 	if (!XDisplay) {
@@ -330,9 +357,18 @@ int CNFGSetup( const char * WindowName, int w, int h )
 
 	eglChooseConfig(egl_display, config_attribute_list, &config, 1,
 			&num_config);
+	printf( "Config: %d\n", num_config );
+
+
+#ifdef RASPI_GPU
+	// get an appropriate EGL frame buffer configuration
+	int result = eglBindAPI(EGL_OPENGL_ES_API);
+	printf( "Bound API: %d\n", result );
+#endif
 
 	context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
-				   context_attribute_list);
+//				NULL );
+				context_attribute_list);
 	if (context == EGL_NO_CONTEXT) {
 		fprintf(stderr, "Error: eglCreateContext failed: 0x%08X\n",
 			eglGetError());
@@ -343,9 +379,47 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	egl_surface = eglCreateWindowSurface(egl_display, config, XWindow,
 					     window_attribute_list);
 #else
+
+#ifdef RASPI_GPU
+	DISPMANX_UPDATE_HANDLE_T dispman_update;
+	VC_RECT_T dst_rect;
+	VC_RECT_T src_rect;
+
+	int adjust = 0;
+	if( w > 2048 )
+	{
+		adjust = (w - 2048) / 2;
+		w = 2048;
+		printf( "Adjusting window to: %d\n", adjust );
+	}
+
+	dst_rect.x = adjust;
+	dst_rect.y = 0;
+	dst_rect.width = w;
+	dst_rect.height = h;
+
+	src_rect.x = 0;
+	src_rect.y = 0;
+	src_rect.width = w << 16;
+	src_rect.height = h << 16;
+
+	rpi_state.w = w;
+	rpi_state.h = h;
+	rpi_state.dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
+	dispman_update = vc_dispmanx_update_start( 0 );
+	rpi_state.dispman_element = vc_dispmanx_element_add ( dispman_update, rpi_state.dispman_display,
+	      0/*layer*/, &dst_rect, 0/*src*/,
+	      &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
+	printf( "DISPMAN ELEMENT: %d(%d, %d)\n", rpi_state.dispman_element, dispman_update, rpi_state.dispman_display );
+	native_window.element = rpi_state.dispman_element;
+	native_window.width = w;
+	native_window.height = h;
+	vc_dispmanx_update_submit_sync( dispman_update );
+#endif
+
 	egl_surface = eglCreateWindowSurface(egl_display, config,
-					     (EGLNativeWindowType)&native_window,
-					     window_attribute_list);
+			     (EGLNativeWindowType)&native_window,
+			     window_attribute_list);
 #endif
 	if (egl_surface == EGL_NO_SURFACE) {
 		fprintf(stderr, "Error: eglCreateWindowSurface failed: "
