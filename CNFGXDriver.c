@@ -43,6 +43,8 @@ GC     CNFGGC;
 GC     CNFGWindowGC;
 Visual * CNFGVisual;
 
+int g_x_global_key_state;
+int g_x_global_shift_key;
 
 #ifdef HAS_XSHAPE
 void	CNFGPrepareForTransparency() { prepare_xshape = 1; }
@@ -316,6 +318,8 @@ void CNFGHandleInput()
 		case KeyRelease:
 			bKeyDirection = 0;
 		case KeyPress:
+			g_x_global_key_state = report.xkey.state;
+			g_x_global_shift_key = XLookupKeysym(&report.xkey, 1);
 			HandleKey( XLookupKeysym(&report.xkey, 0), bKeyDirection );
 			break;
 		case ButtonRelease:
