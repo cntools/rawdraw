@@ -103,6 +103,12 @@ void CNFGGetDimensions( short * x, short * y )
 	}
 }
 
+void	CNFGChangeWindowTitle( const char * WindowName )
+{
+	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, WindowName, None, NULL, 0, NULL );
+}
+
+
 static void InternalLinkScreenAndGo( const char * WindowName )
 {
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
