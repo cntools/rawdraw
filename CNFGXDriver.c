@@ -105,14 +105,17 @@ void CNFGGetDimensions( short * x, short * y )
 
 void	CNFGChangeWindowTitle( const char * WindowName )
 {
-	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, WindowName, None, NULL, 0, NULL );
+	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, 0, 0, 0, 0, 0 );
 }
 
 
 static void InternalLinkScreenAndGo( const char * WindowName )
 {
+	XFlush(CNFGDisplay);
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
 
+/*
+	//Not sure of purpose of this.  If we find it, let me know, if this code is still commented after 2019-12-31, please remove it.
 	XGetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
 	if (!CNFGClassHint) {
 		CNFGClassHint = XAllocClassHint();
@@ -126,16 +129,17 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	} else {
 		fprintf( stderr, "Pre-existing XClassHint\n" );
 	}
-
+*/
 	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
 
-	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, WindowName, None, NULL, 0, NULL );
 
 	CNFGWindowGC = XCreateGC(CNFGDisplay, CNFGWindow, 0, 0);
 
 	CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 	CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
 	XSetLineAttributes(CNFGDisplay, CNFGGC, 1, LineSolid, CapRound, JoinRound);
+	CNFGChangeWindowTitle( WindowName );
+	XMapWindow(CNFGDisplay, CNFGWindow);
 
 #ifdef HAS_XSHAPE
 	if( prepare_xshape )
@@ -210,7 +214,8 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 
 	setwinattr.event_mask = 0;
 #else
-	setwinattr.event_mask = StructureNotifyMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | ButtonPressMask | PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask |KeyPressMask |KeyReleaseMask | SubstructureNotifyMask | FocusChangeMask;
+	//This code is probably made irrelevant by the XSetEventMask in InternalLinkScreenAndGo, if this code is not found needed by 2019-12-31, please remove.
+	//setwinattr.event_mask = StructureNotifyMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | ButtonPressMask | PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask |KeyPressMask |KeyReleaseMask | SubstructureNotifyMask | FocusChangeMask;
 #endif
 	setwinattr.border_pixel = 0;
 	setwinattr.colormap = XCreateColormap( CNFGDisplay, RootWindow(CNFGDisplay, 0), CNFGVisual, AllocNone);
@@ -218,14 +223,12 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	CNFGWindow = XCreateWindow(CNFGDisplay, XRootWindow(CNFGDisplay, screen),
 		xpos, ypos, CNFGWinAtt.width, CNFGWinAtt.height,
 		0, CNFGWinAtt.depth, InputOutput, CNFGVisual, 
-		CWBorderPixel | CWEventMask | CWOverrideRedirect | CWSaveUnder | CWColormap, 
+		CWBorderPixel/* | CWEventMask */ | CWOverrideRedirect | CWSaveUnder | CWColormap, 
 		&setwinattr);
 
-	XMapWindow(CNFGDisplay, CNFGWindow);
 #ifdef FULL_SCREEN_STEAL_FOCUS
 	XSetInputFocus( CNFGDisplay, CNFGWindow,   RevertToParent, CurrentTime );
 #endif
-	XFlush(CNFGDisplay);
 	FullScreen = 1;
 	InternalLinkScreenAndGo( WindowName );
 
@@ -254,11 +257,11 @@ int CNFGSetup( const char * WindowName, int w, int h )
 {
 	CNFGDisplay = XOpenDisplay(NULL);
 	atexit( CNFGTearDown );
-	XGetWindowAttributes( CNFGDisplay, RootWindow(CNFGDisplay, 0), &CNFGWinAtt );
 
-	int depth = CNFGWinAtt.depth;
 	int screen = DefaultScreen(CNFGDisplay);
+	int depth = DefaultDepth(CNFGDisplay, screen);
  	CNFGVisual = DefaultVisual(CNFGDisplay, screen);
+	Window wnd = DefaultRootWindow( CNFGDisplay );
 
 #ifdef CNFGOGL
 	int attribs[] = { GLX_RGBA,
@@ -276,21 +279,14 @@ int CNFGSetup( const char * WindowName, int w, int h )
 
 	XSetWindowAttributes attr;
 	attr.background_pixel = 0;
-	attr.border_pixel = 0;
-	attr.colormap = XCreateColormap( CNFGDisplay, RootWindow(CNFGDisplay, 0), CNFGVisual, AllocNone);
-	attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-	int mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
-
-	CNFGWindow = XCreateWindow(CNFGDisplay, RootWindow(CNFGDisplay, 0), 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, mask, &attr );
-	XMapWindow(CNFGDisplay, CNFGWindow);
-	XFlush(CNFGDisplay);
+	attr.colormap = XCreateColormap( CNFGDisplay, wnd, CNFGVisual, AllocNone);
+	CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
 
 	InternalLinkScreenAndGo( WindowName );
 
-	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
-	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
-
-	XSelectInput( CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
+//Not sure of the purpose of this code - if it's still commented out after 2019-12-31 and no one knows why, please delete it.
+//	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
+//	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
 
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
@@ -343,7 +339,8 @@ void CNFGHandleInput()
 			exit( 0 );
 			break;
 		default:
-			printf( "Event: %d\n", report.type );
+			break;
+			//printf( "Event: %d\n", report.type );
 		}
 	}
 }
