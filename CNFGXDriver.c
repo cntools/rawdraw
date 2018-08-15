@@ -46,6 +46,27 @@ Visual * CNFGVisual;
 int g_x_global_key_state;
 int g_x_global_shift_key;
 
+void 	CNFGSetWindowIconData( int w, int h, uint32_t * data )
+{
+	static Atom net_wm_icon;
+	static Atom cardinal; 
+
+	if( !net_wm_icon ) net_wm_icon = XInternAtom( CNFGDisplay, "_NET_WM_ICON", False );
+	if( !cardinal ) cardinal = XInternAtom( CNFGDisplay, "CARDINAL", False );
+
+	unsigned long outdata[w*h];
+	int i;
+	for( i = 0; i < w*h; i++ )
+	{
+		outdata[i+2] = data[i];
+	}
+	outdata[0] = w;
+	outdata[1] = h;
+	XChangeProperty(CNFGDisplay, CNFGWindow, net_wm_icon, cardinal,
+		32, PropModeReplace, (const unsigned char*)outdata, 2 + w*h);
+}
+
+
 #ifdef HAS_XSHAPE
 void	CNFGPrepareForTransparency() { prepare_xshape = 1; }
 void	CNFGDrawToTransparencyMode( int transp )

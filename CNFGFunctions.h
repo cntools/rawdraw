@@ -63,6 +63,7 @@ void	CNFGClearTransparencyLevel();
 //Only available on systems that support it.
 void	CNFGSetLineWidth( short width );
 void	CNFGChangeWindowTitle( const char * windowtitle );
+void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 
 #ifdef __cplusplus
 };
