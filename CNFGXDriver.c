@@ -247,9 +247,6 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 		CWBorderPixel/* | CWEventMask */ | CWOverrideRedirect | CWSaveUnder | CWColormap, 
 		&setwinattr);
 
-#ifdef FULL_SCREEN_STEAL_FOCUS
-	XSetInputFocus( CNFGDisplay, CNFGWindow,   RevertToParent, CurrentTime );
-#endif
 	FullScreen = 1;
 	InternalLinkScreenAndGo( WindowName );
 
@@ -523,7 +520,6 @@ uint32_t CNFGColor( uint32_t RGB )
 
 void CNFGClearFrame()
 {
-	printf( "CLEAR!\n" );
 	short w, h;
 	unsigned char red = CNFGBGColor & 0xFF;
 	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
