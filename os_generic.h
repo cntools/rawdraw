@@ -56,7 +56,9 @@
 	Date Stamp: 2018-03-25: Switched to header-only format.
 */
 
+#ifndef OSG_INLINE
 #define OSG_INLINE static inline
+#endif
 
 //Threads and Mutices
 typedef void* og_thread_t;
