@@ -2,3 +2,5 @@
 Debug/*
 Release/*
 *.exe
+ogltest
+rawdraw
