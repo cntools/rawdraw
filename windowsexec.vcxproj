@@ -81,7 +81,6 @@
     <ClCompile Include="CNFG3D.c" />
     <ClCompile Include="CNFGFunctions.c" />
     <ClCompile Include="CNFGWinDriver.c" />
-    <ClCompile Include="os_generic.c" />
     <ClCompile Include="rawdraw.c" />
   </ItemGroup>
   <ItemGroup>
