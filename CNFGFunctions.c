@@ -286,6 +286,7 @@ uint32_t CNFGColor( uint32_t RGB )
 	unsigned char grn = ( RGB >> 8 ) & 0xFF;
 	unsigned char blu = ( RGB >> 16 ) & 0xFF;
 	glColor3ub( red, grn, blu );
+	return RGB;
 }
 
 void CNFGClearFrame()
