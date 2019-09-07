@@ -41,9 +41,10 @@
 		void OGSetTLS( og_tls_t tls, void * data );
 		void * OGGetTLS( og_tls_t tls );
 
-   You can permute the operations of this file by the following two means:
+   You can permute the operations of this file by the following means:
     OSG_NO_IMPLEMENTATION
 	OSG_PREFIX
+	OSG_NOSTATIC
 
    The default behavior is to do static inline.
 
@@ -73,8 +74,21 @@
 	Date Stamp: 2018-03-25 CNL: Switched to header-only format.
 */
 
+
+#ifdef OSG_NOSTATIC
+#define OSG_PREFIX inline
+#ifndef OSG_NO_IMPLEMENTATION
+#define OSG_NO_IMPLEMENTATION
+#endif
+#endif
+
 #ifndef OSG_PREFIX
 #define OSG_PREFIX static inline
+#endif
+
+//In case you want to hook the closure of a thread, i.e. if your system has thread-local storage.
+#ifndef OSG_TERM_THREAD_CODE
+#define OSG_TERM_THREAD_CODE
 #endif
 
 typedef void* og_thread_t;
@@ -169,12 +183,14 @@ OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parame
 OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 {
 	WaitForSingleObject( ot, INFINITE );
+	OSG_TERM_THREAD_CODE
 	CloseHandle( ot );
 	return 0;
 }
 
 OSG_PREFIX void OGCancelThread( og_thread_t ot )
 {
+	OSG_TERM_THREAD_CODE
 	CloseHandle( ot );	
 }
 
@@ -349,6 +365,7 @@ static void * OGJoinThread( og_thread_t ot )
 		return 0;
 	}
 	pthread_join( *(pthread_t*)ot, &retval );
+	OSG_TERM_THREAD_CODE
 	free( ot );
 	return retval;
 }
@@ -360,6 +377,7 @@ OSG_PREFIX void OGCancelThread( og_thread_t ot )
 		return;
 	}
 	pthread_cancel( *(pthread_t*)ot );
+	OSG_TERM_THREAD_CODE
 	free( ot );
 }
 
