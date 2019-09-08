@@ -75,8 +75,10 @@
 */
 
 
-#ifdef OSG_NOSTATIC
-#define OSG_PREFIX inline
+#if defined( OSG_NOSTATIC ) && OSG_STATIC != 0
+#ifndef OSG_PREFIX
+#define OSG_PREFIX
+#endif
 #ifndef OSG_NO_IMPLEMENTATION
 #define OSG_NO_IMPLEMENTATION
 #endif
@@ -357,7 +359,7 @@ OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parame
 	return (og_thread_t)ret;
 }
 
-static void * OGJoinThread( og_thread_t ot )
+OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 {
 	void * retval;
 	if( !ot )
