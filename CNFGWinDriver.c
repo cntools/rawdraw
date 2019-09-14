@@ -208,6 +208,8 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	MoveWindow( lsHWND, window.left, window.top, bufferx + wd, buffery + hd, 1 );
 
 	InternalHandleResize();
+
+	return 0;
 }
 
 void CNFGHandleInput()
