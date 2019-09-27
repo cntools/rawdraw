@@ -1,4 +1,5 @@
 //Copyright 2010 Charles Lohr - under the NewBSD license.
+//Generator for FontCharMap and FontCharData included in CNFGFunctions.c
 #include <stdio.h>
 
 unsigned CodePage437PlusUnicode[256][33] = {

@@ -22,6 +22,9 @@ rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c CNFG3D.c
 rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER
 
+rawdraw_ogl : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL
+
 osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
 
@@ -48,5 +51,5 @@ ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl
 

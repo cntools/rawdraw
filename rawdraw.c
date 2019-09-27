@@ -31,7 +31,7 @@ void HandleMotion( int x, int y, int mask )
 short screenx, screeny;
 float Heightmap[HMX*HMY];
 
-void DrawFrame()
+void DrawHeightmap()
 {
 	int x, y;
 	float fdt = ((iframeno++)%(360*10))/10.0;
@@ -187,7 +187,8 @@ int main()
 		CNFGColor( 0xFFFFFF );
 		CNFGGetDimensions( &screenx, &screeny );
 
-		DrawFrame();
+		// Mesh in background
+		DrawHeightmap();
 /*
 
 		pto[0].x = 100;
@@ -206,10 +207,12 @@ int main()
 		CNFGTackSegment( pto[2].x, pto[2].y, pto[0].x, pto[0].y );
 */
 
+		// Square behind text
 		CNFGDrawBox( 0, 0, 260, 260 );
 
 		CNFGPenX = 10; CNFGPenY = 10;
 
+		// Text
 		pos = 0;
 		CNFGColor( 0xffffff );
 		for( i = 0; i < 1; i++ )
@@ -226,6 +229,7 @@ int main()
 			}
 		}
 
+		// Green triangles
 		CNFGPenX = 0;
 		CNFGPenY = 0;
 
