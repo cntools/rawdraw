@@ -4,3 +4,5 @@ Release/*
 *.exe
 ogltest
 rawdraw
+examples/fontsize
+examples/fontsize_ogl
