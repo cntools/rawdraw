@@ -288,6 +288,7 @@ uint32_t CNFGColor( uint32_t RGB )
 	unsigned char grn = ( RGB >> 8 ) & 0xFF;
 	unsigned char blu = ( RGB >> 16 ) & 0xFF;
 	glColor3ub( red, grn, blu );
+	return RGB;
 }
 
 void CNFGClearFrame()
@@ -314,11 +315,14 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	{
 		glBegin( GL_POINTS );
 		glVertex2f( x1+.5, y1+.5 );
-		glEnd();		
+		glEnd();
 	}
 	else
 	{
-		glBegin( GL_LINES );
+		// GL_LINE misses the last pixel if the line is not continued
+		// due to the Diamond-exit rule so we use GL_LINE_LOOP which
+		// draws the line back and forth catching all the pixels.
+		glBegin( GL_LINE_LOOP );
 		glVertex2f( x1+.5, y1+.5 );
 		glVertex2f( x2+.5, y2+.5 );
 		glEnd();

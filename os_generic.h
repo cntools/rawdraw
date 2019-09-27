@@ -1,7 +1,11 @@
 #ifndef _OS_GENERIC_H
 #define _OS_GENERIC_H
 /*
-	"osgeneric" Generic, platform independent tool for the following operations:
+	"osgeneric" Generic, platform independent tool for threads and time.
+		Geared around Windows and Linux. Designed for operation on MSVC,
+		TCC, GCC and clang.  Others may work.
+
+    It offers the following operations:
 
 	Delay functions:
 		void OGSleep( int is );
@@ -23,17 +27,30 @@
 		void OGUnlockMutex( og_mutex_t om );
 		void OGDeleteMutex( og_mutex_t om );
 
-//Always a semaphore (not recursive)
-// og_sema_t OGCreateSema(); //Create a semaphore, comes locked initially.  NOTE: Max count is 32767
-//  void OGLockSema( og_sema_t os );
-//  int OGGetSema( og_sema_t os );  //if <0 there was a failure.
-//  void OGUnlockSema( og_sema_t os );
-//  void OGDeleteSema( og_sema_t os );
+	Always a semaphore (not recursive)
+		og_sema_t OGCreateSema(); //Create a semaphore, comes locked initially.
+          NOTE: For platform compatibility, max count is 32767
+		void OGLockSema( og_sema_t os );
+		int OGGetSema( og_sema_t os );  //if <0 there was a failure.
+		void OGUnlockSema( og_sema_t os );
+		void OGDeleteSema( og_sema_t os );
 
+	TLS (Thread-Local Storage)
+		og_tls_t OGCreateTLS();
+		void OGDeleteTLS( og_tls_t tls );
+		void OGSetTLS( og_tls_t tls, void * data );
+		void * OGGetTLS( og_tls_t tls );
 
+   You can permute the operations of this file by the following means:
+    OSG_NO_IMPLEMENTATION
+	OSG_PREFIX
+	OSG_NOSTATIC
 
-   Copyright (c) 2011-2012,2013,2016,2018 <>< Charles Lohr
-	This file may be licensed under the MIT/x11 license or the NewBSD license.
+   The default behavior is to do static inline.
+
+   Copyright (c) 2011-2012,2013,2016,2018,2019 <>< Charles Lohr
+
+   This file may be licensed under the MIT/x11 license, NewBSD or CC0 licenses
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -53,56 +70,64 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 
-	Date Stamp: 2018-03-25: Switched to header-only format.
+	Date Stamp: 2019-09-05 CNL: Allow for noninstantiation and added TLS.
+	Date Stamp: 2018-03-25 CNL: Switched to header-only format.
 */
 
-//Options:
-//	OSG_NOINLINE  << Do this if you don't want to use it in the normal way
-//	OSG_IMPL_FNS  << If not inlining, then you must have this defined in
-//		something that is compiled
 
-#if defined( OSG_NOINLINE ) || defined( OSG_IMPL_FNS )
-#define OSG_FUNCTION_PREFIX
-#else
-#define OSG_FUNCTION_PREFIX static inline
+#if defined( OSG_NOSTATIC ) && OSG_STATIC != 0
+#ifndef OSG_PREFIX
+#define OSG_PREFIX
+#endif
+#ifndef OSG_NO_IMPLEMENTATION
+#define OSG_NO_IMPLEMENTATION
+#endif
 #endif
 
-//Threads and Mutices
+#ifndef OSG_PREFIX
+#define OSG_PREFIX static inline
+#endif
+
+//In case you want to hook the closure of a thread, i.e. if your system has thread-local storage.
+#ifndef OSG_TERM_THREAD_CODE
+#define OSG_TERM_THREAD_CODE
+#endif
+
 typedef void* og_thread_t;
 typedef void* og_mutex_t;
 typedef void* og_sema_t;
+typedef void* og_tls_t;
 
-#if !defined( OSG_IMPL_FNS ) && defined( OSG_NOINLINE )
-#ifdef __cplusplus
-extern "C" {
-#endif
-OSG_FUNCTION_PREFIX void OGSleep( int is );
-OSG_FUNCTION_PREFIX void OGUSleep( int ius );
-OSG_FUNCTION_PREFIX double OGGetAbsoluteTime();
-OSG_FUNCTION_PREFIX double OGGetFileTime( const char * file );
-OSG_FUNCTION_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter );
-OSG_FUNCTION_PREFIX void * OGJoinThread( og_thread_t ot );
-OSG_FUNCTION_PREFIX void OGCancelThread( og_thread_t ot );
-OSG_FUNCTION_PREFIX og_mutex_t OGCreateMutex();
-OSG_FUNCTION_PREFIX void OGLockMutex( og_mutex_t om );
-OSG_FUNCTION_PREFIX void OGUnlockMutex( og_mutex_t om );
-OSG_FUNCTION_PREFIX void OGDeleteMutex( og_mutex_t om );
-OSG_FUNCTION_PREFIX og_sema_t OGCreateSema();
-OSG_FUNCTION_PREFIX int OGGetSema( og_sema_t os );
-OSG_FUNCTION_PREFIX void OGLockSema( og_sema_t os );
-OSG_FUNCTION_PREFIX void OGUnlockSema( og_sema_t os );
-OSG_FUNCTION_PREFIX void OGDeleteSema( og_sema_t os );
+OSG_PREFIX void OGSleep( int is );
+OSG_PREFIX void OGUSleep( int ius );
+OSG_PREFIX double OGGetAbsoluteTime();
+OSG_PREFIX double OGGetFileTime( const char * file );
+OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter );
+OSG_PREFIX void * OGJoinThread( og_thread_t ot );
+OSG_PREFIX void OGCancelThread( og_thread_t ot );
+OSG_PREFIX og_mutex_t OGCreateMutex();
+OSG_PREFIX void OGLockMutex( og_mutex_t om );
+OSG_PREFIX void OGUnlockMutex( og_mutex_t om );
+OSG_PREFIX void OGDeleteMutex( og_mutex_t om );
+OSG_PREFIX og_sema_t OGCreateSema();
+OSG_PREFIX int OGGetSema( og_sema_t os );
+OSG_PREFIX void OGLockSema( og_sema_t os );
+OSG_PREFIX void OGUnlockSema( og_sema_t os );
+OSG_PREFIX void OGDeleteSema( og_sema_t os );
+OSG_PREFIX og_tls_t OGCreateTLS();
+OSG_PREFIX void OGDeleteTLS( og_tls_t key );
+OSG_PREFIX void * OGGetTLS( og_tls_t key );
+OSG_PREFIX void OGSetTLS( og_tls_t key, void * data );
 
-#ifdef __cplusplus
-};
-#endif
-
-#else
-
-
+#ifndef OSG_NO_IMPLEMENTATION
 
 #if defined( WIN32 ) || defined (WINDOWS) || defined( _WIN32)
 #define USE_WINDOWS
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 
@@ -110,17 +135,17 @@ OSG_FUNCTION_PREFIX void OGDeleteSema( og_sema_t os );
 
 #include <windows.h>
 
-OSG_FUNCTION_PREFIX void OGSleep( int is )
+OSG_PREFIX void OGSleep( int is )
 {
 	Sleep( is*1000 );
 }
 
-OSG_FUNCTION_PREFIX void OGUSleep( int ius )
+OSG_PREFIX void OGUSleep( int ius )
 {
 	Sleep( ius/1000 );
 }
 
-OSG_FUNCTION_PREFIX double OGGetAbsoluteTime()
+OSG_PREFIX double OGGetAbsoluteTime()
 {
 	static LARGE_INTEGER lpf;
 	LARGE_INTEGER li;
@@ -134,7 +159,8 @@ OSG_FUNCTION_PREFIX double OGGetAbsoluteTime()
 	return (double)li.QuadPart / (double)lpf.QuadPart;
 }
 
-OSG_FUNCTION_PREFIX double OGGetFileTime( const char * file )
+
+OSG_PREFIX double OGGetFileTime( const char * file )
 {
 	FILETIME ft;
 
@@ -150,51 +176,55 @@ OSG_FUNCTION_PREFIX double OGGetFileTime( const char * file )
 	return ft.dwHighDateTime + ft.dwLowDateTime;
 }
 
-OSG_FUNCTION_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
+
+OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
 {
 	return (og_thread_t)CreateThread( 0, 0, (LPTHREAD_START_ROUTINE)routine, parameter, 0, 0 );
 }
 
-OSG_FUNCTION_PREFIX void * OGJoinThread( og_thread_t ot )
+OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 {
 	WaitForSingleObject( ot, INFINITE );
+	OSG_TERM_THREAD_CODE
 	CloseHandle( ot );
 	return 0;
 }
 
-OSG_FUNCTION_PREFIX void OGCancelThread( og_thread_t ot )
+OSG_PREFIX void OGCancelThread( og_thread_t ot )
 {
+	OSG_TERM_THREAD_CODE
 	CloseHandle( ot );	
 }
 
-OSG_FUNCTION_PREFIX og_mutex_t OGCreateMutex()
+OSG_PREFIX og_mutex_t OGCreateMutex()
 {
 	return CreateMutex( 0, 0, 0 );
 }
 
-OSG_FUNCTION_PREFIX void OGLockMutex( og_mutex_t om )
+OSG_PREFIX void OGLockMutex( og_mutex_t om )
 {
 	WaitForSingleObject(om, INFINITE);
 }
 
-OSG_FUNCTION_PREFIX void OGUnlockMutex( og_mutex_t om )
+OSG_PREFIX void OGUnlockMutex( og_mutex_t om )
 {
 	ReleaseMutex(om);
 }
 
-OSG_FUNCTION_PREFIX void OGDeleteMutex( og_mutex_t om )
+OSG_PREFIX void OGDeleteMutex( og_mutex_t om )
 {
 	CloseHandle( om );
 }
 
 
-OSG_FUNCTION_PREFIX og_sema_t OGCreateSema()
+
+OSG_PREFIX og_sema_t OGCreateSema()
 {
 	HANDLE sem = CreateSemaphore( 0, 0, 32767, 0 );
 	return (og_sema_t)sem;
 }
 
-OSG_FUNCTION_PREFIX int OGGetSema( og_sema_t os )
+OSG_PREFIX int OGGetSema( og_sema_t os )
 {
 	typedef LONG NTSTATUS;
 	HANDLE sem = (HANDLE)os;
@@ -237,19 +267,39 @@ OSG_FUNCTION_PREFIX int OGGetSema( og_sema_t os )
 	return -2;
 }
 
-OSG_FUNCTION_PREFIX void OGLockSema( og_sema_t os )
+OSG_PREFIX void OGLockSema( og_sema_t os )
 {
 	WaitForSingleObject( (HANDLE)os, INFINITE );
 }
 
-OSG_FUNCTION_PREFIX void OGUnlockSema( og_sema_t os )
+OSG_PREFIX void OGUnlockSema( og_sema_t os )
 {
 	ReleaseSemaphore( (HANDLE)os, 1, 0 );
 }
 
-OSG_FUNCTION_PREFIX void OGDeleteSema( og_sema_t os )
+OSG_PREFIX void OGDeleteSema( og_sema_t os )
 {
 	CloseHandle( os );
+}
+
+OSG_PREFIX og_tls_t OGCreateTLS()
+{
+	return (og_tls_t)TlsAlloc();
+}
+
+OSG_PREFIX void OGDeleteTLS( og_tls_t key )
+{
+	TlsFree( (DWORD)key );
+}
+
+OSG_PREFIX void * OGGetTLS( og_tls_t key )
+{
+	return TlsGetValue( (DWORD)key );
+}
+
+OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
+{
+	TlsSetValue( (DWORD)key, data );
 }
 
 #else
@@ -264,24 +314,24 @@ OSG_FUNCTION_PREFIX void OGDeleteSema( og_sema_t os )
 #include <semaphore.h>
 #include <unistd.h>
 
-OSG_FUNCTION_PREFIX void OGSleep( int is )
+OSG_PREFIX void OGSleep( int is )
 {
 	sleep( is );
 }
 
-OSG_FUNCTION_PREFIX void OGUSleep( int ius )
+OSG_PREFIX void OGUSleep( int ius )
 {
 	usleep( ius );
 }
 
-OSG_FUNCTION_PREFIX double OGGetAbsoluteTime()
+OSG_PREFIX double OGGetAbsoluteTime()
 {
 	struct timeval tv;
 	gettimeofday( &tv, 0 );
 	return ((double)tv.tv_usec)/1000000. + (tv.tv_sec);
 }
 
-OSG_FUNCTION_PREFIX double OGGetFileTime( const char * file )
+OSG_PREFIX double OGGetFileTime( const char * file )
 {
 	struct stat buff; 
 
@@ -295,7 +345,9 @@ OSG_FUNCTION_PREFIX double OGGetFileTime( const char * file )
 	return buff.st_mtime;
 }
 
-OSG_FUNCTION_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
+
+
+OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
 {
 	pthread_t * ret = malloc( sizeof( pthread_t ) );
 	int r = pthread_create( ret, 0, routine, parameter );
@@ -307,7 +359,7 @@ OSG_FUNCTION_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void
 	return (og_thread_t)ret;
 }
 
-OSG_FUNCTION_PREFIX void * OGJoinThread( og_thread_t ot )
+OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 {
 	void * retval;
 	if( !ot )
@@ -315,21 +367,23 @@ OSG_FUNCTION_PREFIX void * OGJoinThread( og_thread_t ot )
 		return 0;
 	}
 	pthread_join( *(pthread_t*)ot, &retval );
+	OSG_TERM_THREAD_CODE
 	free( ot );
 	return retval;
 }
 
-OSG_FUNCTION_PREFIX void OGCancelThread( og_thread_t ot )
+OSG_PREFIX void OGCancelThread( og_thread_t ot )
 {
 	if( !ot )
 	{
 		return;
 	}
 	pthread_cancel( *(pthread_t*)ot );
+	OSG_TERM_THREAD_CODE
 	free( ot );
 }
 
-OSG_FUNCTION_PREFIX og_mutex_t OGCreateMutex()
+OSG_PREFIX og_mutex_t OGCreateMutex()
 {
 	pthread_mutexattr_t   mta;
 	og_mutex_t r = malloc( sizeof( pthread_mutex_t ) );
@@ -342,7 +396,7 @@ OSG_FUNCTION_PREFIX og_mutex_t OGCreateMutex()
 	return r;
 }
 
-OSG_FUNCTION_PREFIX void OGLockMutex( og_mutex_t om )
+OSG_PREFIX void OGLockMutex( og_mutex_t om )
 {
 	if( !om )
 	{
@@ -351,7 +405,7 @@ OSG_FUNCTION_PREFIX void OGLockMutex( og_mutex_t om )
 	pthread_mutex_lock( (pthread_mutex_t*)om );
 }
 
-OSG_FUNCTION_PREFIX void OGUnlockMutex( og_mutex_t om )
+OSG_PREFIX void OGUnlockMutex( og_mutex_t om )
 {
 	if( !om )
 	{
@@ -360,7 +414,7 @@ OSG_FUNCTION_PREFIX void OGUnlockMutex( og_mutex_t om )
 	pthread_mutex_unlock( (pthread_mutex_t*)om );
 }
 
-OSG_FUNCTION_PREFIX void OGDeleteMutex( og_mutex_t om )
+OSG_PREFIX void OGDeleteMutex( og_mutex_t om )
 {
 	if( !om )
 	{
@@ -372,34 +426,59 @@ OSG_FUNCTION_PREFIX void OGDeleteMutex( og_mutex_t om )
 }
 
 
-OSG_FUNCTION_PREFIX og_sema_t OGCreateSema()
+
+
+OSG_PREFIX og_sema_t OGCreateSema()
 {
 	sem_t * sem = malloc( sizeof( sem_t ) );
 	sem_init( sem, 0, 0 );
 	return (og_sema_t)sem;
 }
 
-OSG_FUNCTION_PREFIX int OGGetSema( og_sema_t os )
+OSG_PREFIX int OGGetSema( og_sema_t os )
 {
 	int valp;
 	sem_getvalue( os, &valp );
 	return valp;
 }
 
-OSG_FUNCTION_PREFIX void OGLockSema( og_sema_t os )
+
+OSG_PREFIX void OGLockSema( og_sema_t os )
 {
 	sem_wait( os );
 }
 
-OSG_FUNCTION_PREFIX void OGUnlockSema( og_sema_t os )
+OSG_PREFIX void OGUnlockSema( og_sema_t os )
 {
 	sem_post( os );
 }
 
-OSG_FUNCTION_PREFIX void OGDeleteSema( og_sema_t os )
+OSG_PREFIX void OGDeleteSema( og_sema_t os )
 {
 	sem_destroy( os );
 	free(os);
+}
+
+OSG_PREFIX og_tls_t OGCreateTLS()
+{
+	pthread_key_t ret = 0;
+	pthread_key_create(&ret, 0);
+	return (og_tls_t)(intptr_t)ret;
+}
+
+OSG_PREFIX void OGDeleteTLS( og_tls_t key )
+{
+	pthread_key_delete( (pthread_key_t)(intptr_t)key );
+}
+
+OSG_PREFIX void * OGGetTLS( og_tls_t key )
+{
+	return pthread_getspecific( (pthread_key_t)(intptr_t)key );
+}
+
+OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
+{
+	pthread_setspecific( (pthread_key_t)(intptr_t)key, data );
 }
 
 #endif
