@@ -96,6 +96,7 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
 	{
+#ifndef CNFGOGL
 	case WM_SYSCOMMAND:  //Not sure why, if deactivated, the dc gets unassociated?
 		if( wParam == SC_RESTORE || wParam == SC_MAXIMIZE || wParam == SC_SCREENSAVE )
 		{
@@ -103,6 +104,7 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SelectObject( lsWindowHDC, lsBitmap );
 		}
 		break;
+#endif
 	case WM_DESTROY:
 		HandleDestroy();
 		CNFGTearDown();
