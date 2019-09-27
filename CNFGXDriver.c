@@ -378,7 +378,6 @@ void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
 	static XImage *xi;
 	static int depth;
 	static int lw, lh;
-	static unsigned char * lbuffer;
 
 	if( !xi )
 	{
