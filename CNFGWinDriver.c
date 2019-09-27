@@ -1,4 +1,4 @@
-//Copyright (c) 2011 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
+//Copyright (c) 2011-2019 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
 //Portion from: http://en.wikibooks.org/wiki/Windows_Programming/Window_Creation
 
 
