@@ -193,6 +193,7 @@ OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 OSG_PREFIX void OGCancelThread( og_thread_t ot )
 {
 	OSG_TERM_THREAD_CODE
+	TerminateThread( ot, 0);
 	CloseHandle( ot );	
 }
 
