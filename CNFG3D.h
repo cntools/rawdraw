@@ -59,7 +59,7 @@ void tdMode( int mode );
 void tdSetViewport( float leftx, float topy, float rightx, float bottomy, float pixx, float pixy );
 void tdFinalPoint( float * pin, float * pout );
 
-
+float tdNoiseAt( int x, int y );
 float tdFLerp( float a, float b, float t );
 float tdPerlin2D( float x, float y );
 

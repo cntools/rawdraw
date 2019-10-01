@@ -469,11 +469,9 @@ void tdFinalPoint( float * pin, float * pout )
 
 
 
-static inline float tdNoiseAt( int x, int y )
+float tdNoiseAt( int x, int y )
 {
-	return ((x*13241 + y * 33455927)%9293) / 9292.;
-//	srand( x + y * 1314);
-//	return ((rand()%1000)/500.) - 1.0;
+	return ((x*13241*y + y * 33455927)%9293) / 4646. - 1.0;
 }
 
 static inline float tdFade( float f )
