@@ -253,14 +253,28 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
 	if( egl_immediate_draw_mode != GL_LINES 
 		|| egl_immediate_size >= EGL_IMMEDIATE_SIZE )	FlushRender();
+
+	int ofsxy1 = 0;
+	if( x1 == x2 && y1 == y2 )
+	{
+		ofsxy1 = 1;
+	}
+
 	egl_immediate_geo_ptr[0] = x1;
 	egl_immediate_geo_ptr[1] = y1;
 	egl_immediate_geo_ptr[2] = x2;
-	egl_immediate_geo_ptr[3] = y2;
-	egl_immediate_geo_ptr += 4;
+	egl_immediate_geo_ptr[3] = y2+ofsxy1;
+	egl_immediate_geo_ptr[4] = x2+ofsxy1;
+	egl_immediate_geo_ptr[5] = y2;
+	egl_immediate_geo_ptr[6] = x1;
+	egl_immediate_geo_ptr[7] = y1;
+	egl_immediate_geo_ptr += 8;
 	egl_immediate_color_buffer[egl_immediate_size+0] = egl_currentcolor;
 	egl_immediate_color_buffer[egl_immediate_size+1] = egl_currentcolor;
-	egl_immediate_size+=2;
+	egl_immediate_color_buffer[egl_immediate_size+2] = egl_currentcolor;
+	egl_immediate_color_buffer[egl_immediate_size+3] = egl_currentcolor;
+	egl_immediate_size+=4;
+
 	egl_immediate_draw_mode = GL_LINES;
 	egl_immediate_stride = 2;
 }
