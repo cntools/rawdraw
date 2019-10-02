@@ -373,6 +373,7 @@ OSG_PREFIX void * OGJoinThread( og_thread_t ot )
 	return retval;
 }
 
+#ifndef ANDROID
 OSG_PREFIX void OGCancelThread( og_thread_t ot )
 {
 	if( !ot )
@@ -383,6 +384,7 @@ OSG_PREFIX void OGCancelThread( og_thread_t ot )
 	OSG_TERM_THREAD_CODE
 	free( ot );
 }
+#endif
 
 OSG_PREFIX og_mutex_t OGCreateMutex()
 {
