@@ -38,6 +38,7 @@ XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
 Display *CNFGDisplay;
 Window CNFGWindow;
+int CNFGWindowInvisible;
 Pixmap CNFGPixmap;
 GC     CNFGGC;
 GC     CNFGWindowGC;
@@ -160,7 +161,8 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
 	XSetLineAttributes(CNFGDisplay, CNFGGC, 1, LineSolid, CapRound, JoinRound);
 	CNFGChangeWindowTitle( WindowName );
-	XMapWindow(CNFGDisplay, CNFGWindow);
+	if( !CNFGWindowInvisible )
+		XMapWindow(CNFGDisplay, CNFGWindow);
 
 #ifdef HAS_XSHAPE
 	if( prepare_xshape )
@@ -254,7 +256,6 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 
 	FullScreen = 1;
 	InternalLinkScreenAndGo( WindowName );
-
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
 #endif
@@ -308,7 +309,13 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	XSetWindowAttributes attr;
 	attr.background_pixel = 0;
 	attr.colormap = XCreateColormap( CNFGDisplay, wnd, CNFGVisual, AllocNone);
-	CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+	if( w && h )
+		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+	else
+	{
+		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, 1, 1, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+		CNFGWindowInvisible = 1;
+	}
 
 	InternalLinkScreenAndGo( WindowName );
 
@@ -324,6 +331,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 
 void CNFGHandleInput()
 {
+	if( !CNFGWindow ) return;
 	static int ButtonsDown;
 	XEvent report;
 
@@ -412,6 +420,8 @@ void   CNFGSetVSync( int vson )
 
 void CNFGSwapBuffers()
 {
+	if( CNFGWindowInvisible ) return;
+
 	glFlush();
 	glFinish();
 
