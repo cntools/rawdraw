@@ -285,22 +285,22 @@ OSG_PREFIX void OGDeleteSema( og_sema_t os )
 
 OSG_PREFIX og_tls_t OGCreateTLS()
 {
-	return (og_tls_t)TlsAlloc();
+	return (og_tls_t)(intptr_t)TlsAlloc();
 }
 
 OSG_PREFIX void OGDeleteTLS( og_tls_t key )
 {
-	TlsFree( (DWORD)key );
+	TlsFree( (DWORD)(intptr_t)key );
 }
 
 OSG_PREFIX void * OGGetTLS( og_tls_t key )
 {
-	return TlsGetValue( (DWORD)key );
+	return TlsGetValue( (DWORD)(intptr_t)key );
 }
 
 OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
 {
-	TlsSetValue( (DWORD)key, data );
+	TlsSetValue( (DWORD)(intptr_t)key, data );
 }
 
 #else
