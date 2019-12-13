@@ -423,7 +423,7 @@ void CNFGSwapBuffers()
 	if( CNFGWindowInvisible ) return;
 
 	glFlush();
-	glFinish();
+	//glFinish();
 
 #ifdef HAS_XSHAPE
 	if( taint_shape )
