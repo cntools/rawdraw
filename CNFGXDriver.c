@@ -43,6 +43,7 @@ Pixmap CNFGPixmap;
 GC     CNFGGC;
 GC     CNFGWindowGC;
 Visual * CNFGVisual;
+int CNFGX11ForceNoDecoration;
 
 int g_x_global_key_state;
 int g_x_global_shift_key;
@@ -156,6 +157,15 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 
 
 	CNFGWindowGC = XCreateGC(CNFGDisplay, CNFGWindow, 0, 0);
+
+
+	if( CNFGX11ForceNoDecoration )
+	{
+		Atom window_type = XInternAtom(CNFGDisplay, "_NET_WM_WINDOW_TYPE", False);
+		long value = XInternAtom(CNFGDisplay, "_NET_WM_WINDOW_TYPE_SPLASH", False);
+		XChangeProperty(CNFGDisplay, CNFGWindow, window_type,
+		   XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
+	}
 
 	CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 	CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
