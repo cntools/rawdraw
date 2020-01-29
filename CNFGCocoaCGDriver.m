@@ -357,7 +357,7 @@ void CNFGSwapBuffers()
     [app_imageView setNeedsDisplay:YES];
 }
 
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
     CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, data, 4*w*h, NULL);
     CGImageRef bitmap = CGImageCreate(w, h, 8, 32, 4*w, colorSpace, kCGBitmapByteOrderDefault, provider, NULL, false, kCGRenderingIntentDefault);

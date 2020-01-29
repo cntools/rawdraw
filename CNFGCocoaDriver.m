@@ -581,7 +581,7 @@ void CNFGHandleInput()
     [app_currDate release];
 }
 
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
     unsigned char *rgba=data;
 

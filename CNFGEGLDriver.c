@@ -68,25 +68,6 @@ static const char* kTAG = KTAG(APPNAME);
 #define EGL_ZBITS 16
 #define EGL_IMMEDIATE_SIZE 2048
 
-/*
-	Just FYI If running on the rpi, make sure you have the right mode set.
-
-		vcgencmd hdmi_timings 2160 1 40 20 46 1200 1 28 2 234 0 0 0 90 0 297000000 5 && tvservice -e "DMT 87"
-		sleep .5
-		fbset -depth 8 && fbset -depth 16
-		sleep .5
-*/
-
-
-#ifdef RASPI_GPU
-struct rpi_state_t
-{
-	int w, h;
-	DISPMANX_DISPLAY_HANDLE_T dispman_display;
-	DISPMANX_ELEMENT_HANDLE_T dispman_element;
-} rpi_state;
-#endif
-
 #ifdef USE_EGL_X
 	#error This feature has never been completed or tested.
 	Display *XDisplay;
@@ -122,13 +103,13 @@ struct rpi_state_t
 		unsigned short *data;
 		unsigned int format; /* extra format information in case rgbal is not enough, especially for YUV formats */
 	} fbdev_pixmap;
-#ifdef RASPI_GPU
-static EGL_DISPMANX_WINDOW_T native_window;
-#elif defined( ANDROID )
+
+#if defined( ANDROID )
 EGLNativeWindowType native_window;
 #else
 struct fbdev_window native_window;
 #endif
+
 #endif
 
 
@@ -154,9 +135,36 @@ static const char *default_fragment_shader_source =
 	"{                            \n"
 	"    gl_FragColor = vColor;   \n"
 	"}                            \n";
-GLuint default_vertex_shader;
-GLuint default_fragment_shader;
 GLuint default_screenscale_offset;
+GLuint default_program;
+
+
+static const char *texture_vertex_shader_source =
+	"attribute vec4 aPosition;    \n"
+	"attribute vec4 aColor;       \n"
+	"uniform vec4 screenscale;    \n"
+	"                             \n"
+	"varying vec2 vCoord;         \n"
+	"                             \n"
+	"void main()                  \n"
+	"{                            \n"
+	"    vCoord = aColor.xy;         \n"
+	"    gl_Position = vec4( -1.0, 1.0, 0.0, 0.0 ) + aPosition * screenscale; \n"
+	"}                            \n";
+static const char *texture_fragment_shader_source =
+	"precision mediump float;     \n"
+	"uniform sampler2D tex;       \n"
+	"                             \n"
+	"varying vec2 vCoord;         \n"
+	"                             \n"
+	"void main()                  \n"
+	"{                            \n"
+	"    gl_FragColor = texture2D(tex, vCoord);\n"
+	"}                            \n";
+GLuint texture_screenscale_offset;
+GLuint texture_program;
+GLuint texture_swap_id;
+GLuint texture_sampler_offset;
 
 
 static EGLint const config_attribute_list[] = {
@@ -193,10 +201,99 @@ uint32_t egl_currentcolor;
 
 uint32_t CNFGColor( uint32_t RGB ) { return( egl_currentcolor = RGB|((RGB<0x1000000)?0xff000000:0) ); }
 
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+
+
+GLuint CNFGEGLInternalLoadShader( const char * vertex_shader, const char * fragment_shader )
 {
-	fprintf( stderr, "Screen bitmap update not permitted.\n" );
-	//Not implemented
+	GLuint fragment_shader_object = 0;
+	GLuint vertex_shader_object = 0;
+	GLuint program = 0;
+	int ret;
+
+	vertex_shader_object = glCreateShader(GL_VERTEX_SHADER);
+	if (!vertex_shader_object) {
+		fprintf(stderr, "Error: glCreateShader(GL_VERTEX_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
+	}
+
+	glShaderSource(vertex_shader_object, 1, &vertex_shader, NULL);
+	glCompileShader(vertex_shader_object);
+
+	glGetShaderiv(vertex_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf(stderr, "Error: vertex shader compilation failed!\n");
+		glGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			glGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
+			fprintf(stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	fragment_shader_object = glCreateShader(GL_FRAGMENT_SHADER);
+	if (!fragment_shader_object) {
+		fprintf(stderr, "Error: glCreateShader(GL_FRAGMENT_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
+	}
+
+	glShaderSource(fragment_shader_object, 1, &fragment_shader, NULL);
+	glCompileShader(fragment_shader_object);
+
+	glGetShaderiv(fragment_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf(stderr, "Error: fragment shader compilation failed!\n");
+		glGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			glGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
+			fprintf(stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	program = glCreateProgram();
+	if (!program) {
+		fprintf(stderr, "Error: failed to create program!\n");
+		goto fail;
+	}
+
+	glAttachShader(program, vertex_shader_object);
+	glAttachShader(program, fragment_shader_object);
+
+	glBindAttribLocation(program, 0, "aPosition");
+	glBindAttribLocation(program, 1, "aColor");
+
+	glLinkProgram(program);
+
+	glGetProgramiv(program, GL_LINK_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf(stderr, "Error: program linking failed!\n");
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			glGetProgramInfoLog(program, ret, NULL, log);
+			fprintf(stderr, "%s", log);
+		}
+		goto fail;
+	}
+	return program;
+fail:
+	if( !vertex_shader_object ) glDeleteShader( vertex_shader_object );
+	if( !fragment_shader_object ) glDeleteShader( fragment_shader_object );
+	if( !program ) glDeleteShader( program );
+	return -1;
 }
 
 
@@ -209,12 +306,47 @@ int16_t	*	 egl_immediate_geo_ptr;
 uint32_t 		 egl_immediate_color_buffer[EGL_IMMEDIATE_SIZE*4];
 
 
-static GLfloat vVertices[] = {  0.0f,  0.5f, 0.0f,
-			       -0.5f, -0.5f, 0.0f,
-				0.5f, -0.5f, 0.0f };
-static GLfloat vColors[] = {1.0f, 0.0f, 0.0f, 1.0f,
-			    0.0f, 1.0f, 0.0f, 1.0f,
-			    0.0f, 0.0f, 1.0f, 1.0f};
+
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
+{
+	glUseProgram( texture_program );
+	glUniform4f( texture_screenscale_offset, 2./android_width, -2./android_height, 1.0, 1.0 );
+	glUniform1i( texture_sampler_offset, 0 );
+	glEnable( GL_TEXTURE_2D );
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture( GL_TEXTURE_2D, texture_swap_id );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);  //Always set the base and max mipmap levels of a texture.
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	static const uint8_t egl_uvs[12] = { 0, 0, 255, 0, 0, 255,   255, 0,  255, 255,  0, 255 };
+	int16_t         vertex_data[12];
+	vertex_data[0] = 0;
+	vertex_data[1] = 0;
+	vertex_data[2] = w;
+	vertex_data[3] = 0;
+	vertex_data[4] = 0;
+	vertex_data[5] = h;
+
+	vertex_data[6] = w;
+	vertex_data[7] = 0;
+	vertex_data[8] = w;
+	vertex_data[9] = h;
+	vertex_data[10] = 0;
+	vertex_data[11] = h;
+
+	glVertexAttribPointer(0, 2, GL_SHORT, GL_FALSE, 0, vertex_data);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_UNSIGNED_BYTE, GL_TRUE, 0, egl_uvs);
+	glEnableVertexAttribArray(1);
+	glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+	glUseProgram(default_program);
+	glDisable( GL_TEXTURE_2D );
+}
+
 
 
 void FlushRender()
@@ -355,11 +487,6 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	EGLConfig config;
 	EGLint num_config;
 	EGLContext context;
-	GLuint program;
-
-#ifdef RASPI_GPU
-	bcm_host_init();
-#endif
 
 #ifdef USE_EGL_X
 	XDisplay = XOpenDisplay(NULL);
@@ -418,13 +545,6 @@ int CNFGSetup( const char * WindowName, int w, int h )
 			&num_config);
 	printf( "Config: %d\n", num_config );
 
-
-#ifdef RASPI_GPU
-	// get an appropriate EGL frame buffer configuration
-	int result = eglBindAPI(EGL_OPENGL_ES_API);
-	printf( "Bound API: %d\n", result );
-#endif
-
 	printf( "Creating Context\n" );
 	context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
 //				NULL );
@@ -441,43 +561,6 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	egl_surface = eglCreateWindowSurface(egl_display, config, XWindow,
 					     window_attribute_list);
 #else
-
-#ifdef RASPI_GPU
-	DISPMANX_UPDATE_HANDLE_T dispman_update;
-	VC_RECT_T dst_rect;
-	VC_RECT_T src_rect;
-
-	int adjust = 0;
-	if( w > 2048 )
-	{
-		adjust = (w - 2048) / 2;
-		w = 2048;
-		printf( "Adjusting window to: %d\n", adjust );
-	}
-
-	dst_rect.x = adjust;
-	dst_rect.y = 0;
-	dst_rect.width = w;
-	dst_rect.height = h;
-
-	src_rect.x = 0;
-	src_rect.y = 0;
-	src_rect.width = w << 16;
-	src_rect.height = h << 16;
-
-	rpi_state.w = w;
-	rpi_state.h = h;
-	rpi_state.dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
-	dispman_update = vc_dispmanx_update_start( 0 );
-	rpi_state.dispman_element = vc_dispmanx_element_add ( dispman_update, rpi_state.dispman_display,
-	      0/*layer*/, &dst_rect, 0/*src*/,
-	      &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
-	printf( "DISPMAN ELEMENT: %d(%d, %d)\n", rpi_state.dispman_element, dispman_update, rpi_state.dispman_display );
-	native_window.element = rpi_state.dispman_element;
-	native_window.width = w;
-	native_window.height = h;
-	vc_dispmanx_update_submit_sync( dispman_update );
-#endif
 
 	printf( "Getting Surface %p\n", native_window = gapp->window );
 	android_width = ANativeWindow_getWidth( native_window );
@@ -524,86 +607,19 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	printf("GL Version: \"%s\"\n", glGetString(GL_VERSION));
 	printf("GL Extensions: \"%s\"\n", glGetString(GL_EXTENSIONS));
 
-	default_vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	if (!default_vertex_shader) {
-		fprintf(stderr, "Error: glCreateShader(GL_VERTEX_SHADER) "
-			"failed: 0x%08X\n", glGetError());
-		return -1;
-	}
+	default_program = CNFGEGLInternalLoadShader( default_vertex_shader_source, default_fragment_shader_source );
+	if( default_program < 0 ) ret = default_program;
+	glUseProgram(default_program);
+	default_screenscale_offset = glGetUniformLocation ( default_program , "screenscale" );
 
-	glShaderSource(default_vertex_shader, 1, &default_vertex_shader_source, NULL);
-	glCompileShader(default_vertex_shader);
+	texture_program = CNFGEGLInternalLoadShader( texture_vertex_shader_source, texture_fragment_shader_source );
+	if( texture_program < 0 ) ret = texture_program;
+	glUseProgram( texture_program );
+	texture_screenscale_offset = glGetUniformLocation( texture_program , "screenscale" );
+	texture_sampler_offset = glGetUniformLocation( texture_program , "tex" );
+	glGenTextures( 1, &texture_swap_id );
 
-	glGetShaderiv(default_vertex_shader, GL_COMPILE_STATUS, &ret);
-	if (!ret) {
-		char *log;
-
-		fprintf(stderr, "Error: vertex shader compilation failed!\n");
-		glGetShaderiv(default_vertex_shader, GL_INFO_LOG_LENGTH, &ret);
-
-		if (ret > 1) {
-			log = malloc(ret);
-			glGetShaderInfoLog(default_vertex_shader, ret, NULL, log);
-			fprintf(stderr, "%s", log);
-		}
-		return -1;
-	}
-
-	default_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	if (!default_fragment_shader) {
-		fprintf(stderr, "Error: glCreateShader(GL_FRAGMENT_SHADER) "
-			"failed: 0x%08X\n", glGetError());
-		return -1;
-	}
-
-	glShaderSource(default_fragment_shader, 1, &default_fragment_shader_source, NULL);
-	glCompileShader(default_fragment_shader);
-
-	glGetShaderiv(default_fragment_shader, GL_COMPILE_STATUS, &ret);
-	if (!ret) {
-		char *log;
-
-		fprintf(stderr, "Error: fragment shader compilation failed!\n");
-		glGetShaderiv(default_fragment_shader, GL_INFO_LOG_LENGTH, &ret);
-
-		if (ret > 1) {
-			log = malloc(ret);
-			glGetShaderInfoLog(default_fragment_shader, ret, NULL, log);
-			fprintf(stderr, "%s", log);
-		}
-		return -1;
-	}
-
-	program = glCreateProgram();
-	if (!program) {
-		fprintf(stderr, "Error: failed to create program!\n");
-		return -1;
-	}
-
-	glAttachShader(program, default_vertex_shader);
-	glAttachShader(program, default_fragment_shader);
-
-	glBindAttribLocation(program, 0, "aPosition");
-	glBindAttribLocation(program, 1, "aColor");
-
-	glLinkProgram(program);
-
-	glGetProgramiv(program, GL_LINK_STATUS, &ret);
-	if (!ret) {
-		char *log;
-
-		fprintf(stderr, "Error: program linking failed!\n");
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
-
-		if (ret > 1) {
-			log = malloc(ret);
-			glGetProgramInfoLog(program, ret, NULL, log);
-			fprintf(stderr, "%s", log);
-		}
-		return -1;
-	}
-	glUseProgram(program);
-	default_screenscale_offset = glGetUniformLocation ( program , "screenscale" );
+	glUseProgram(default_program);
 
 	egl_immediate_geo_ptr = &egl_immediate_geo_buffer[0];
 

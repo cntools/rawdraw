@@ -348,7 +348,7 @@ void CNFGGetDimensions( short * x, short * y )
     *y = app_sh;
 }
 
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);

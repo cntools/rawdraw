@@ -240,7 +240,7 @@ void CNFGTackPixel( short x, short y )
 
 void CNFGSwapBuffers()
 {
-	CNFGUpdateScreenWithBitmap( (long unsigned int*)buffer, bufferx, buffery );
+	CNFGUpdateScreenWithBitmap( (uint32_t*)buffer, bufferx, buffery );
 }
 
 

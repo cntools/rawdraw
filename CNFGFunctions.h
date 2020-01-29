@@ -25,7 +25,7 @@ void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores
 
 //To be provided by driver.
 uint32_t CNFGColor( uint32_t RGB );
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h );
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
 void CNFGTackPixel( short x1, short y1 );
 void CNFGTackSegment( short x1, short y1, short x2, short y2 );
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 );

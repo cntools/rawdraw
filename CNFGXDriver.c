@@ -373,7 +373,7 @@ void CNFGHandleInput()
 }
 
 
-void CNFGUpdateScreenWithBitmap( unsigned long * data, int w, int h )
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	static XImage *xi;
 	static int depth;
