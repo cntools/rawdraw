@@ -10,15 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef USE_EGL_SURFACE
-#include <GL/gl.h>
-#else
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
-#endif
-#endif
-
 #include <GLES3/gl3.h>
 #include <GLES3/gl32.h>
 #include <EGL/egl.h>
