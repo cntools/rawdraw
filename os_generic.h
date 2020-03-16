@@ -390,7 +390,7 @@ OSG_PREFIX void OGCancelThread( og_thread_t ot )
 #ifdef ANDROID
 	pthread_kill( *(pthread_t*)ot, SIGTERM );
 #else
-	thread_cancel( *(pthread_t*)ot );
+	pthread_cancel( *(pthread_t*)ot );
 #endif
 	OSG_TERM_THREAD_CODE
 	free( ot );
