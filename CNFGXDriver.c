@@ -99,6 +99,9 @@ void	CNFGClearTransparencyLevel()
 }
 #endif
 
+#ifdef CNFGCONTEXTONLY
+void CNFGInternalResize( short x, short y ) { }
+#endif
 
 #ifdef CNFGOGL
 #include <GL/glx.h>
