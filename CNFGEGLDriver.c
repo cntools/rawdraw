@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2013 Luc Verhaegen <libv@skynet.be>
- * Copyright (c) 2018 <>< Charles Lohr
+ * Copyright (c) 2018-2020 <>< Charles Lohr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,11 +32,19 @@ void AndroidRequestAppPermissions(const char * perm);
 void AndroidDisplayKeyboard(int pShow);
 int AndroidGetUnicodeChar( int keyCode, int metaState );
 int android_width, android_height;
-static const char* kTAG;
-
 //You must implement these.
 void HandleResume();
 void HandleSuspend();
+
+#include <android_native_app_glue.h>
+#include <android/log.h>
+#include <jni.h>
+#include <native_activity.h>
+#define LOGI(...)  ((void)__android_log_print(ANDROID_LOG_INFO, APPNAME, __VA_ARGS__))
+#define ERRLOG( ... ) ((void)__android_log_print( ANDROID_LOG_ERROR, APPNAME, __VA_ARGS__))
+#else
+#define ERRLOG( x... ) fprintf( stderr, x )
+#define LOGI(x...) printf( x )
 #endif
 
 
@@ -54,16 +62,6 @@ void HandleSuspend();
 #include <GLES3/gl3.h>
 #else
 #include <GLES2/gl2.h>
-#endif
-
-#ifdef ANDROID
-#include <android_native_app_glue.h>
-#include <android/log.h>
-#include <jni.h>
-#include <native_activity.h>
-
-#define LOGI(...)  ((void)__android_log_print(ANDROID_LOG_INFO, APPNAME, __VA_ARGS__))
-#define printf( x...) LOGI( x )
 #endif
 
 #define EGL_ZBITS 16
@@ -213,7 +211,7 @@ GLuint CNFGEGLInternalLoadShader( const char * vertex_shader, const char * fragm
 
 	vertex_shader_object = glCreateShader(GL_VERTEX_SHADER);
 	if (!vertex_shader_object) {
-		fprintf(stderr, "Error: glCreateShader(GL_VERTEX_SHADER) "
+		ERRLOG( "Error: glCreateShader(GL_VERTEX_SHADER) "
 			"failed: 0x%08X\n", glGetError());
 		goto fail;
 	}
@@ -225,20 +223,20 @@ GLuint CNFGEGLInternalLoadShader( const char * vertex_shader, const char * fragm
 	if (!ret) {
 		char *log;
 
-		fprintf(stderr, "Error: vertex shader compilation failed!\n");
+		ERRLOG( "Error: vertex shader compilation failed!\n");
 		glGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
 			log = malloc(ret);
 			glGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
-			fprintf(stderr, "%s", log);
+			ERRLOG( "%s", log);
 		}
 		goto fail;
 	}
 
 	fragment_shader_object = glCreateShader(GL_FRAGMENT_SHADER);
 	if (!fragment_shader_object) {
-		fprintf(stderr, "Error: glCreateShader(GL_FRAGMENT_SHADER) "
+		ERRLOG( "Error: glCreateShader(GL_FRAGMENT_SHADER) "
 			"failed: 0x%08X\n", glGetError());
 		goto fail;
 	}
@@ -250,20 +248,20 @@ GLuint CNFGEGLInternalLoadShader( const char * vertex_shader, const char * fragm
 	if (!ret) {
 		char *log;
 
-		fprintf(stderr, "Error: fragment shader compilation failed!\n");
+		ERRLOG( "Error: fragment shader compilation failed!\n");
 		glGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
 			log = malloc(ret);
 			glGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
-			fprintf(stderr, "%s", log);
+			ERRLOG( "%s", log);
 		}
 		goto fail;
 	}
 
 	program = glCreateProgram();
 	if (!program) {
-		fprintf(stderr, "Error: failed to create program!\n");
+		ERRLOG( "Error: failed to create program!\n");
 		goto fail;
 	}
 
@@ -279,13 +277,13 @@ GLuint CNFGEGLInternalLoadShader( const char * vertex_shader, const char * fragm
 	if (!ret) {
 		char *log;
 
-		fprintf(stderr, "Error: program linking failed!\n");
+		ERRLOG( "Error: program linking failed!\n");
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
 			log = malloc(ret);
 			glGetProgramInfoLog(program, ret, NULL, log);
-			fprintf(stderr, "%s", log);
+			ERRLOG( "%s", log);
 		}
 		goto fail;
 	}
@@ -508,7 +506,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #ifdef USE_EGL_X
 	XDisplay = XOpenDisplay(NULL);
 	if (!XDisplay) {
-		fprintf(stderr, "Error: failed to open X display.\n");
+		ERRLOG( "Error: failed to open X display.\n");
 		return -1;
 	}
 
@@ -542,12 +540,12 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 #endif
 	if (egl_display == EGL_NO_DISPLAY) {
-		fprintf(stderr, "Error: No display found!\n");
+		ERRLOG( "Error: No display found!\n");
 		return -1;
 	}
 
 	if (!eglInitialize(egl_display, &egl_major, &egl_minor)) {
-		fprintf(stderr, "Error: eglInitialise failed!\n");
+		ERRLOG( "Error: eglInitialise failed!\n");
 		return -1;
 	}
 
@@ -567,7 +565,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 //				NULL );
 				context_attribute_list);
 	if (context == EGL_NO_CONTEXT) {
-		fprintf(stderr, "Error: eglCreateContext failed: 0x%08X\n",
+		ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
 			eglGetError());
 		return -1;
 	}
@@ -594,7 +592,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	printf( "Got Surface: %p\n", egl_surface );
 
 	if (egl_surface == EGL_NO_SURFACE) {
-		fprintf(stderr, "Error: eglCreateWindowSurface failed: "
+		ERRLOG( "Error: eglCreateWindowSurface failed: "
 			"0x%08X\n", eglGetError());
 		return -1;
 	}
@@ -603,7 +601,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	int width, height;
 	if (!eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &width) ||
 	    !eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &height)) {
-		fprintf(stderr, "Error: eglQuerySurface failed: 0x%08X\n",
+		ERRLOG( "Error: eglQuerySurface failed: 0x%08X\n",
 			eglGetError());
 		return -1;
 	}
@@ -614,7 +612,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #endif
 
 	if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, context)) {
-		fprintf(stderr, "Error: eglMakeCurrent() failed: 0x%08X\n",
+		ERRLOG( "Error: eglMakeCurrent() failed: 0x%08X\n",
 			eglGetError());
 		return -1;
 	}
