@@ -26,9 +26,11 @@
 //you may "extern" them in your code.
 void FlushRender();
 #ifdef ANDROID
+struct android_app * gapp;
+int AndroidHasPermissions(const char* perm_name);
+void AndroidRequestAppPermissions(const char * perm);
 void AndroidDisplayKeyboard(int pShow);
 int AndroidGetUnicodeChar( int keyCode, int metaState );
-struct android_app * gapp;
 int android_width, android_height;
 static const char* kTAG;
 
@@ -59,9 +61,8 @@ void HandleSuspend();
 #include <android/log.h>
 #include <jni.h>
 #include <native_activity.h>
-#define KTAG( x ) #x
-static const char* kTAG = KTAG(APPNAME);
-#define LOGI(...)  ((void)__android_log_print(ANDROID_LOG_INFO, kTAG, __VA_ARGS__))
+
+#define LOGI(...)  ((void)__android_log_print(ANDROID_LOG_INFO, APPNAME, __VA_ARGS__))
 #define printf( x...) LOGI( x )
 #endif
 
@@ -306,6 +307,8 @@ int16_t	*	 egl_immediate_geo_ptr;
 uint32_t 		 egl_immediate_color_buffer[EGL_IMMEDIATE_SIZE*4];
 
 
+int UpdateScreenWithBitmapOffsetX = 0;
+int UpdateScreenWithBitmapOffsetY = 0;
 
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
@@ -323,19 +326,19 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 
 	static const uint8_t egl_uvs[12] = { 0, 0, 255, 0, 0, 255,   255, 0,  255, 255,  0, 255 };
 	int16_t         vertex_data[12];
-	vertex_data[0] = 0;
-	vertex_data[1] = 0;
-	vertex_data[2] = w;
-	vertex_data[3] = 0;
-	vertex_data[4] = 0;
-	vertex_data[5] = h;
+	vertex_data[0] = UpdateScreenWithBitmapOffsetX;
+	vertex_data[1] = UpdateScreenWithBitmapOffsetY;
+	vertex_data[2] = w+UpdateScreenWithBitmapOffsetX;
+	vertex_data[3] = UpdateScreenWithBitmapOffsetY;
+	vertex_data[4] = UpdateScreenWithBitmapOffsetX;
+	vertex_data[5] = h+UpdateScreenWithBitmapOffsetY;
 
-	vertex_data[6] = w;
-	vertex_data[7] = 0;
-	vertex_data[8] = w;
-	vertex_data[9] = h;
-	vertex_data[10] = 0;
-	vertex_data[11] = h;
+	vertex_data[6] = w+UpdateScreenWithBitmapOffsetX;
+	vertex_data[7] = UpdateScreenWithBitmapOffsetY;
+	vertex_data[8] = w+UpdateScreenWithBitmapOffsetX;
+	vertex_data[9] = h+UpdateScreenWithBitmapOffsetY;
+	vertex_data[10] = UpdateScreenWithBitmapOffsetX;
+	vertex_data[11] = h+UpdateScreenWithBitmapOffsetY;
 
 	glVertexAttribPointer(0, 2, GL_SHORT, GL_FALSE, 0, vertex_data);
 	glEnableVertexAttribArray(0);
@@ -649,6 +652,8 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 	CNFGSetup( WindowName, -1, -1 );
 }
 
+int debuga, debugb, debugc;
+
 int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
 #ifdef ANDROID
@@ -659,6 +664,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		static uint64_t downmask;
 
 		int action = AMotionEvent_getAction( event );
+		int oaction = action;
 		int whichsource = action >> 8;
 		action &= AMOTION_EVENT_ACTION_MASK;
 		size_t pointerCount = AMotionEvent_getPointerCount(event);
@@ -672,18 +678,22 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 
 			if( action == AMOTION_EVENT_ACTION_POINTER_DOWN || action == AMOTION_EVENT_ACTION_DOWN )
 			{
-				HandleButton( x, y, whichsource, 1 );
-				downmask    |= 1<<whichsource;
+				int id = index;
+				if( action == AMOTION_EVENT_ACTION_POINTER_DOWN && id != whichsource ) continue;
+				HandleButton( x, y, id, 1 );
+				downmask    |= 1<<id;
 				ANativeActivity_showSoftInput( gapp->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
 			}
-			else if( action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP )
+			else if( action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL )
 			{
-				HandleButton( x, y, whichsource, 0 );
-				downmask    &= ~(1<<whichsource);
+				int id = index;
+				if( action == AMOTION_EVENT_ACTION_POINTER_UP && id != whichsource ) continue;
+				HandleButton( x, y, id, 0 );
+				downmask    &= ~(1<<id);
 			}
 			else if( action == AMOTION_EVENT_ACTION_MOVE )
 			{
-				HandleMotion( x, y, downmask );
+				HandleMotion( x, y, index );
 			}
 		}
 		return 1;
@@ -913,10 +923,9 @@ int AndroidGetUnicodeChar( int keyCode, int metaState )
 
 	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
 	env = (*envptr);
-	jclass activityClass = env->FindClass( envptr, "android/app/NativeActivity");
-
+	//jclass activityClass = env->FindClass( envptr, "android/app/NativeActivity");
 	// Retrieves NativeActivity.
-	jobject lNativeActivity = gapp->activity->clazz;
+	//jobject lNativeActivity = gapp->activity->clazz;
 
 	jclass class_key_event = env->FindClass( envptr, "android/view/KeyEvent");
 	int unicodeKey;
@@ -933,5 +942,101 @@ int AndroidGetUnicodeChar( int keyCode, int metaState )
 	printf("Unicode key is: %d", unicodeKey);
 	return unicodeKey;
 }
+
+
+//Based on: https://stackoverflow.com/questions/41820039/jstringjni-to-stdstringc-with-utf8-characters
+
+jstring android_permission_name(const struct JNINativeInterface ** envptr, const char* perm_name) {
+    // nested class permission in class android.Manifest,
+    // hence android 'slash' Manifest 'dollar' permission
+	const struct JNINativeInterface * env = *envptr;
+    jclass ClassManifestpermission = env->FindClass( envptr, "android/Manifest$permission");
+    jfieldID lid_PERM = env->GetStaticFieldID( envptr, ClassManifestpermission, perm_name, "Ljava/lang/String;" );
+    jstring ls_PERM = (jstring)(env->GetStaticObjectField( envptr, ClassManifestpermission, lid_PERM )); 
+    return ls_PERM;
+}
+
+/**
+ * \brief Tests whether a permission is granted.
+ * \param[in] app a pointer to the android app.
+ * \param[in] perm_name the name of the permission, e.g.,
+ *   "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE".
+ * \retval true if the permission is granted.
+ * \retval false otherwise.
+ * \note Requires Android API level 23 (Marshmallow, May 2015)
+ */
+int AndroidHasPermissions( const char* perm_name)
+{
+	struct android_app* app = gapp;
+	const struct JNINativeInterface * env = 0;
+	const struct JNINativeInterface ** envptr = &env;
+	const struct JNIInvokeInterface ** jniiptr = app->activity->vm;
+	const struct JNIInvokeInterface * jnii = *jniiptr;
+	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
+	env = (*envptr);
+
+	int lThreadAttached = 0;
+
+	int result = 0;
+	jstring ls_PERM = android_permission_name( envptr, perm_name);
+
+	jint PERMISSION_GRANTED = (-1);
+
+	{
+		jclass ClassPackageManager = env->FindClass( envptr, "android/content/pm/PackageManager" );
+		jfieldID lid_PERMISSION_GRANTED = env->GetStaticFieldID( envptr, ClassPackageManager, "PERMISSION_GRANTED", "I" );
+		PERMISSION_GRANTED = env->GetStaticIntField( envptr, ClassPackageManager, lid_PERMISSION_GRANTED );
+	}
+	{
+		jobject activity = app->activity->clazz;
+		jclass ClassContext = env->FindClass( envptr, "android/content/Context" );
+		jmethodID MethodcheckSelfPermission = env->GetMethodID( envptr, ClassContext, "checkSelfPermission", "(Ljava/lang/String;)I" );
+		jint int_result = env->CallIntMethod( envptr, activity, MethodcheckSelfPermission, ls_PERM );
+		result = (int_result == PERMISSION_GRANTED);
+	}
+
+	jnii->DetachCurrentThread( jniiptr );
+
+	return result;
+}
+
+/**
+ * \brief Query file permissions.
+ * \details This opens the system dialog that lets the user
+ *  grant (or deny) the permission.
+ * \param[in] app a pointer to the android app.
+ * \note Requires Android API level 23 (Marshmallow, May 2015)
+ */
+void AndroidRequestAppPermissions(const char * perm)
+{
+	struct android_app* app = gapp;
+	const struct JNINativeInterface * env = 0;
+	const struct JNINativeInterface ** envptr = &env;
+	const struct JNIInvokeInterface ** jniiptr = app->activity->vm;
+	const struct JNIInvokeInterface * jnii = *jniiptr;
+	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
+	env = (*envptr);
+	jobject activity = app->activity->clazz;
+
+	jobjectArray perm_array = env->NewObjectArray( envptr, 1, env->FindClass( envptr, "java/lang/String"), env->NewStringUTF( envptr, "" ) );
+	env->SetObjectArrayElement( envptr, perm_array, 0, android_permission_name( envptr, perm ) );
+	jclass ClassActivity = env->FindClass( envptr, "android/app/Activity" );
+
+	jmethodID MethodrequestPermissions = env->GetMethodID( envptr, ClassActivity, "requestPermissions", "([Ljava/lang/String;I)V" );
+
+	// Last arg (0) is just for the callback (that I do not use)
+	env->CallVoidMethod( envptr, activity, MethodrequestPermissions, perm_array, 0 );
+	jnii->DetachCurrentThread( jniiptr );
+}
+
+/* Example:
+	int hasperm = android_has_permission( "RECORD_AUDIO" );
+	if( !hasperm )
+	{
+		android_request_app_permissions( "RECORD_AUDIO" );
+	}
+*/
+
+
 #endif
 
