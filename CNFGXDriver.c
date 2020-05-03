@@ -366,7 +366,17 @@ void CNFGHandleInput()
 			CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
 			break;
 		case KeyRelease:
+		{
 			bKeyDirection = 0;
+			//Tricky - handle key repeats cleanly.
+			if( XPending( CNFGDisplay ) )
+			{
+				XEvent nev;
+				XPeekEvent( CNFGDisplay, &nev );
+				if (nev.type == KeyPress && nev.xkey.time == report.xkey.time && nev.xkey.keycode == report.xkey.keycode )
+					bKeyDirection = 2;
+			}
+		}
 		case KeyPress:
 			g_x_global_key_state = report.xkey.state;
 			g_x_global_shift_key = XLookupKeysym(&report.xkey, 1);
