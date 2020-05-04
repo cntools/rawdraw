@@ -135,7 +135,7 @@ void tdRotateAA( float * f, float angle, float ix, float iy, float iz )
 void tdRotateQuat( float * f, float qw, float qx, float qy, float qz )
 {
 	float ftmp[16];
-	float qw2 = qw*qw;
+	//float qw2 = qw*qw;
 	float qx2 = qx*qx;
 	float qy2 = qy*qy;
 	float qz2 = qz*qz;
@@ -207,7 +207,7 @@ void tdRotateEA( float * f, float x, float y, float z )
 void tdMultiply( float * fin1, float * fin2, float * fout )
 {
 	float fotmp[16];
-	int i, j, k;
+	int i, k;
 #ifdef CNFG3D_USE_OGL_MAJOR
 	fotmp[m00] = fin1[m00] * fin2[m00] + fin1[m01] * fin2[m10] + fin1[m02] * fin2[m20] + fin1[m03] * fin2[m30];
 	fotmp[m01] = fin1[m00] * fin2[m01] + fin1[m01] * fin2[m11] + fin1[m02] * fin2[m21] + fin1[m03] * fin2[m31];
@@ -286,7 +286,6 @@ void tdPerspective( float fovy, float aspect, float zNear, float zFar, float * o
 void tdLookAt( float * m, float * eye, float * at, float * up )
 {
 	float out[16];
-	float otmp[16];
 	float F[3] = { at[0] - eye[0], at[1] - eye[1], at[2] - eye[2] };
 	float fdiv = 1./tdSQRT( F[0]*F[0] + F[1]*F[1] + F[2]*F[2] );
 	float f[3] = { F[0]*fdiv, F[1]*fdiv, F[2]*fdiv };

@@ -29,6 +29,7 @@ void FlushRender();
 #include "CNFGAndroid.h"
 struct android_app * gapp;
 static int OGLESStarted;
+int android_width, android_height;
 #endif
 
 
@@ -671,7 +672,6 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		static uint64_t downmask;
 
 		int action = AMotionEvent_getAction( event );
-		int oaction = action;
 		int whichsource = action >> 8;
 		action &= AMOTION_EVENT_ACTION_MASK;
 		size_t pointerCount = AMotionEvent_getPointerCount(event);
@@ -887,7 +887,7 @@ void AndroidDisplayKeyboard(int pShow)
 	if (pShow) {
 		// Runs lInputMethodManager.showSoftInput(...).
 		jmethodID MethodShowSoftInput = env->GetMethodID( envptr, ClassInputMethodManager, "showSoftInput", "(Landroid/view/View;I)Z");
-		jboolean lResult = env->CallBooleanMethod( envptr, lInputMethodManager, MethodShowSoftInput, lDecorView, lFlags);
+		/*jboolean lResult = */env->CallBooleanMethod( envptr, lInputMethodManager, MethodShowSoftInput, lDecorView, lFlags);
 	} else {
 		// Runs lWindow.getViewToken()
 		jclass ClassView = env->FindClass( envptr, "android/view/View");
@@ -896,7 +896,7 @@ void AndroidDisplayKeyboard(int pShow)
 
 		// lInputMethodManager.hideSoftInput(...).
 		jmethodID MethodHideSoftInput = env->GetMethodID( envptr, ClassInputMethodManager, "hideSoftInputFromWindow", "(Landroid/os/IBinder;I)Z");
-		jboolean lRes = env->CallBooleanMethod( envptr, lInputMethodManager, MethodHideSoftInput, lBinder, lFlags);
+		/*jboolean lRes = */env->CallBooleanMethod( envptr, lInputMethodManager, MethodHideSoftInput, lBinder, lFlags);
 	}
 
 	// Finished with the JVM.
@@ -966,8 +966,6 @@ int AndroidHasPermissions( const char* perm_name)
 	const struct JNIInvokeInterface * jnii = *jniiptr;
 	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
 	env = (*envptr);
-
-	int lThreadAttached = 0;
 
 	int result = 0;
 	jstring ls_PERM = android_permission_name( envptr, perm_name);
