@@ -62,6 +62,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	RECT r;
 
+	SelectObject( lsHDC, lsBitmap );
 	SetBitmapBits(lsBitmap,w*h*4,data);
 	BitBlt(lsWindowHDC, 0, 0, w, h, lsHDC, 0, 0, SRCCOPY);
 	UpdateWindow( lsHWND );
