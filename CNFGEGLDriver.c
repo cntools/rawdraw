@@ -26,17 +26,9 @@
 //you may "extern" them in your code.
 void FlushRender();
 #ifdef ANDROID
+#include "CNFGAndroid.h"
 struct android_app * gapp;
-int AndroidHasPermissions(const char* perm_name);
-void AndroidRequestAppPermissions(const char * perm);
-void AndroidDisplayKeyboard(int pShow);
-int AndroidGetUnicodeChar( int keyCode, int metaState );
-int android_width, android_height;
-static const char* kTAG;
-
-//You must implement these.
-void HandleResume();
-void HandleSuspend();
+static int OGLESStarted;
 #endif
 
 
@@ -505,6 +497,18 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	EGLint num_config;
 	EGLContext context;
 
+	//This MUST be called before doing any initialization.
+	int events;
+	while( !OGLESStarted )
+	{
+		struct android_poll_source* source;
+		if (ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0)
+		{
+			if (source != NULL) source->process(gapp, source);
+		}
+	}
+
+
 #ifdef USE_EGL_X
 	XDisplay = XOpenDisplay(NULL);
 	if (!XDisplay) {
@@ -649,6 +653,9 @@ int CNFGSetup( const char * WindowName, int w, int h )
 
 void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 {
+	//Removes decoration, must be called before setup.
+	AndroidMakeFullscreen();
+
 	CNFGSetup( WindowName, -1, -1 );
 }
 
@@ -749,7 +756,6 @@ void CNFGHandleInput()
 
 #ifdef ANDROID
 
-static int OGLESStarted;
 
 void handle_cmd(struct android_app* app, int32_t cmd)
 {
@@ -779,7 +785,6 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 
 void android_main(struct android_app* app)
 {
-	int events;
 	int main( int argc, char ** argv );
 	char * argv[] = { "main", 0 };
 
@@ -788,25 +793,12 @@ void android_main(struct android_app* app)
 	app->onInputEvent = handle_input;
 	printf( "Starting" );
 
-#ifdef ANDROID_FULLSCREEN
-	void MakeAndroidFullscreen();
-	MakeAndroidFullscreen();
-#endif
-
-	while( !OGLESStarted )
-	{
-		struct android_poll_source* source;
-		if (ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0)
-		{
-			if (source != NULL) source->process(gapp, source);
-		}
-	}
 	printf( "Starting Main\n" );
 	main( 1, argv );
 	printf( "Main Complete\n" );
 }
 
-void MakeAndroidFullscreen()
+void AndroidMakeFullscreen()
 {
 	//Partially based on https://stackoverflow.com/questions/47507714/how-do-i-enable-full-screen-immersive-mode-for-a-native-activity-ndk-app
 	const struct JNINativeInterface * env = 0;
