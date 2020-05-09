@@ -6,7 +6,7 @@
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
-#elif defined( __android__ )
+#elif defined( __android__ ) || defined( ANDROID )
 #include "CNFGEGLDriver.c"
 #else
 #include "CNFGXDriver.c"
