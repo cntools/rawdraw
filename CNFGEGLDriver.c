@@ -22,6 +22,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+
+#if defined( __android__ ) && !defined( ANDROID )
+#define ANDROID
+#endif
+
 //Note: This interface provides the following two things privately.
 //you may "extern" them in your code.
 void FlushRender();

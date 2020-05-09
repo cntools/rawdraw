@@ -90,6 +90,7 @@ CNFG Configuration options include:
 * `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides rasterized graphics functions.
 * `RASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
 * `CNFGOGL` = Make underlying functions use OpenGL if possible.
+* `CNFGGLES` = Make underlying functions use OpenGL:ES if possible. (useful for Android)
 
 Platform-Specific
 * `HAS_XSHAPE` = Include extra functions for handling on-screen display functionality in X11.
