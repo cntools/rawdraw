@@ -3,9 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "CNFGFunctions.h"
 #include "os_generic.h"
-#include "CNFG3D.h"
+
+#define CNFG3D
+#define CNFG_IMPLEMENTATION
+#include "CNFG.h"
+
 
 unsigned frames = 0;
 unsigned long iframeno = 0;

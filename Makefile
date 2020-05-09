@@ -28,6 +28,8 @@ rawdraw_ogl : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
 osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
 
+vulkantest : rawdraw.c CNFGFunctions.c CNFGVulkanDriver.c CNFG3D.c
+	gcc -o $@ $^ -lX11 -lpthread -lm -O3 -lvulkan
 
 ontop : ontop.c CNFGFunctions.c CNFGXDriver.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL

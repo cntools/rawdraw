@@ -2,32 +2,8 @@
 	Copyright (c) 2011, 2017, 2019 <>< Charles Lohr
 	Under the MIT/x11 or NewBSD License you choose.
 
-	Example program:
-
-	#include <CNFGFunctions.h>
-	void HandleKey( int keycode, int bDown ) { }
-	void HandleButton( int x, int y, int button, int bDown ) { }
-	void HandleMotion( int x, int y, int mask ) { }
-	void HandleDestroy() { }
-	int main()
-	{
-		CNFGSetup( "Example App", 1024, 768 );
-		while(1)
-		{
-			short w, h;
-			CNFGClearFrame();
-			CNFGHandleInput();
-			CNFGGetDimensions( &w, &h );
-			CNFGColor( 0xffffff );
-			CNFGPenX = 1; CNFGPenY = 1;
-			CNFGDrawText( "Hello, World", 2 );
-			CNFGSwapBuffers();
-		}
-	}
-
-	Windows compile:
-		C:\tcc\tcc main.c rawdraw/CNFGFunctions.c rawdraw/CNFGWinDriver.c -Irawdraw -lgdi32 -luser32
-
+	You probably should not directly #include this file, but
+	Instead, #include "cnfg.h"
 */
 
 #ifndef _DRAWFUCNTIONS_H
