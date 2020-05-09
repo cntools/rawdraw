@@ -1,6 +1,5 @@
 # CN's Fundamental Graphics Library
 
-
 An OS-Agnostic (including No OS AT ALL!) drawing system.  It includes lines,
 boxes, linetext, points, bitmaps.  
 
@@ -22,7 +21,12 @@ more features implemented than others, and a major goal is not to abstract
 very much, but almost to provide an exmaple how to use graphics on a specific
 platform.
 
+
 ## Usage in project
+
+You probably want to include CNFG as a submodule.
+
+`git submodule add https://github.com/cntools/rawdraw`
 
 To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 ```
