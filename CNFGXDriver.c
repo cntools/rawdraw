@@ -6,7 +6,10 @@
 //#define HAS_XSHAPE
 //#define FULL_SCREEN_STEAL_FOCUS
 
-#include "CNFGFunctions.h"
+#ifndef _CNFGXDRIVER_C
+#define _CNFGXDRIVER_C
+
+#include "CNFG.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -469,7 +472,7 @@ void CNFGSwapBuffers()
 #else
 #define AGLF(x) static BACKEND_##x
 #if defined( RASTERIZER ) 
-#include "CNFGRasterizer.h"
+#include "CNFGRasterizer.c"
 #endif
 #endif
 
@@ -658,3 +661,6 @@ void CNFGSetLineWidth( short width )
 }
 
 #endif
+
+#endif // _CNFGXDRIVER_C
+

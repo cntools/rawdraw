@@ -1,8 +1,10 @@
 //Copyright (c) 2011-2019 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
 //Portion from: http://en.wikibooks.org/wiki/Windows_Programming/Window_Creation
 
+#ifndef _CNFGWINDRIVER_C
+#define _CNFGWINDRIVER_C
 
-#include "CNFGFunctions.h"
+#include "CNFG.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <malloc.h> //for alloca
@@ -13,7 +15,7 @@ static HDC lsWindowHDC;
 static HDC lsHDC;
 
 #ifdef RASTERIZER
-#include "CNFGRasterizer.h"
+#include "CNFGRasterizer.c"
 
 void InternalHandleResize()
 {
@@ -356,4 +358,6 @@ void CNFGInternalResize( short bufferx, short  buffery ) { }
 #endif
 
 #endif
+
+#endif // _CNFGWINDRIVER_C
 

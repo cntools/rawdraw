@@ -11,8 +11,8 @@
 //  but if you have Cocoa, you should have OpenGL, so it's okay
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl3.h>
-#include "CNFGFunctions.h"
-#include "CNFGRasterizer.h"
+#include "CNFG.h"
+#include "CNFGRasterizer.c"
 
 
 

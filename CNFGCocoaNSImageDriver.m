@@ -5,8 +5,8 @@
 
 #define RASTERIZER
 
-#include "CNFGFunctions.h"
-#include "CNFGRasterizer.h"
+#include "CNFG.h"
+#include "CNFGRasterizer.c"
 
 id app_menubar, app_appMenuItem, app_appMenu, app_appName, app_quitMenuItem, app_quitTitle, app_quitMenuItem, app_window;
 id app_imageView;

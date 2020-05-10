@@ -21,8 +21,11 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "CNFGFunctions.h"
-#include <stdio.h>
+#ifndef _CNFG_C
+#define _CNFG_C
+
+#include "CNFG.h"
+
 
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
@@ -370,3 +373,5 @@ void CNFGSetLineWidth( short width )
 #endif
 
 #endif
+
+#endif //_CNFG_C

@@ -29,7 +29,7 @@
 
 //Note: This interface provides the following two things privately.
 //you may "extern" them in your code.
-void FlushRender();
+
 #ifdef ANDROID
 #include "CNFGAndroid.h"
 struct android_app * gapp;
@@ -349,7 +349,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 
 
 
-void FlushRender()
+void CNFGFlushRender()
 {
 	if( egl_immediate_size && egl_immediate_draw_mode >= 0 )
 	{
@@ -371,7 +371,7 @@ void FlushRender()
 void CNFGTackPixel( short x1, short y1 )
 {
 	if( egl_immediate_draw_mode != GL_POINTS 
-		|| (egl_immediate_size+2) >= EGL_IMMEDIATE_SIZE )	FlushRender();
+		|| (egl_immediate_size+2) >= EGL_IMMEDIATE_SIZE )	CNFGFlushRender();
 	egl_immediate_geo_ptr[0] = x1;
 	egl_immediate_geo_ptr[1] = y1;
 	egl_immediate_geo_ptr += 2;
@@ -384,7 +384,7 @@ void CNFGTackPixel( short x1, short y1 )
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
 	if( egl_immediate_draw_mode != GL_LINES 
-		|| egl_immediate_size >= EGL_IMMEDIATE_SIZE )	FlushRender();
+		|| egl_immediate_size >= EGL_IMMEDIATE_SIZE )	CNFGFlushRender();
 
 	int ofsxy1 = 0;
 	if( x1 == x2 && y1 == y2 )
@@ -414,7 +414,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
 	if( egl_immediate_draw_mode != GL_TRIANGLES
-		|| (egl_immediate_size+12) >= EGL_IMMEDIATE_SIZE )	FlushRender();
+		|| (egl_immediate_size+12) >= EGL_IMMEDIATE_SIZE )	CNFGFlushRender();
 	/*
 			*-*
 			|/|
@@ -447,7 +447,7 @@ void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 void CNFGTackPoly( RDPoint * points, int verts )
 {
 	if( egl_immediate_draw_mode != GL_TRIANGLES
-		|| egl_immediate_size+verts*2 >= EGL_IMMEDIATE_SIZE )	FlushRender();
+		|| egl_immediate_size+verts*2 >= EGL_IMMEDIATE_SIZE )	CNFGFlushRender();
 
 	int i;
 	for( i = 0; i < verts; i++ )
@@ -478,7 +478,7 @@ void CNFGSetVSync( int vson )
 
 void CNFGSwapBuffers()
 {
-	FlushRender();
+	CNFGFlushRender();
 	eglSwapBuffers(egl_display, egl_surface);
 #ifdef ANDROID
 	android_width = ANativeWindow_getWidth( native_window );

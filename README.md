@@ -94,6 +94,7 @@ CNFG Configuration options include:
 
 Platform-Specific
 * `HAS_XSHAPE` = Include extra functions for handling on-screen display functionality in X11.
+* `HAS_XINERAMA` = Use X11's Xinerama to handle full-screen more cleanly.
 
 Flags you will probably never want to use:
 * `EGL_LEAN_AND_MEAN` = Bare bones EGL Driver

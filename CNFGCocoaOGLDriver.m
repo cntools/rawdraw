@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl3.h>
-#include "CNFGFunctions.h"
-#include "CNFGRasterizer.h"
+#include "CNFG.h"
+#include "CNFGRasterizer.c"
 
 int app_sw=-999, app_sh=-999;
 BOOL inFullscreen = false;

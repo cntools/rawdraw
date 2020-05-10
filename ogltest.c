@@ -1,7 +1,8 @@
-#include "CNFGFunctions.h"
 #include <GL/gl.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "CNFG.h"
 
 void HandleKey( int keycode, int bDown )
 {

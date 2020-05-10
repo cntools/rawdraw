@@ -13,43 +13,43 @@ all : rawdraw ogltest
 
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
-rawdraw.exe : rawdraw.c CNFGFunctions.c CNFGWinDriver.c CNFG3D.c
+rawdraw.exe : rawdraw.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
-rawdraw_egl : rawdraw.c CNFGFunctions.c CNFGEGLDriver.c CNFG3D.c
+rawdraw_egl : rawdraw.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
-rawdraw : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
+rawdraw : rawdraw.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER
 
-rawdraw_ogl : rawdraw.c CNFGFunctions.c CNFGXDriver.c CNFG3D.c
+rawdraw_ogl : rawdraw.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL
 
-osdtest : osdtest.c CNFGFunctions.c CNFGXDriver.c
+osdtest : osdtest.c CNFG.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
 
-vulkantest : rawdraw.c CNFGFunctions.c CNFGVulkanDriver.c CNFG3D.c
+vulkantest : rawdraw.c CNFG.c
 	gcc -o $@ $^ -lX11 -lpthread -lm -O3 -lvulkan
 
-ontop : ontop.c CNFGFunctions.c CNFGXDriver.c
+ontop : ontop.c CNFG.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
 
-rawdraw_mac : rawdraw.c CNFGFunctions.c CNFGCocoaDriver.m CNFG3D.c
+rawdraw_mac : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
 
-rawdraw_mac_soft : rawdraw.c CNFGFunctions.c CNFGCocoaNSImageDriver.m CNFG3D.c
+rawdraw_mac_soft : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
 
-rawdraw_mac_cg : rawdraw.c CNFGFunctions.c CNFGCocoaCGDriver.m CNFG3D.c
+rawdraw_mac_cg : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
 
-rawdraw_mac_ogl : rawdraw.c CNFGFunctions.c CNFGCocoaOGLDriver.m CNFG3D.c
+rawdraw_mac_ogl : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
 
-ogltest : ogltest.c CNFGFunctions.c CNFGXDriver.c
+ogltest : ogltest.c CNFG.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
 
-ogltest.exe : ogltest.c CNFGFunctions.c CNFGWinDriver.c
+ogltest.exe : ogltest.c CNFG.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
 
 clean : 

@@ -3,7 +3,9 @@
 //This is a series of tools useful for software rendering.
 //Use of this file with OpenGL is untested.
 
-#include "CNFG3D.h"
+#ifdef CNFG3D
+
+#include "CNFG.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -518,3 +520,4 @@ float tdPerlin2D( float x, float y )
 	return ret;
 }
 
+#endif
