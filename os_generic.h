@@ -359,6 +359,7 @@ OSG_PREFIX double OGGetFileTime( const char * file )
 OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
 {
 	pthread_t * ret = malloc( sizeof( pthread_t ) );
+	if( !ret ) return 0;
 	int r = pthread_create( ret, 0, routine, parameter );
 	if( r )
 	{
@@ -400,6 +401,7 @@ OSG_PREFIX og_mutex_t OGCreateMutex()
 {
 	pthread_mutexattr_t   mta;
 	og_mutex_t r = malloc( sizeof( pthread_mutex_t ) );
+	if( !r ) return 0;
 
 	pthread_mutexattr_init(&mta);
 	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
@@ -444,6 +446,7 @@ OSG_PREFIX void OGDeleteMutex( og_mutex_t om )
 OSG_PREFIX og_sema_t OGCreateSema()
 {
 	sem_t * sem = malloc( sizeof( sem_t ) );
+	if( !sem ) return 0;
 	sem_init( sem, 0, 0 );
 	return (og_sema_t)sem;
 }
