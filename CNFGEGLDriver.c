@@ -716,10 +716,18 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 	}
 	else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY)
 	{
+		int code = AKeyEvent_getKeyCode(event);
 #ifdef ANDROID_USE_SCANCODES
-		HandleKey( AKeyEvent_getKeyCode(event), AKeyEvent_getAction(event) );
+		HandleKey( code, AKeyEvent_getAction(event) );
 #else
-		HandleKey( AndroidGetUnicodeChar( AKeyEvent_getKeyCode(event), AMotionEvent_getMetaState( event ) ), AKeyEvent_getAction(event) );
+		int unicode = AndroidGetUnicodeChar( code, AMotionEvent_getMetaState( event ) );
+		if( unicode )
+			HandleKey( unicode, AKeyEvent_getAction(event) );
+		else
+		{
+			HandleKey( code, !AKeyEvent_getAction(event) );
+			return 0; //If a system key, don't override, unless it's back.
+		}
 #endif
 
 		return 1;
@@ -770,6 +778,10 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 {
 	switch (cmd)
 	{
+	case APP_CMD_DESTROY:
+		ANativeActivity_finish( gapp->activity );
+		exit(0);
+		break;
 	case APP_CMD_INIT_WINDOW:
 		if( !OGLESStarted )
 		{
