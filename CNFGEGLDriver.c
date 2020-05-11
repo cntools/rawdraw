@@ -50,7 +50,7 @@ int android_width, android_height;
 
 
 
-#include "CNFGFunctions.h"
+#include "CNFG.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
