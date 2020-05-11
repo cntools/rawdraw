@@ -726,7 +726,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		else
 		{
 			HandleKey( code, !AKeyEvent_getAction(event) );
-			return 0; //If a system key, don't override, unless it's back.
+			return 0; //don't override functionality.
 		}
 #endif
 
@@ -795,9 +795,7 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 		}
 		break;
 	case APP_CMD_TERM_WINDOW:
-		HandleSuspend();
-		//HandleDestroy();
-		//exit( 0 );
+		//Not sure why - callbacks here seem to break stuff.
 		break;
 	default:
 		printf( "event not handled: %d", cmd);
