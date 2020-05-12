@@ -573,24 +573,38 @@ int CNFGSetup( const char * WindowName, int w, int h )
 			&num_config);
 	printf( "Config: %d\n", num_config );
 
-	printf( "Creating Context\n" );
-	context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
-//				NULL );
-				context_attribute_list);
-	if (context == EGL_NO_CONTEXT) {
-		ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
-			eglGetError());
-		return -1;
+	if( !context )
+	{
+		printf( "Creating Context\n" );
+		context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
+	//				NULL );
+					context_attribute_list);
+		if (context == EGL_NO_CONTEXT) {
+			ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
+				eglGetError());
+			return -1;
+		}
+		printf( "Context Created %p\n", context );
 	}
-	printf( "Context Created %p\n", context );
-
 
 #ifdef USE_EGL_X
 	egl_surface = eglCreateWindowSurface(egl_display, config, XWindow,
 					     window_attribute_list);
 #else
 
+	if( native_window && !gapp->window )
+	{
+		printf( "WARNING: App restarted without a window.  Cannot progress.\n" );
+		exit( 0 );
+	}
+
 	printf( "Getting Surface %p\n", native_window = gapp->window );
+
+	if( !native_window )
+	{
+		printf( "FAULT: Cannot get window\n" );
+		return -5;
+	}
 	android_width = ANativeWindow_getWidth( native_window );
 	android_height = ANativeWindow_getHeight( native_window );
 	printf( "Width/Height: %dx%d\n", android_width, android_height );
@@ -723,7 +737,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		else
 		{
 			HandleKey( code, !AKeyEvent_getAction(event) );
-			return 0; //don't override functionality.
+			return (code == 4)?1:0; //don't override functionality.
 		}
 #endif
 
@@ -776,10 +790,12 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 	switch (cmd)
 	{
 	case APP_CMD_DESTROY:
+		//This gets called initially after back.
+		HandleDestroy();
 		ANativeActivity_finish( gapp->activity );
-		exit(0);
 		break;
 	case APP_CMD_INIT_WINDOW:
+		//When returning from a back button suspension, this isn't called.
 		if( !OGLESStarted )
 		{
 			OGLESStarted = 1;
@@ -791,9 +807,11 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 			HandleResume();
 		}
 		break;
-	case APP_CMD_TERM_WINDOW:
+	//case APP_CMD_TERM_WINDOW:
+		//This gets called initially when you click "back"
+		//This also gets called when you are brought into standby.
 		//Not sure why - callbacks here seem to break stuff.
-		break;
+	//	break;
 	default:
 		printf( "event not handled: %d", cmd);
 	}
@@ -1043,6 +1061,23 @@ void AndroidRequestAppPermissions(const char * perm)
 	}
 */
 
+void AndroidSendToBack( int param )
+{
+	struct android_app* app = gapp;
+	const struct JNINativeInterface * env = 0;
+	const struct JNINativeInterface ** envptr = &env;
+	const struct JNIInvokeInterface ** jniiptr = app->activity->vm;
+	const struct JNIInvokeInterface * jnii = *jniiptr;
+	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
+	env = (*envptr);
+	jobject activity = app->activity->clazz;
+
+	//_glfmCallJavaMethodWithArgs(jni, gapp->activity->clazz, "moveTaskToBack", "(Z)Z", Boolean, false);
+	jclass ClassActivity = env->FindClass( envptr, "android/app/Activity" );
+	jmethodID MethodmoveTaskToBack = env->GetMethodID( envptr, ClassActivity, "moveTaskToBack", "(Z)Z" );
+	env->CallBooleanMethod( envptr, activity, MethodmoveTaskToBack, param );
+	jnii->DetachCurrentThread( jniiptr );
+}
 
 #endif
 
