@@ -37,14 +37,11 @@ static int OGLESStarted;
 int android_width, android_height;
 
 #include <android_native_app_glue.h>
-#include <android/log.h>
 #include <jni.h>
 #include <native_activity.h>
-#define LOGI(...)  ((void)__android_log_print(ANDROID_LOG_INFO, APPNAME, __VA_ARGS__))
-#define ERRLOG( ... ) ((void)__android_log_print( ANDROID_LOG_ERROR, APPNAME, __VA_ARGS__))
+#define ERRLOG(...) printf( __VA_ARGS__ );
 #else
-#define ERRLOG( x... ) fprintf( stderr, x )
-#define LOGI(x...) printf( x )
+#define ERRLOG(...) fprintf( stderr, __VA_ARGS__ );
 #endif
 
 
@@ -950,7 +947,7 @@ int AndroidGetUnicodeChar( int keyCode, int metaState )
 	// Finished with the JVM.
 	jnii->DetachCurrentThread( jniiptr );
 
-	printf("Unicode key is: %d", unicodeKey);
+	//printf("Unicode key is: %d", unicodeKey);
 	return unicodeKey;
 }
 
