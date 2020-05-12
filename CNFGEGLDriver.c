@@ -573,19 +573,16 @@ int CNFGSetup( const char * WindowName, int w, int h )
 			&num_config);
 	printf( "Config: %d\n", num_config );
 
-	if( !context )
-	{
-		printf( "Creating Context\n" );
-		context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
-	//				NULL );
-					context_attribute_list);
-		if (context == EGL_NO_CONTEXT) {
-			ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
-				eglGetError());
-			return -1;
-		}
-		printf( "Context Created %p\n", context );
+	printf( "Creating Context\n" );
+	context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
+//				NULL );
+				context_attribute_list);
+	if (context == EGL_NO_CONTEXT) {
+		ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
+			eglGetError());
+		return -1;
 	}
+	printf( "Context Created %p\n", context );
 
 #ifdef USE_EGL_X
 	egl_surface = eglCreateWindowSurface(egl_display, config, XWindow,
