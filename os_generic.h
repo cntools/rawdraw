@@ -48,7 +48,7 @@
 
    The default behavior is to do static inline.
 
-   Copyright (c) 2011-2012,2013,2016,2018,2019 <>< Charles Lohr
+   Copyright (c) 2011-2012,2013,2016,2018,2019,2020 <>< Charles Lohr
 
    This file may be licensed under the MIT/x11 license, NewBSD or CC0 licenses
 
@@ -313,8 +313,9 @@ OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
 
 #else
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-
+#endif
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -358,7 +359,7 @@ OSG_PREFIX double OGGetFileTime( const char * file )
 
 OSG_PREFIX og_thread_t OGCreateThread( void * (routine)( void * ), void * parameter )
 {
-	pthread_t * ret = malloc( sizeof( pthread_t ) );
+	pthread_t * ret = (pthread_t *)malloc( sizeof( pthread_t ) );
 	if( !ret ) return 0;
 	int r = pthread_create( ret, 0, routine, parameter );
 	if( r )
@@ -445,7 +446,7 @@ OSG_PREFIX void OGDeleteMutex( og_mutex_t om )
 
 OSG_PREFIX og_sema_t OGCreateSema()
 {
-	sem_t * sem = malloc( sizeof( sem_t ) );
+	sem_t * sem = (sem_t *)malloc( sizeof( sem_t ) );
 	if( !sem ) return 0;
 	sem_init( sem, 0, 0 );
 	return (og_sema_t)sem;
@@ -454,24 +455,24 @@ OSG_PREFIX og_sema_t OGCreateSema()
 OSG_PREFIX int OGGetSema( og_sema_t os )
 {
 	int valp;
-	sem_getvalue( os, &valp );
+	sem_getvalue( (sem_t*)os, &valp );
 	return valp;
 }
 
 
 OSG_PREFIX void OGLockSema( og_sema_t os )
 {
-	sem_wait( os );
+	sem_wait( (sem_t*)os );
 }
 
 OSG_PREFIX void OGUnlockSema( og_sema_t os )
 {
-	sem_post( os );
+	sem_post( (sem_t*)os );
 }
 
 OSG_PREFIX void OGDeleteSema( og_sema_t os )
 {
-	sem_destroy( os );
+	sem_destroy( (sem_t*)os );
 	free(os);
 }
 
@@ -499,7 +500,11 @@ OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
 
 #endif
 
+#ifdef __cplusplus
+};
 #endif
 
-#endif
+#endif //OSG_NO_IMPLEMENTATION
+
+#endif //_OS_GENERIC_H
 
