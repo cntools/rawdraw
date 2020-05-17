@@ -12,7 +12,7 @@ void AndroidDisplayKeyboard(int pShow);
 int AndroidGetUnicodeChar( int keyCode, int metaState );
 void AndroidSendToBack( int param );
 
-
+extern int android_sdk_version; //Derived at start from property ro.build.version.sdk
 extern int android_width, android_height;
 extern int UpdateScreenWithBitmapOffsetX;
 extern int UpdateScreenWithBitmapOffsetY;

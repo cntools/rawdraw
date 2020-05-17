@@ -35,6 +35,7 @@
 struct android_app * gapp;
 static int OGLESStarted;
 int android_width, android_height;
+int android_sdk_version;
 
 #include <android_native_app_glue.h>
 #include <jni.h>
@@ -172,7 +173,12 @@ static EGLint const config_attribute_list[] = {
 	EGL_DEPTH_SIZE, EGL_ZBITS,
 	//EGL_SAMPLES, 1,
 #ifdef ANDROID
+#if ANDROIDVERSION >= 28
 	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
+#else
+	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+#endif
+
 #else
 	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 	EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PIXMAP_BIT,
@@ -819,10 +825,19 @@ void android_main(struct android_app* app)
 	int main( int argc, char ** argv );
 	char * argv[] = { "main", 0 };
 
+	{
+		char sdk_ver_str[92];
+		int len = __system_property_get("ro.build.version.sdk", sdk_ver_str);
+		if( len <= 0 ) 
+			android_sdk_version = 0;
+		else
+			android_sdk_version = atoi(sdk_ver_str);
+	}
+
 	gapp = app;
 	app->onAppCmd = handle_cmd;
 	app->onInputEvent = handle_input;
-	printf( "Starting" );
+	printf( "Starting with Android SDK Version: %d", android_sdk_version );
 
 	printf( "Starting Main\n" );
 	main( 1, argv );
@@ -995,6 +1010,13 @@ int AndroidHasPermissions( const char* perm_name)
 	const struct JNINativeInterface ** envptr = &env;
 	const struct JNIInvokeInterface ** jniiptr = app->activity->vm;
 	const struct JNIInvokeInterface * jnii = *jniiptr;
+
+	if( android_sdk_version < 23 )
+	{
+		printf( "Android SDK version %d does not support AndroidHasPermissions\n", android_sdk_version );
+		return 1;
+	}
+
 	jnii->AttachCurrentThread( jniiptr, &envptr, NULL);
 	env = (*envptr);
 
@@ -1030,6 +1052,12 @@ int AndroidHasPermissions( const char* perm_name)
  */
 void AndroidRequestAppPermissions(const char * perm)
 {
+	if( android_sdk_version < 23 )
+	{
+		printf( "Android SDK version %d does not support AndroidRequestAppPermissions\n",android_sdk_version );
+		return;
+	}
+
 	struct android_app* app = gapp;
 	const struct JNINativeInterface * env = 0;
 	const struct JNINativeInterface ** envptr = &env;
