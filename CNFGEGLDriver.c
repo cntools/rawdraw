@@ -820,6 +820,8 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 	}
 }
 
+int __system_property_get(const char* name, char* value);
+
 void android_main(struct android_app* app)
 {
 	int main( int argc, char ** argv );
