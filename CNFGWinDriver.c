@@ -92,6 +92,9 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 void CNFGTearDown()
 {
 	PostQuitMessage(0);
+#ifdef CNFGOGL
+	exit(0);
+#endif
 }
 
 //This was from the article
@@ -271,6 +274,7 @@ static void InternalHandleResize()
 
 uint32_t CNFGColor( uint32_t RGB )
 {
+	if( CNFGLastColor == RGB ) return RGB;
 	CNFGLastColor = RGB;
 
 	DeleteObject( lsHBR );
