@@ -470,7 +470,7 @@ void CNFGSwapBuffers()
 #if !defined( CNFGOGL)
 #define AGLF(x) x
 #else
-#define AGLF(x) static BACKEND_##x
+#define AGLF(x) static inline BACKEND_##x
 #if defined( RASTERIZER ) 
 #include "CNFGRasterizer.c"
 #endif
@@ -513,10 +513,18 @@ void AGLF(CNFGSwapBuffers)()
 
 void AGLF(CNFGTackSegment)( short x1, short y1, short x2, short y2 )
 {
-	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2, y2 );
-	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2, x1, y1 );
-//XXX HACK!  See discussion here: https://github.com/cntools/cnping/issues/68
-//	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
+	if( x1 == x2 && y1 == y2 )
+	{
+		//On some targets, zero-length lines will not show up.
+		//This is tricky - since this will also cause more draw calls for points on systems like GLAMOR.
+		XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
+	}
+	else
+	{
+		//XXX HACK!  See discussion here: https://github.com/cntools/cnping/issues/68
+		XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2, y2 );
+		XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2, x1, y1 );
+	}
 }
 
 void AGLF(CNFGTackPixel)( short x1, short y1 )
