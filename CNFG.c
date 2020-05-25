@@ -13,5 +13,10 @@
 #else
 #include "CNFGXDriver.c"
 #endif
+
 #include "CNFGFunctions.c"
+
+#ifdef CNFG3D
+#include "CNFG3D.c"
+#endif
 

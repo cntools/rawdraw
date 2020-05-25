@@ -514,7 +514,9 @@ void AGLF(CNFGSwapBuffers)()
 void AGLF(CNFGTackSegment)( short x1, short y1, short x2, short y2 )
 {
 	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x1, y1, x2, y2 );
-	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
+	XDrawLine( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2, x1, y1 );
+//XXX HACK!  See discussion here: https://github.com/cntools/cnping/issues/68
+//	XDrawPoint( CNFGDisplay, CNFGPixmap, CNFGGC, x2, y2 );
 }
 
 void AGLF(CNFGTackPixel)( short x1, short y1 )

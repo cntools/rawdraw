@@ -146,9 +146,6 @@ float tdPerlin2D( float x, float y );
 
 #ifdef CNFG_IMPLEMENTATION
 #include "CNFG.c"
-#ifdef CNFG3D
-#include "CNFG3D.c"
-#endif
 #endif
 
 #endif
