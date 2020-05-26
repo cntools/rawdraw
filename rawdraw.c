@@ -7,6 +7,7 @@
 
 #define CNFG3D
 #define CNFG_IMPLEMENTATION
+#define CNFGOGL
 #include "CNFG.h"
 
 
@@ -15,7 +16,7 @@ unsigned long iframeno = 0;
 
 void HandleKey( int keycode, int bDown )
 {
-	if( keycode == 65307 ) exit( 0 );
+	if( keycode == 27 ) exit( 0 );
 	printf( "Key: %d -> %d\n", keycode, bDown );
 }
 
