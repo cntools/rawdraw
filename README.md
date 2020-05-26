@@ -68,7 +68,7 @@ int main()
 
 Windows compile:
 ```
-C:\tcc\tcc rawdraw.c -Irawdraw -lgdi32 -luser32
+C:\tcc\tcc rawdraw.c -Irawdraw -lopengl32 -lgdi32 -luser32
 ```
 
 Linux compile:
