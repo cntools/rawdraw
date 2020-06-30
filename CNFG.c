@@ -8,8 +8,6 @@
 #include "CNFGEGLLeanAndMean.c"
 #elif defined( __android__ ) || defined( ANDROID )
 #include "CNFGEGLDriver.c"
-#elif defined( OSX )
-#include "CNFGCocoaCGDriver.m"
 #else
 #include "CNFGXDriver.c"
 #endif

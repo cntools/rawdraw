@@ -1,7 +1,7 @@
 # CN's Fundamental Graphics Library
 
 An OS-Agnostic (including No OS AT ALL!) drawing system.  It includes lines,
-boxes, linetext, points, bitmaps.  
+boxes, linetext, points, bitmaps.
 
 The drawing method can either be by the OS (i.e. SetPixel in Windows),
 rasterized in software (we draw our own lines) or by OpenGL where available.
@@ -11,6 +11,8 @@ to get an OpenGL window on just about any supported platform.
 Somewhere unusual and want to open a window and draw stuff?  Use rawdraw.
 
 Other packages too big, bulky or include junk you don't want?  Use rawdraw.
+
+Want to use OpenGL really quickly?  Use rawdraw.
 
 For embedded platforms, `RASTERIZER` is usually the back end which allows you
 to have high level commands on a framebuffer.  It's what was used in ESP
@@ -120,4 +122,4 @@ semaphores as well as getting the current time.  It has the following configurat
 
 ## Warnings
 
-OSX Support is not full-fledged. 
+OSX Support has been moved to attic.
