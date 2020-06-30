@@ -26,8 +26,7 @@ void InternalHandleResize()
 	SelectObject( lsHDC, lsBitmap );
 }
 #else
-static int bufferx, buffery;
-static int bufferx, buffery;
+static short bufferx, buffery;
 static void InternalHandleResize();
 #endif
 
@@ -44,11 +43,11 @@ void CNFGSwapBuffers()
 
 void CNFGGetDimensions( short * x, short * y )
 {
-	static int lastx, lasty;
+	static short lastx, lasty;
 	RECT window;
 	GetClientRect( lsHWND, &window );
-	bufferx = ( window.right - window.left);
-	buffery = ( window.bottom - window.top);
+	bufferx = (short)( window.right - window.left);
+	buffery = (short)( window.bottom - window.top);
 	if( bufferx != lastx || buffery != lasty )
 	{
 		lastx = bufferx;
@@ -69,7 +68,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 	BitBlt(lsWindowHDC, 0, 0, w, h, lsHDC, 0, 0, SRCCOPY);
 	UpdateWindow( lsHWND );
 
-	int thisw, thish;
+	short thisw, thish;
 
 	//Check to see if the window is closed.
 	if( !IsWindow( lsHWND ) )
@@ -78,8 +77,8 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 	}
 
 	GetClientRect( lsHWND, &r );
-	thisw = r.right - r.left;
-	thish = r.bottom - r.top;
+	thisw = (short)(r.right - r.left);
+	thish = (short)(r.bottom - r.top);
 	if( thisw != bufferx || thish != buffery )
 	{
 		bufferx = thisw;
@@ -128,8 +127,8 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	int w, h, wd, hd;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 
-	bufferx = width;
-	buffery = height;
+	bufferx = (short)width;
+	buffery = (short)height;
 
 	wnd.style = CS_HREDRAW | CS_VREDRAW; //we will explain this later
 	wnd.lpfnWndProc = MyWndProc;
@@ -246,7 +245,7 @@ void CNFGHandleInput()
 		case WM_MBUTTONUP:		HandleButton( (msg.lParam & 0xFFFF), (msg.lParam>>16) & 0xFFFF, 3, 0 ); break;
 		case WM_KEYDOWN:
 		case WM_KEYUP:
-			HandleKey( tolower( msg.wParam ), (msg.message==WM_KEYDOWN) );
+			HandleKey( tolower( (int) msg.wParam ), (msg.message==WM_KEYDOWN) );
 			break;
 		default:
 			DispatchMessage(&msg);
@@ -260,7 +259,6 @@ void CNFGHandleInput()
 #ifndef RASTERIZER
 
 static HBITMAP lsBackBitmap;
-static HDC lsWindowHDC;
 static HBRUSH lsHBR;
 static HPEN lsHPEN;
 static HBRUSH lsClearBrush;
@@ -352,13 +350,13 @@ void CNFGSwapBuffers()
 
 	if( thisw != bufferx || thish != buffery )
 	{
-		bufferx = thisw;
-		buffery = thish;
+		bufferx = (short)thisw;
+		buffery = (short)thish;
 		InternalHandleResize();
 	}
 }
 
-void CNFGInternalResize( short bufferx, short  buffery ) { }
+void CNFGInternalResize( short bfx, short bfy ) { }
 #endif
 
 #endif

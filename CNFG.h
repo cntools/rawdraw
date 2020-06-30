@@ -24,8 +24,8 @@ extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
 extern uint32_t CNFGDialogColor; //background for boxes
 
-void CNFGDrawText( const char * text, int scale );
-void CNFGDrawBox(  int x1, int y1, int x2, int y2 );
+void CNFGDrawText( const char * text, short scale );
+void CNFGDrawBox( short x1, short y1, short x2, short y2 );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
 void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
 
@@ -137,7 +137,8 @@ float tdPerlin2D( float x, float y );
 
 #endif
 
-
+extern const unsigned char FontCharData[1902];
+extern const unsigned short FontCharMap[256];
 
 #ifdef __cplusplus
 };

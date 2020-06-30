@@ -208,10 +208,10 @@ void CNFGDrawText( const char * text, int scale )
 			lmap = &FontCharData[index];
 			do
 			{
-				int x1 = (int)((((*lmap) & 0x70)>>4)*scale + iox);
-				int y1 = (int)(((*lmap) & 0x0f)*scale + ioy);
-				int x2 = (int)((((*(lmap+1)) & 0x70)>>4)*scale + iox);
-				int y2 = (int)(((*(lmap+1)) & 0x0f)*scale + ioy);
+				short x1 = (short)((((*lmap) & 0x70)>>4)*scale + iox);
+				short y1 = (short)(((*lmap) & 0x0f)*scale + ioy);
+				short x2 = (short)((((*(lmap+1)) & 0x70)>>4)*scale + iox);
+				short y2 = (short)(((*(lmap+1)) & 0x0f)*scale + ioy);
 				lmap++;
 				CNFGTackSegment( x1, y1, x2, y2 );
 				bQuit = *lmap & 0x80;
@@ -225,7 +225,7 @@ void CNFGDrawText( const char * text, int scale )
 }
 
 
-void CNFGDrawBox( int x1, int y1, int x2, int y2 )
+void CNFGDrawBox( short x1, short y1, short x2, short y2 )
 {
 	unsigned lc = CNFGLastColor;
 	CNFGColor( CNFGDialogColor );
@@ -271,7 +271,7 @@ void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
 
 	CNFGGetTextExtents( text, &w, &h, textsize );
 	
-	CNFGDrawBox( x, y, x + w, y + h );
+	CNFGDrawBox( (short)x, (short)y, (short)(x + w), (short)(y + h) );
 	CNFGPenX = x + textsize;
 	CNFGPenY = y + textsize;
 	CNFGDrawText( text, textsize );
