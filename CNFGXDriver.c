@@ -111,7 +111,7 @@ void CNFGInternalResize( short x, short y ) { }
 #include <GL/glxext.h>
 
 GLXContext CNFGCtx;
-void * CNFGGetExtension( const char * extname ) { return glXGetProcAddressARB((const GLubyte *) extname); }
+void * CNFGGetExtension( const char * extname ) { return (void*)glXGetProcAddressARB((const GLubyte *) extname); }
 #endif
 
 int FullScreen = 0;
