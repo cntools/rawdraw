@@ -175,7 +175,7 @@ const unsigned char FontCharData[1902] = {
 //Set this if you are only using CNFG to create an OpenGL context.
 #ifndef CNFGCONTEXTONLY
 
-void CNFGDrawText( const char * text, int scale )
+void CNFGDrawText( const char * text, short scale )
 {
 	const unsigned char * lmap;
 	float iox = (float)CNFGPenX;
