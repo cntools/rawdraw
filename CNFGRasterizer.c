@@ -1,7 +1,7 @@
 //Don't call this file yourself.  It is intended to be included in any drivers which want to support the rasterizer plugin.
 
 #ifdef RASTERIZER
-#include "CNFGFunctions.h"
+#include "CNFG.h"
 #include <stdlib.h>
 #include <stdint.h>
 

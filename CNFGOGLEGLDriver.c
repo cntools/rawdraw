@@ -5,7 +5,7 @@
 //NOTE: This is a truly incomplete driver - if no EGL surface is available, it does not support direct buffer rendering.
 //Additionally no input is connected.
 
-#include "CNFGFunctions.h"
+#include "CNFG.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
