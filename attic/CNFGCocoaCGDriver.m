@@ -6,7 +6,7 @@
 
 #define RGB2Color(RGB) (RGB&0xFF)/256., ((RGB>>8)&0xFF)/256., ((RGB>>16)&0xFF)/256. 
 
-#include "CNFGFunctions.h"
+#include "CNFG.h"
 
 id app_menubar, app_appMenuItem, app_appMenu, app_appName, app_quitMenuItem, app_quitTitle, app_quitMenuItem, app_window;
 NSView *app_imageView;

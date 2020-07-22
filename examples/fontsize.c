@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../CNFGFunctions.h"
+#include "../CNFG.h"
 #include "../os_generic.h"
 #include "../CNFG3D.h"
 
