@@ -284,6 +284,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 
 void CNFGTearDown()
 {
+	HandleDestroy();
 	if ( CNFGClassHint ) XFree( CNFGClassHint );
 	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
