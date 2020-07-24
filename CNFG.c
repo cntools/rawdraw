@@ -2,7 +2,7 @@
 //want to include this in your build, but instead, #include "CNFG.h"
 //after #define CNFG_IMPLEMENTATION in one of your C files.
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
