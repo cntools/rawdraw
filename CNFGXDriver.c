@@ -425,7 +425,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 
 	if( lw != w || lh != h )
 	{
-		if( xi ) free( xi );
+		if( xi ) XDestroyImage( xi );
 		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
@@ -472,7 +472,7 @@ void CNFGSwapBuffers()
 #define AGLF(x) x
 #else
 #define AGLF(x) static inline BACKEND_##x
-#if defined( RASTERIZER ) 
+#if defined( CNFGRASTERIZER ) 
 #include "CNFGRasterizer.c"
 #endif
 #endif

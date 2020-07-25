@@ -14,8 +14,8 @@ Other packages too big, bulky or include junk you don't want?  Use rawdraw.
 
 Want to use OpenGL really quickly?  Use rawdraw.
 
-For embedded platforms, `RASTERIZER` is usually the back end which allows you
-to have high level commands on a framebuffer.  It's what was used in ESP
+For embedded platforms, `CNFGRASTERIZER` is usually the back end which allows
+you to have high level commands on a framebuffer.  It's what was used in ESP
 Channel 3.
 
 This is **not** like SDL - some drivers have different quirks, some have
@@ -90,7 +90,7 @@ CNFG Configuration options include:
 * `__android__` = build Android port
 * `WINDOWS`, `WIN32`, `WIN64` = Windows build
 * `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides rasterized graphics functions.
-* `RASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
+* `CNFGRASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
 * `CNFGOGL` = Make underlying functions use OpenGL if possible.
 
 Platform-Specific

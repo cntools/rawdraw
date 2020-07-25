@@ -7,7 +7,7 @@
 
 #if defined( CNFGOGL )
 #define TITLESTRING "Fontsize test with OpenGL"
-#elif defined( RASTERIZER )
+#elif defined( CNFGRASTERIZER )
 #define TITLESTRING "Fontsize test with Rasterizer"
 #else
 #define TITLESTRING "Fontsize test with Unknown"

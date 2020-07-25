@@ -7,7 +7,9 @@
 
 #define CNFG3D
 #define CNFG_IMPLEMENTATION
-#define CNFGOGL
+//#define CNFGOGL
+#define CNFGRASTERIZER
+
 #include "CNFG.h"
 
 

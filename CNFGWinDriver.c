@@ -14,7 +14,7 @@ static HWND lsHWND;
 static HDC lsWindowHDC;
 static HDC lsHDC;
 
-#ifdef RASTERIZER
+#ifdef CNFGRASTERIZER
 #include "CNFGRasterizer.c"
 
 void InternalHandleResize()
@@ -256,7 +256,7 @@ void CNFGHandleInput()
 
 #ifndef CNFGOGL
 
-#ifndef RASTERIZER
+#ifndef CNFGRASTERIZER
 
 static HBITMAP lsBackBitmap;
 static HBRUSH lsHBR;

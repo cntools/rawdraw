@@ -5,7 +5,7 @@ all : fontsize fontsize_ogl
 #for full screen you'll need:  libxinerama-dev libxext-dev
 #for OGL You'll need:          mesa-common-dev libglu1-mesa-dev
 
-#-DRASTERIZER
+#-DCNFGRASTERIZER
 #  and
 #-CNFGOGL
 #  are incompatible.
@@ -14,7 +14,7 @@ all : fontsize fontsize_ogl
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
 fontsize : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER -Wall
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGRASTERIZER -Wall
 
 fontsize_ogl : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -lX11 -lXinerama -lGL -DCNFGOGL -Wall

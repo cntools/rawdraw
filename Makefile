@@ -5,7 +5,7 @@ all : rawdraw ogltest
 #for full screen you'll need:  libxinerama-dev libxext-dev
 #for OGL You'll need:          mesa-common-dev libglu1-mesa-dev
 
-#-DRASTERIZER
+#-DCNFGRASTERIZER
 #  and
 #-CNFGOGL
 #  are incompatible.
@@ -20,7 +20,7 @@ rawdraw_egl : rawdraw.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
 rawdraw : rawdraw.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DRASTERIZER
+	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g
 
 rawdraw_ogl : rawdraw.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL
@@ -35,7 +35,7 @@ ontop : ontop.c CNFG.c
 	gcc -o $@ $^ -lpthread -lX11 -lm -lXinerama -lXext -lGL
 
 rawdraw_mac : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DCNFGRASTERIZER
 
 rawdraw_mac_soft : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
@@ -44,7 +44,7 @@ rawdraw_mac_cg : rawdraw.c CNFG.c
 	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
 
 rawdraw_mac_ogl : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DRASTERIZER
+	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DCNFGRASTERIZER
 
 ogltest : ogltest.c CNFG.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
