@@ -47,6 +47,7 @@ GC     CNFGGC;
 GC     CNFGWindowGC;
 Visual * CNFGVisual;
 int CNFGX11ForceNoDecoration;
+XImage *xi;
 
 int g_x_global_key_state;
 int g_x_global_shift_key;
@@ -285,6 +286,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 void CNFGTearDown()
 {
 	HandleDestroy();
+	if( xi ) free( xi );
 	if ( CNFGClassHint ) XFree( CNFGClassHint );
 	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
@@ -410,7 +412,6 @@ void CNFGHandleInput()
 
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
-	static XImage *xi;
 	static int depth;
 	static int lw, lh;
 
@@ -425,7 +426,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 
 	if( lw != w || lh != h )
 	{
-		if( xi ) XDestroyImage( xi );
+		if( xi ) free( xi );
 		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
