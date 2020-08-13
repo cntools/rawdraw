@@ -178,8 +178,8 @@ const unsigned char FontCharData[1902] = {
 void CNFGDrawText( const char * text, short scale )
 {
 	const unsigned char * lmap;
-	float iox = (float)CNFGPenX;
-	float ioy = (float)CNFGPenY;
+	float iox = (float)CNFGPenX; //x offset
+	float ioy = (float)CNFGPenY; //y offset
 
 	int place = 0;
 	unsigned short index;
@@ -187,7 +187,6 @@ void CNFGDrawText( const char * text, short scale )
 	while( text[place] )
 	{
 		unsigned char c = text[place];
-
 		switch( c )
 		{
 		case 9: // tab
@@ -208,6 +207,7 @@ void CNFGDrawText( const char * text, short scale )
 			lmap = &FontCharData[index];
 			do
 			{
+
 				short x1 = (short)((((*lmap) & 0x70)>>4)*scale + iox);
 				short y1 = (short)(((*lmap) & 0x0f)*scale + ioy);
 				short x2 = (short)((((*(lmap+1)) & 0x70)>>4)*scale + iox);
