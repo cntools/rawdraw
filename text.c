@@ -8,7 +8,7 @@
 void HandleDestroy() { }
 
 size_t const num_chars = 256;
-unsigned char** charArray ; 
+unsigned char** charArray; 
 
 
 
@@ -42,34 +42,48 @@ void HandleButton(int x, int y, int button, int bDown)
 		//lines[drawnPoints] = coordToPos(x, y)+0b10000000;
 		if (drawnPoints == 0 || coords != (charData[drawnPoints - 1] & 0b00111111))
 		{
-			memset(&charData[drawnPoints], coords + 0b10000000, 1);
+			if (drawnPoints >= 8 && ((drawnPoints & (drawnPoints - 1)) == 0))
+			{
+				printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
+				
+				unsigned char* tmp =(unsigned char *) realloc(charArray[selectedChar], sizeof(char) * (drawnPoints << 1));
+				if (tmp != NULL && tmp != charArray[selectedChar]) {
+					free(charArray[selectedChar]);
+					charArray[selectedChar] = tmp;
+					charData = tmp;
+				}
+			}
+
+			charData[drawnPoints] = coords + 0b10000000;
+			
 			if (drawnPoints > 0)
 			{
+				
 				currentColor = &colorContinuing;
 				memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] - 0b10000000, 1);
 				segmentLength++;
 			}
 			drawnPoints++;
 		}
-		else if (coords == (charData[drawnPoints - 1] & 0b00111111)) {
+		else if (coords == (charData[drawnPoints - 1] & 0b00111111)) 
+		{
+
 			
+			memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] ^ 0b01000000, 1);
 			if (charData[drawnPoints - 1] & 0b01000000)
 			{
-				printf("continuation\n");
-				currentColor = &colorContinuing;
-				memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] - 0b01000000, 1);
-			}
-			else
-			{
-				printf("discontinuation\n");
 				currentColor = &colorNotContinuing;
-				memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] + 0b01000000, 1);
-				if(segmentLength==0)
-				{
-				}
 			}
+			else {
+				currentColor = &colorContinuing;
+				
+			}
+			
+
+		
 		}
 	}
+
 	else if (bDown && button == 2)
 	{
 		if (drawnPoints > 0)
@@ -79,6 +93,17 @@ void HandleButton(int x, int y, int button, int bDown)
 			if (drawnPoints > 0)
 			{
 				memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] + 0b10000000, 1);
+				if (drawnPoints >= 7 && (((drawnPoints+1) & (drawnPoints)) == 0))
+				{
+					printf("Allocating %d\n", sizeof(char) * ((drawnPoints+1)));
+
+					unsigned char* tmp = (unsigned char*)realloc(charArray[selectedChar], sizeof(char) * (drawnPoints+1));
+					if (tmp != NULL) {
+						charArray[selectedChar] = tmp;
+						charData = tmp;
+					}
+					//printf("new size %d\n", drawnPoints + 1);
+				}
 			}
 		}
 	}
@@ -218,7 +243,7 @@ int main()
 	charArray = malloc(sizeof(char*) * num_chars);
 
 	for (int i = 0; i < num_chars; i++) {
-		charArray[i] = malloc(10);
+		charArray[i] = malloc(8*sizeof(char));
 		memset(charArray[i], 0b10000000, 1);
 	}
 
@@ -269,11 +294,11 @@ int main()
 		//If we have already drawn a point
 		if (drawnPoints && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[drawnPoints - 1] & 0b01000000) != 0b01000000)
 		{
+			
 			short x = (short)(((charData[drawnPoints-1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
 			short y = (short)(((charData[drawnPoints-1] & 0b00000111)) * scale + (scale - centerSize) / 2);
 			CNFGTackSegment(x + centerSize / 2, y + centerSize / 2, selectedSquareX * scale + scale / 2, selectedSquareY * scale + scale / 2);	//draw line from last point to selected point
 		}
-
 
 
 		int bQuit = 0;
