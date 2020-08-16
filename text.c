@@ -7,9 +7,6 @@
 //unsigned char* FontData = { 'a','b' };
 
 
-
-void HandleDestroy() { }
-
 size_t const num_chars = 256;
 unsigned char** charArray; 
 
@@ -58,7 +55,7 @@ void HandleButton(int x, int y, int button, int bDown)
 			}
 
 			charData[drawnPoints] = coords + 0b10000000; //Set the current point's position to the selected point's and add the "end of character flag"
-			
+			//printf("coords: %x, %x\N", coords, coords + 0b10000000);
 			if (drawnPoints > 0) //and if we have another point from before
 			{
 				
@@ -98,7 +95,7 @@ void HandleButton(int x, int y, int button, int bDown)
 				memset(&charData[drawnPoints - 1], charData[drawnPoints - 1] + 0b10000000, 1); //set the previous point's end of character flag to 1
 				if (drawnPoints >= 7 && (((drawnPoints+1) & (drawnPoints)) == 0)) //If we have allocated more ram than neccesary now, halve it, same formula as before
 				{
-					printf("Allocating %d\n", sizeof(char) * ((drawnPoints+1)));
+				//	printf("Allocating %d\n", sizeof(char) * ((drawnPoints+1)));
 
 					unsigned char* tmp = (unsigned char*)realloc(charArray[selectedChar], sizeof(char) * (drawnPoints+1));
 					if (tmp != NULL) {
@@ -114,14 +111,147 @@ void HandleButton(int x, int y, int button, int bDown)
 }
 
 
+
+#ifdef FONTINIT
+void LoadFont()
+{
+
+
+	int totalPoints = 0;
+
+	int characterToLoad;
+
+	for (characterToLoad = 0; characterToLoad < 256; characterToLoad++) {
+
+		charArray[characterToLoad] = malloc(8 * sizeof(char)); //allocating 8 points (bytes/characters) per character
+		int index = CharIndex[characterToLoad];
+		
+		if (!index) {
+
+			memset(charArray[characterToLoad], 0b10000000, 1);
+		}
+		else {
+
+			//If the character has data, add it
+			
+			unsigned char* characterData = &FontData[index];
+
+			unsigned char* characterDestination = charArray[characterToLoad];
+
+			int c = -1;
+			do
+			{
+				c++;
+				totalPoints++;
+
+				if (totalPoints >= 8 && ((totalPoints & (totalPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
+				{
+
+					unsigned char* tmp = (unsigned char*)realloc(charArray[characterToLoad], sizeof(char) * (totalPoints << 1));
+					if (tmp != NULL && tmp != charArray[characterToLoad]) { //If the memory was reallocated properly and we get a new pointer
+						free(charArray[characterToLoad]); //Free the old address
+						charArray[characterToLoad] = tmp; //Get the new Address
+						characterDestination = tmp;
+					}
+				}
+				memset(&characterDestination[c], characterData[c], 1);
+				printf("%x\n", characterData[c]);
+				
+
+			} while ((characterData[c] & 0b10000000) != 0b10000000);
+		}
+	}
+	printf("Font Loaded\n");
+}
+
+
+
+	
+
+#else
+void LoadFont() 
+{
+
+	for (int i = 0; i < num_chars; i++) {
+		charArray[i] = malloc(8 * sizeof(char)); //allocating 8 points (bytes/characters) per character
+		memset(charArray[i], 0b10000000, 1);
+	}
+	printf("No Font Loaded\n");
+}
+#endif // !FONTINIT
+
+
+void SaveFont(char* filename)
+{
+	FILE* f = fopen(filename, "wb");
+	int characterIndex[256];
+	unsigned char* AllCharacterData = malloc(sizeof(char) * 8);
+
+	int totalPoints = 0;
+
+	int characterToSave;
+
+	for (characterToSave = 0; characterToSave < 256; characterToSave++) {
+
+		unsigned char* characterData = charArray[characterToSave];
+		int c = -1;
+
+		//If the character has lines from previously, count the amount of points and segments
+		if ((characterData[0] & 0b10000000) != 0b10000000)
+		{
+			characterIndex[characterToSave] = totalPoints + 1;
+
+			do
+			{
+				c++;
+				totalPoints++;
+
+				if (totalPoints >= 7 && ((totalPoints & (totalPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
+				{
+
+					unsigned char* tmp = (unsigned char*)realloc(AllCharacterData, sizeof(char) * (totalPoints << 1));
+					if (tmp != NULL && tmp != AllCharacterData) { //If the memory was reallocated properly and we get a new pointer
+						free(AllCharacterData); //Free the old address
+						AllCharacterData = tmp; //Get the new Address
+					}
+				}
+				AllCharacterData[totalPoints] = characterData[c];
+
+				//printf("%x\n", characterData[c]);
+
+			} while ((characterData[c] & 0b10000000) != 0b10000000);
+		}
+		else {
+			characterIndex[characterToSave] = 0;
+		}
+	}
+	fprintf(f,"%s\n%s\n", "#ifndef FONTINIT","#define FONTINIT");
+	fprintf(f, "int CharIndex[] = {\n\t");
+
+	for (int i = 0; i < 256; i++)
+		fprintf(f, "%4d,%s", characterIndex[i], (((i+1) % 16) == 0) ? "\n\t" : " ");
+	fprintf(f, "};\n\n");
+
+	fprintf(f, "unsigned char FontData[] = {\n\t");
+	for (int i = 0; i <= totalPoints; i++)
+		fprintf(f, "0x%02x,%s", AllCharacterData[i], (((i+1) % 16)==0) ? "\n\t" : " ");
+	fprintf(f, "};\n\n");
+
+	fprintf(f, "%s\n", "#endif");
+	fclose(f);
+
+}
+
+
 //Selecting a different character from the grid below to redraw
-void changeChar(int difference) { 
+void changeChar(int difference) {
+	SaveFont("FontBackup.c");
 	selectedChar += difference;
-	printf("%c\n", selectedChar);
+	//printf("%c\n", selectedChar);
 	charData = charArray[selectedChar];
 	segmentLength = 0;
 	drawnPoints = 0;
-	printf("0x%x\n", charData[0]);
+	//printf("0x%x\n", charData[0]);
 	int c;
 
 	//If the character has lines from previously, count the amount of points and segments
@@ -139,9 +269,12 @@ void changeChar(int difference) {
 			drawnPoints++;
 		}
 	}
-	
+
 }
 
+void HandleDestroy() { 
+	SaveFont("FontData.c");
+}
 
 void HandleKey( int keycode, int bDown )
 {
@@ -150,6 +283,7 @@ void HandleKey( int keycode, int bDown )
 		switch (keycode)
 		{
 		case 27:	//esc
+			SaveFont("FontData.c");
 			if (drawnPoints > 1)
 			{
 
@@ -251,19 +385,18 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 }
 
 
+
+
+
 int main()
 {
-	//printf("%s\n", FontData);
-
 	charArray = malloc(sizeof(char*) * num_chars);//Allocating the memory for the array of pointers that'll store every character's info
+	LoadFont();
 
-	for (int i = 0; i < num_chars; i++) {
-		charArray[i] = malloc(8*sizeof(char)); //allocating 8 points (bytes/characters) per character
-		memset(charArray[i], 0b10000000, 1);
-	}
 
 	charData = charArray[48]; //Selecting one random character
 
+	changeChar(0);
 	sprintf(testText, "The quick brown fox jumped over the lazy dog"); //Setting up the test text
 
 	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 800, 1200);

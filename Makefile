@@ -16,11 +16,11 @@ MINGW32:=/usr/bin/i686-w64-mingw32-
 rawdraw.exe : rawdraw.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
-text.exe : text.c 
+text.exe : text.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
 
 
-text : text.c 
+text : text.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g
 
 rawdraw_egl : rawdraw.c

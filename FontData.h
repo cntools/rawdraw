@@ -1,3 +1,6 @@
 #include "FontData.c"
-extern unsigned char FontData[0];
-extern int* CharIndex;
+
+#ifndef FONTINIT
+extern unsigned char FontData[];
+extern int CharIndex[];
+#endif
