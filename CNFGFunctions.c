@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #define _CNFG_C
 
 #include "CNFG.h"
-
+#include "FontData.h"
 
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
@@ -224,6 +224,69 @@ void CNFGDrawText( const char * text, short scale )
 	}
 }
 
+void CNFGDrawBigText(const char* text, short scale)
+{
+	const unsigned char* lmap;
+	float iox = (float)CNFGPenX; //x offset
+	float ioy = (float)CNFGPenY; //y offset
+
+	int place = 0;
+	unsigned short index;
+	int bQuit = 0;
+	int segmentEnd = 0;
+	while (text[place])
+	{
+		unsigned char c = text[place];
+		switch (c)
+		{
+		case 9: // tab
+			iox += 16 * scale;
+			break;
+		case 10: // linefeed
+			iox = (float)CNFGPenX;
+			ioy += 6 * scale;
+			break;
+		default:
+			index = CharIndex[c];
+			if (index == 0)
+			{
+				iox += 8 * scale;
+				break;
+			}
+
+			lmap = &FontData[index];
+			do
+			{
+
+				short x1 = (short)((((*lmap) & 0b00111000) >> 3) * scale + iox);
+				short y1 = (short)(((*lmap) & 0b00000111) * scale + ioy);
+				segmentEnd = *lmap & 0x40;
+				short x2 = 0;
+				short y2 = 0;
+				if (segmentEnd) 
+				{
+					x2 = x1;
+					y2 = y1;
+				}
+				else
+				{
+					x2 = (short)((((*(lmap + 1)) & 0b00111000) >> 3) * scale + iox);
+					y2 = (short)(((*(lmap + 1)) & 0b00000111) * scale + ioy);
+				}
+				
+				lmap++;
+				CNFGTackSegment(x1, y1, x2, y2);
+				bQuit = *lmap & 0x80;
+				
+				lmap++;
+			} while (!bQuit);
+
+			iox += 8 * scale;
+		}
+		place++;
+	}
+}
+
 
 void CNFGDrawBox( short x1, short y1, short x2, short y2 )
 {
@@ -276,6 +339,8 @@ void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
 	CNFGPenY = y + textsize;
 	CNFGDrawText( text, textsize );
 }
+
+
 
 
 #if defined( CNFGOGL ) && !defined( HAS_XSHAPE )

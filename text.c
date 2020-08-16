@@ -13,7 +13,7 @@ unsigned char** charArray;
 
 
 short selectedSquareX, selectedSquareY;		// Coords of the chosen point
-short scale = 100;	//scale for the grid
+short scale = 50;	//scale for the grid
 short drawnPoints = 0; //Number of points in this character
 
 int selectedChar = 48;	//Selected character 
@@ -186,6 +186,7 @@ void SaveFont(char* filename)
 	FILE* f = fopen(filename, "wb");
 	int characterIndex[256];
 	unsigned char* AllCharacterData = malloc(sizeof(char) * 8);
+	memset(&AllCharacterData[0], 0b10000000, 1);
 
 	int totalPoints = 0;
 
@@ -247,7 +248,7 @@ void SaveFont(char* filename)
 void changeChar(int difference) {
 	SaveFont("FontBackup.c");
 	selectedChar += difference;
-	//printf("%c\n", selectedChar);
+	printf("Selected character: %c, %d\n", selectedChar, selectedChar);
 	charData = charArray[selectedChar];
 	segmentLength = 0;
 	drawnPoints = 0;
@@ -280,6 +281,7 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
+		printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
 		case 27:	//esc
@@ -300,21 +302,25 @@ void HandleKey( int keycode, int bDown )
 			}
 			printf("\n");
 			exit(0);
+		case 119:
 		case 38:	//up
 			if (selectedChar - 16 >= 0) {
 				changeChar(-16);
 			}
 			break;
+		case 115:
 		case 40:	//down
 			if (selectedChar + 16 < 256) {
 				changeChar(16);
 			}
 			break;
+		case 97:
 		case 37:	//left
 			if (selectedChar - 1 >= 0) {
 				changeChar(-1);
 			}
 			break;
+		case 100:
 		case 39:	//right
 			if (selectedChar + 1 < 256) {
 				changeChar(1);
@@ -382,6 +388,8 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 	CNFGPenX = offsetX;
 	CNFGPenY = offsetY;
 	CNFGDrawText(testText, scale);
+	CNFGPenY = offsetY+5*scale;
+	CNFGDrawBigText(testText, scale);
 }
 
 
@@ -397,7 +405,7 @@ int main()
 	charData = charArray[48]; //Selecting one random character
 
 	changeChar(0);
-	sprintf(testText, "The quick brown fox jumped over the lazy dog"); //Setting up the test text
+	sprintf(testText, "'The quick brown fox jumped over the lazy dog' \"05+6=B\""); //Setting up the test text
 
 	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 800, 1200);
 
@@ -504,9 +512,14 @@ int main()
 		//draw the bottom text grid
 		int yOff = 20 + (gridH)*scale ;
 		makeText(10,yOff,2);
+		CNFGPenX = 10+16*16;
+		CNFGPenY = yOff;
+		char characterIndex[32];
+		sprintf(characterIndex,"Character code: %d\nCharacter: %c\n", selectedChar,selectedChar);
+		CNFGDrawText(characterIndex,5);
 		yOff += 10+16 * 8 * 2;
 		//draw the bottom test text
-		DrawTestText(10, yOff, 5);
+		DrawTestText(10, yOff, 3);
 
 		//swap the buffer
 		CNFGSwapBuffers();
