@@ -256,26 +256,30 @@ void CNFGDrawBigText(const char* text, short scale)
 			}
 
 			lmap = &FontData[index];
+			
+			short xbase = ((*lmap) & 0b00001100)>>2;
+			short ybase = (*lmap) & 0b00000011;
+			lmap++;
 			do
 			{
 
-				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
-				int y1 = (((*lmap) & 0b00000111) * scale + ioy);
+				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase*scale);
+				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
 				segmentEnd = *lmap & 0x40;
 				int x2 = 0;
 				int y2 = 0;
 				lmap++;
-				if (segmentEnd) 
+				if (segmentEnd)
 				{
 					x2 = x1;
 					y2 = y1;
 				}
 				else
 				{
-					
-					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
-					y2 = (((*lmap) & 0b00000111) * scale + ioy);
-					
+
+					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
+					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+
 				}
 				
 				
