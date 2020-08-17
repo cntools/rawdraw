@@ -52,8 +52,6 @@ void HandleButton(int x, int y, int button, int bDown)
 				
 				unsigned char* tmp =(unsigned char *) realloc(charArray[selectedChar], sizeof(char) * (drawnPoints << 1)); 
 				if (tmp != NULL && tmp != charArray[selectedChar]) { //If the memory was reallocated properly and we get a new pointer
-					free(charArray[selectedChar]); //Free the old address
-//					printf("pointer changed.");
 					charArray[selectedChar] = tmp; //Get the new Address
 					charData = tmp;
 				}
