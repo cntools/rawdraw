@@ -397,7 +397,6 @@ void HandleKey( int keycode, int bDown )
 			exit(0);
 
 		case 15:	//r x11
-		case 27:	//r sdl
 		case 114:	//r
 			resetChar();
 			break;
