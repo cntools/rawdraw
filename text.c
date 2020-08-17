@@ -378,8 +378,11 @@ void makeText(int offsetX,int offsetY,int scale)
 				CNFGColor(0xffffff);
 			}
 			CNFGDrawText(tw, scale);
+			CNFGPenX = offsetX + (c % 16) * 16 * scale / 2 +17*16;
+			CNFGDrawBigText(tw, scale/2);
 		}
 	}
+	CNFGTackSegment(offsetX+ 16 * 16,offsetY, offsetX  + 16 * 16, offsetY+256/16*16*scale/2);
 }
 
 
@@ -409,7 +412,7 @@ int main()
 	changeChar(0);
 	sprintf(testText, "'The quick brown fox jumped over the lazy dog' \"05+6=B\""); //Setting up the test text
 
-	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 800, 1200);
+	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 1000, 800);
 
 	while (1)
 	{
@@ -514,17 +517,25 @@ int main()
 		//draw the bottom text grid
 		int yOff = 20 + (gridH)*scale ;
 		makeText(10,yOff,2);
-		CNFGPenX = 10+16*16;
-		CNFGPenY = yOff;
+		CNFGPenX = 8*scale+10;
+		CNFGPenY = 10;
+		
+		
 		char characterInfo[32];
 		sprintf(characterInfo,"Character code: %d\nCharacter: %c\n", selectedChar,selectedChar);
-		CNFGDrawText(characterInfo,5); 
-		CNFGPenY = yOff+80;
+		CNFGDrawText(characterInfo, 5);
+
+		CNFGPenY = 90;
 		sprintf(characterInfo, "New Character:  %c\n", selectedChar);
+		
+		
 		CNFGDrawBigText(characterInfo,2);
 		yOff += 10+16 * 8 * 2;
 		//draw the bottom test text
 		DrawTestText(10, yOff, 4);
+
+		CNFGPenY = h;
+		CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
 
 		//swap the buffer
 		CNFGSwapBuffers();
