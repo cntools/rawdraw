@@ -1,8 +1,9 @@
 #define CNFG_IMPLEMENTATION
 
+#include "FontData.h"
 #include "CNFG.h"
 #include <stdio.h>
-#include "FontData.h"
+
 
 //unsigned char* FontData = { 'a','b' };
 
@@ -35,20 +36,24 @@ char coordToPos(int x, int y) { //Screen coordinates to grid position
 void HandleButton(int x, int y, int button, int bDown) 
 {
 	
+	
 	if (bDown && button == 1 && selectedSquareX >= 0 && selectedSquareY >= 0) //If we left click inside the grid
 	{
+		printf("Drawn points: %d\n", drawnPoints);
 		char coords = coordToPos(x, y); //Get the selected point
 
+		
 		
 		if (drawnPoints == 0 || coords != (charData[drawnPoints - 1] & 0b00111111)) //If we have no points or the last point was different from the current one, add a new point
 		{
 			if (drawnPoints >= 8 && ((drawnPoints & (drawnPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this character
 			{
-				//printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
+				printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
 				
 				unsigned char* tmp =(unsigned char *) realloc(charArray[selectedChar], sizeof(char) * (drawnPoints << 1)); 
 				if (tmp != NULL && tmp != charArray[selectedChar]) { //If the memory was reallocated properly and we get a new pointer
 					free(charArray[selectedChar]); //Free the old address
+					printf("pointer changed.");
 					charArray[selectedChar] = tmp; //Get the new Address
 					charData = tmp;
 				}
@@ -86,6 +91,7 @@ void HandleButton(int x, int y, int button, int bDown)
 
 	else if (bDown && button == 2) //If we are right clicking
 	{
+		printf("Drawn points: %d\n", drawnPoints);
 		if (drawnPoints > 0) //And there are points drawn
 		{
 			drawnPoints--;
@@ -117,12 +123,12 @@ void LoadFont()
 {
 
 
-	int totalPoints = 0;
+	
 
 	int characterToLoad;
 
 	for (characterToLoad = 0; characterToLoad < 256; characterToLoad++) {
-
+		int characterPoints = 0;
 		charArray[characterToLoad] = malloc(8 * sizeof(char)); //allocating 8 points (bytes/characters) per character
 		int index = CharIndex[characterToLoad];
 		
@@ -142,12 +148,12 @@ void LoadFont()
 			do
 			{
 				c++;
-				totalPoints++;
+				characterPoints++;
 
-				if (totalPoints >= 8 && ((totalPoints & (totalPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
+				if (characterPoints >= 8 && ((characterPoints & (characterPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
 				{
 
-					unsigned char* tmp = (unsigned char*)realloc(charArray[characterToLoad], sizeof(char) * (totalPoints << 1));
+					unsigned char* tmp = (unsigned char*)realloc(charArray[characterToLoad], sizeof(char) * (characterPoints << 1));
 					if (tmp != NULL && tmp != charArray[characterToLoad]) { //If the memory was reallocated properly and we get a new pointer
 						free(charArray[characterToLoad]); //Free the old address
 						charArray[characterToLoad] = tmp; //Get the new Address
@@ -196,7 +202,7 @@ void SaveFont(char* filename)
 
 		unsigned char* characterData = charArray[characterToSave];
 		int c = -1;
-
+		
 		//If the character has lines from previously, count the amount of points and segments
 		if ((characterData[0] & 0b10000000) != 0b10000000)
 		{
@@ -204,12 +210,12 @@ void SaveFont(char* filename)
 
 			do
 			{
+				
 				c++;
 				totalPoints++;
-
 				if (totalPoints >= 7 && ((totalPoints & (totalPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
 				{
-
+					printf("char %c too big, allocating more\n", characterToSave);
 					unsigned char* tmp = (unsigned char*)realloc(AllCharacterData, sizeof(char) * (totalPoints << 1));
 					if (tmp != NULL && tmp != AllCharacterData) { //If the memory was reallocated properly and we get a new pointer
 						free(AllCharacterData); //Free the old address
@@ -389,7 +395,7 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 	CNFGPenY = offsetY;
 	CNFGDrawText(testText, scale);
 	CNFGPenY = offsetY+5*scale;
-	CNFGDrawBigText(testText, scale);
+	CNFGDrawBigText(testText, 10);
 }
 
 
