@@ -39,7 +39,7 @@ void HandleButton(int x, int y, int button, int bDown)
 	
 	if (bDown && button == 1 && selectedSquareX >= 0 && selectedSquareY >= 0) //If we left click inside the grid
 	{
-		printf("Drawn points: %d\n", drawnPoints);
+//		printf("Drawn points: %d\n", drawnPoints);
 		char coords = coordToPos(x, y); //Get the selected point
 
 		
@@ -48,12 +48,12 @@ void HandleButton(int x, int y, int button, int bDown)
 		{
 			if (drawnPoints >= 8 && ((drawnPoints & (drawnPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this character
 			{
-				printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
+//				printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
 				
 				unsigned char* tmp =(unsigned char *) realloc(charArray[selectedChar], sizeof(char) * (drawnPoints << 1)); 
 				if (tmp != NULL && tmp != charArray[selectedChar]) { //If the memory was reallocated properly and we get a new pointer
 					free(charArray[selectedChar]); //Free the old address
-					printf("pointer changed.");
+//					printf("pointer changed.");
 					charArray[selectedChar] = tmp; //Get the new Address
 					charData = tmp;
 				}
@@ -91,7 +91,7 @@ void HandleButton(int x, int y, int button, int bDown)
 
 	else if (bDown && button == 2) //If we are right clicking
 	{
-		printf("Drawn points: %d\n", drawnPoints);
+//		printf("Drawn points: %d\n", drawnPoints);
 		if (drawnPoints > 0) //And there are points drawn
 		{
 			drawnPoints--;
@@ -121,10 +121,6 @@ void HandleButton(int x, int y, int button, int bDown)
 #ifdef FONTINIT
 void LoadFont()
 {
-
-
-	
-
 	int characterToLoad;
 
 	for (characterToLoad = 0; characterToLoad < 256; characterToLoad++) {
@@ -161,7 +157,7 @@ void LoadFont()
 					}
 				}
 				memset(&characterDestination[c], characterData[c], 1);
-				printf("%x\n", characterData[c]);
+//				printf("%x\n", characterData[c]);
 				
 
 			} while ((characterData[c] & 0b10000000) != 0b10000000);
@@ -215,7 +211,7 @@ void SaveFont(char* filename)
 				totalPoints++;
 				if (totalPoints >= 7 && ((totalPoints & (totalPoints - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
 				{
-					printf("char %c too big, allocating more\n", characterToSave);
+				//	printf("char %c too big, allocating more\n", characterToSave);
 					unsigned char* tmp = (unsigned char*)realloc(AllCharacterData, sizeof(char) * (totalPoints << 1));
 					if (tmp != NULL && tmp != AllCharacterData) { //If the memory was reallocated properly and we get a new pointer
 						free(AllCharacterData); //Free the old address
@@ -287,7 +283,7 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
-		printf("kc: %d\n",keycode);
+//		printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
 		case 27:	//esc
@@ -395,7 +391,7 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 	CNFGPenY = offsetY;
 	CNFGDrawText(testText, scale);
 	CNFGPenY = offsetY+5*scale;
-	CNFGDrawBigText(testText, 10);
+	CNFGDrawBigText(testText, scale/2);
 }
 
 
@@ -525,7 +521,7 @@ int main()
 		CNFGDrawText(characterIndex,5);
 		yOff += 10+16 * 8 * 2;
 		//draw the bottom test text
-		DrawTestText(10, yOff, 3);
+		DrawTestText(10, yOff, 4);
 
 		//swap the buffer
 		CNFGSwapBuffers();

@@ -258,11 +258,12 @@ void CNFGDrawBigText(const char* text, short scale)
 			do
 			{
 
-				short x1 = (short)((((*lmap) & 0b00111000) >> 3) * scale + iox);
-				short y1 = (short)(((*lmap) & 0b00000111) * scale + ioy);
+				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
+				int y1 = (((*lmap) & 0b00000111) * scale + ioy);
 				segmentEnd = *lmap & 0x40;
-				short x2 = 0;
-				short y2 = 0;
+				int x2 = 0;
+				int y2 = 0;
+				lmap++;
 				if (segmentEnd) 
 				{
 					x2 = x1;
@@ -270,15 +271,16 @@ void CNFGDrawBigText(const char* text, short scale)
 				}
 				else
 				{
-					x2 = (short)((((*(lmap + 1)) & 0b00111000) >> 3) * scale + iox);
-					y2 = (short)(((*(lmap + 1)) & 0b00000111) * scale + ioy);
+					
+					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
+					y2 = (((*lmap) & 0b00000111) * scale + ioy);
+					
 				}
 				
-				lmap++;
-				CNFGTackSegment(x1, y1, x2, y2);
-				bQuit = *lmap & 0x80;
 				
-				lmap++;
+				CNFGTackSegment(x1, y1, x2, y2);
+				bQuit = *(lmap-1 )& 0x80;
+				
 			} while (!bQuit);
 
 			iox += 8 * scale;
