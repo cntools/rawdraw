@@ -373,7 +373,7 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
-		printf("kc: %d\n",keycode);
+		//printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
 		case 65307:
@@ -396,10 +396,13 @@ void HandleKey( int keycode, int bDown )
 //			printf("\n");
 			exit(0);
 
+		case 15:	//r x11
+		case 27:	//r sdl
 		case 114:	//r
 			resetChar();
 			break;
-		case 65362:
+
+		case 65362:	//up linux
 		case 119:	//w
 		case 38:	//up
 			if (selectedChar - 16 >= 0) {
@@ -407,8 +410,9 @@ void HandleKey( int keycode, int bDown )
 			}
 			break;
 
-		case 65364:
-		case 115:
+
+		case 65364:	//down linux
+		case 115:	//s
 		case 40:	//down
 			if (selectedChar + 16 < 256) {
 				changeChar(16);
