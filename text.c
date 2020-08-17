@@ -516,9 +516,12 @@ int main()
 		makeText(10,yOff,2);
 		CNFGPenX = 10+16*16;
 		CNFGPenY = yOff;
-		char characterIndex[32];
-		sprintf(characterIndex,"Character code: %d\nCharacter: %c\n", selectedChar,selectedChar);
-		CNFGDrawText(characterIndex,5);
+		char characterInfo[32];
+		sprintf(characterInfo,"Character code: %d\nCharacter: %c\n", selectedChar,selectedChar);
+		CNFGDrawText(characterInfo,5); 
+		CNFGPenY = yOff+80;
+		sprintf(characterInfo, "New Character:  %c\n", selectedChar);
+		CNFGDrawBigText(characterInfo,2);
 		yOff += 10+16 * 8 * 2;
 		//draw the bottom test text
 		DrawTestText(10, yOff, 4);
