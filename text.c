@@ -1,3 +1,4 @@
+#define FONT_CREATION_TOOL
 #define CNFG_IMPLEMENTATION
 
 #include "FontData.h"
@@ -26,6 +27,9 @@ const uint32_t colorNotContinuing = 0xff00ff;	//color for the selected square wh
 const uint32_t* currentColor = &colorContinuing;	//current color
 
 int segmentLength = 0;	//how many points since the last segment cut
+
+unsigned char* tempFontData;
+int* tempCharIndex;
 
 char coordToPos(int x, int y) { //Screen coordinates to grid position
 	x = (x > 7 * scale ? 7 * scale : x) / scale;
@@ -115,10 +119,81 @@ void HandleButton(int x, int y, int button, int bDown)
 }
 
 
+void CNFGDrawBigText(const char* text, short scale)
+{
+	const unsigned char* lmap;
+	float iox = (float)CNFGPenX; //x offset
+	float ioy = (float)CNFGPenY; //y offset
+
+	int place = 0;
+	unsigned short index;
+	int bQuit = 0;
+	int segmentEnd = 0;
+	while (text[place])
+	{
+		unsigned char c = text[place];
+		switch (c)
+		{
+		case 9: // tab
+			iox += 16 * scale;
+			break;
+		case 10: // linefeed
+			iox = (float)CNFGPenX;
+			ioy += 6 * scale;
+			break;
+		default:
+			index = tempCharIndex[c];
+			if (index == 0)
+			{
+				iox += 8 * scale;
+				break;
+			}
+
+			lmap = &tempFontData[index];
+			do
+			{
+
+				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
+				int y1 = (((*lmap) & 0b00000111) * scale + ioy);
+				segmentEnd = *lmap & 0x40;
+				int x2 = 0;
+				int y2 = 0;
+				lmap++;
+				if (segmentEnd)
+				{
+					x2 = x1;
+					y2 = y1;
+				}
+				else
+				{
+
+					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox);
+					y2 = (((*lmap) & 0b00000111) * scale + ioy);
+
+				}
+
+
+				CNFGTackSegment(x1, y1, x2, y2);
+				bQuit = *(lmap - 1) & 0x80;
+
+			} while (!bQuit);
+
+			iox += 8 * scale;
+		}
+		place++;
+	}
+}
+
 
 #ifdef FONTINIT
 void LoadFont()
 {
+	tempCharIndex = malloc(sizeof(CharIndex));
+	memcpy(tempCharIndex, CharIndex, sizeof(CharIndex));
+	
+	tempFontData = malloc(sizeof(FontData));
+	memcpy(tempFontData, FontData, sizeof(FontData));
+
 	int characterToLoad;
 
 	for (characterToLoad = 0; characterToLoad < 256; characterToLoad++) {
@@ -229,12 +304,19 @@ void SaveFont(char* filename)
 
 	for (int i = 0; i < 256; i++)
 		fprintf(f, "%4d,%s", characterIndex[i], (((i+1) % 16) == 0) ? "\n\t" : " ");
+
+	tempCharIndex = (int *) malloc(sizeof(characterIndex));
+	memcpy(tempCharIndex, characterIndex, sizeof(characterIndex));
+
 	fprintf(f, "};\n\n");
 
 	fprintf(f, "unsigned char FontData[] = {\n\t");
 	for (int i = 0; i <= totalPoints; i++)
 		fprintf(f, "0x%02x,%s", AllCharacterData[i], (((i+1) % 16)==0) ? "\n\t" : " ");
 	fprintf(f, "};\n\n");
+
+	tempFontData = malloc(sizeof(AllCharacterData));
+	memcpy(&tempFontData, &AllCharacterData, sizeof(AllCharacterData));
 
 	fprintf(f, "%s\n", "#endif");
 	fclose(f);
@@ -243,7 +325,8 @@ void SaveFont(char* filename)
 
 
 //Selecting a different character from the grid below to redraw
-void changeChar(int difference) {
+void changeChar(int difference) 
+{
 	SaveFont("FontBackup.c");
 	selectedChar += difference;
 	printf("Selected character: %c, %d\n", selectedChar, selectedChar);
@@ -271,6 +354,17 @@ void changeChar(int difference) {
 
 }
 
+
+void resetChar()
+{
+	free(charArray[selectedChar]);
+	charArray[selectedChar] = malloc(8 * sizeof(char));
+	charData = charArray[selectedChar];
+	segmentLength = 0;
+	drawnPoints = 0;
+
+
+}
 void HandleDestroy() { 
 	SaveFont("FontData.c");
 }
@@ -279,7 +373,7 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
-		//printf("kc: %d\n",keycode);
+		printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
 		case 65307:
@@ -302,8 +396,11 @@ void HandleKey( int keycode, int bDown )
 //			printf("\n");
 			exit(0);
 
+		case 114:	//r
+			resetChar();
+			break;
 		case 65362:
-		case 119:
+		case 119:	//w
 		case 38:	//up
 			if (selectedChar - 16 >= 0) {
 				changeChar(-16);
@@ -335,7 +432,6 @@ void HandleKey( int keycode, int bDown )
 			break;
 		}
 	}
-	//printf( "Key: %d -> %d\n", keycode, bDown );
 }
 
 
@@ -416,7 +512,7 @@ int main()
 	charData = charArray[48]; //Selecting one random character
 
 	changeChar(0);
-	sprintf(testText, "'The quick brown fox jumped over the lazy dog' \"05+6=B\""); //Setting up the test text
+	sprintf(testText, "'The quick brown fox jumps over the lazy dog' \"05+6=B\""); //Setting up the test text
 
 	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 1000, 800);
 

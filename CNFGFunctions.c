@@ -224,6 +224,7 @@ void CNFGDrawText( const char * text, short scale )
 	}
 }
 
+#ifndef FONT_CREATION_TOOL
 void CNFGDrawBigText(const char* text, short scale)
 {
 	const unsigned char* lmap;
@@ -288,7 +289,7 @@ void CNFGDrawBigText(const char* text, short scale)
 		place++;
 	}
 }
-
+#endif
 
 void CNFGDrawBox( short x1, short y1, short x2, short y2 )
 {
