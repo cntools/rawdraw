@@ -151,7 +151,6 @@ void LoadFont()
 
 					unsigned char* tmp = (unsigned char*)realloc(charArray[characterToLoad], sizeof(char) * (characterPoints << 1));
 					if (tmp != NULL && tmp != charArray[characterToLoad]) { //If the memory was reallocated properly and we get a new pointer
-						free(charArray[characterToLoad]); //Free the old address
 						charArray[characterToLoad] = tmp; //Get the new Address
 						characterDestination = tmp;
 					}
@@ -214,7 +213,6 @@ void SaveFont(char* filename)
 				//	printf("char %c too big, allocating more\n", characterToSave);
 					unsigned char* tmp = (unsigned char*)realloc(AllCharacterData, sizeof(char) * (totalPoints << 1));
 					if (tmp != NULL && tmp != AllCharacterData) { //If the memory was reallocated properly and we get a new pointer
-						free(AllCharacterData); //Free the old address
 						AllCharacterData = tmp; //Get the new Address
 					}
 				}
@@ -283,9 +281,10 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
-//		printf("kc: %d\n",keycode);
+		printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
+		case 65307:
 		case 27:	//esc
 			SaveFont("FontData.c");
 			if (drawnPoints > 1)
@@ -295,33 +294,41 @@ void HandleKey( int keycode, int bDown )
 				const unsigned char* lmap = &charData[0];
 				do
 				{
-					printf("0x%x", *lmap);
+//					printf("0x%x", *lmap);
 
 					bQuit = *(lmap) & 0x80;
 					lmap++;
-					if (!bQuit)printf(", ");
+					//if (!bQuit)printf(", ");
 				} while (!bQuit);
 			}
-			printf("\n");
+//			printf("\n");
 			exit(0);
+
+		case 65362:
 		case 119:
 		case 38:	//up
 			if (selectedChar - 16 >= 0) {
 				changeChar(-16);
 			}
 			break;
+
+		case 65364:
 		case 115:
 		case 40:	//down
 			if (selectedChar + 16 < 256) {
 				changeChar(16);
 			}
 			break;
+
+		case 65361:
 		case 97:
 		case 37:	//left
 			if (selectedChar - 1 >= 0) {
 				changeChar(-1);
 			}
 			break;
+
+		case 65363:
 		case 100:
 		case 39:	//right
 			if (selectedChar + 1 < 256) {
