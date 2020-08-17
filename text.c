@@ -380,6 +380,7 @@ void makeText(int offsetX,int offsetY,int scale)
 			{
 				CNFGColor(0x444444);
 				CNFGTackRectangle(CNFGPenX - 4 * scale / 2, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2, CNFGPenY + 12 * scale / 2);
+				CNFGTackRectangle(CNFGPenX - 4 * scale / 2 + 17 * 16, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2 + 17 * 16, CNFGPenY + 12 * scale / 2);
 				CNFGColor(0xffffff);
 			}
 			CNFGDrawText(tw, scale);
@@ -539,7 +540,7 @@ int main()
 		//draw the bottom test text
 		DrawTestText(10, yOff, 4);
 
-		CNFGPenY = h;
+		CNFGPenY = yOff+70;
 		CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
 
 		//swap the buffer
