@@ -47,7 +47,7 @@ void HandleButton(int x, int y, int button, int bDown)
 	{
 		if (selectedBaselineX >= 0 && selectedBaselineY >= 0)
 		{
-			charData[0] = (selectedBaselineX << 2) + (selectedBaselineY);
+			memset(&charData[0],(selectedBaselineX << 2) + (selectedBaselineY),1);
 		}else if (selectedSquareX >= 0 && selectedSquareY >= 0) //If we left click inside the main grid
 		{
 			//		printf("Drawn points: %d\n", drawnPoints);
@@ -205,7 +205,7 @@ void LoadFont()
 	
 	tempCharIndex =(int *) malloc(sizeof(CharIndex));
 	//memcpy(tempCharIndex, CharIndex, sizeof(CharIndex));
-	memset(tempCharIndex, 0, sizeof(CharIndex));
+	memset(&tempCharIndex[0], 0, sizeof(CharIndex));
 	
 
 	
@@ -353,7 +353,7 @@ void changeChar(int difference)
 	printf("Selected character: %c, %d\n", selectedChar, selectedChar);
 	charData = charArray[selectedChar];
 	segmentLength = 0;
-	bytesInCharacter = 1;
+	bytesInCharacter = 0;
 	//printf("0x%x\n", charData[0]);
 	int c;
 
@@ -373,7 +373,8 @@ void changeChar(int difference)
 		}
 	}
 	else
-	{
+	{	
+		bytesInCharacter++;
 		memset(&charData[0],0b00000110,1);
 	}
 
@@ -386,6 +387,7 @@ void resetChar()
 	charArray[selectedChar] = malloc(8 * sizeof(char));
 	charData = charArray[selectedChar];
 	memset(&charData[0], 0b00000110, 1);
+	memset(&charData[1], 0b10000000, 1);
 	segmentLength = 0;
 	bytesInCharacter = 1;
 
@@ -412,11 +414,11 @@ void HandleKey( int keycode, int bDown )
 				const unsigned char* lmap = &charData[0];
 				do
 				{
-//					printf("0x%x", *lmap);
+					printf("0x%x", *lmap);
 
 					bQuit = *(lmap) & 0x80;
 					lmap++;
-					//if (!bQuit)printf(", ");
+					if (!bQuit)printf(", ");
 				} while (!bQuit);
 			}
 //			printf("\n");
@@ -594,14 +596,21 @@ int main()
 		CNFGColor(0xffffff); //Setting the color white for the lines
 		
 		//If we have already drawn a point
-		if (bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000)
+		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000)
 		{
 			
-			short x = (short)(((charData[bytesInCharacter-1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
-			short y = (short)(((charData[bytesInCharacter-1] & 0b00000111)) * scale + (scale - centerSize) / 2);
+			short x = (short)(((charData[bytesInCharacter - 1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
+			short y = (short)(((charData[bytesInCharacter - 1] & 0b00000111)) * scale + (scale - centerSize) / 2);
 			CNFGTackSegment(x + centerSize / 2, y + centerSize / 2, selectedSquareX * scale + scale / 2, selectedSquareY * scale + scale / 2);	//draw line from last point to selected point
 		}
 
+
+		int gridRepX = 8 * scale + 10;
+		int gridRepY = 120;
+		CNFGColor(0x444444);
+		CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
+		CNFGColor(0x884444);
+		CNFGTackRectangle(gridRepX + scale, gridRepY + 2 * scale, gridRepX + 2 * scale, gridRepY + 3 * scale);
 
 		int bQuit = 0; //flag in case we reach the last point of the character
 		const unsigned char* lmap; //Current point
@@ -616,12 +625,7 @@ int main()
 			short ybase = (*lmap) & 0b00000011;
 			lmap++;
 
-			int gridRepX = 8 * scale + 10;
-			int gridRepY = 120;
-			CNFGColor(0x444444);
-			CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
-			CNFGColor(0x884444);
-			CNFGTackRectangle(gridRepX+scale, gridRepY+2*scale, gridRepX + 2 * scale, gridRepY + 3 * scale);
+			
 			CNFGColor(0x448844);
 			CNFGTackRectangle(gridRepX+ xbase *scale, gridRepY+ ybase *scale, gridRepX + (xbase +1) * scale, gridRepY + (ybase+1) * scale);
 			if (selectedBaselineX >= 0 && selectedBaselineY >= 0) {
