@@ -281,7 +281,7 @@ void HandleKey( int keycode, int bDown )
 {
 	if (bDown)
 	{
-		printf("kc: %d\n",keycode);
+		//printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
 		case 65307:
