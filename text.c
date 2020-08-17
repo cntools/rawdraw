@@ -221,7 +221,7 @@ void LoadFont()
 		
 		if (!index) {
 
-			memset(&(charArray[characterToLoad][0]), 0b00000110, 1);
+			memset(&(charArray[characterToLoad][0]), 0b00000101, 1);
 			memset(&(charArray[characterToLoad][1]), 0b10000000, 1);
 		}
 		else {
@@ -375,7 +375,7 @@ void changeChar(int difference)
 	else
 	{	
 		bytesInCharacter++;
-		memset(&charData[0],0b00000110,1);
+		memset(&charData[0],0b00000101,1);
 	}
 
 }
@@ -386,7 +386,7 @@ void resetChar()
 	free(charArray[selectedChar]);
 	charArray[selectedChar] = malloc(8 * sizeof(char));
 	charData = charArray[selectedChar];
-	memset(&charData[0], 0b00000110, 1);
+	memset(&charData[0], 0b00000101, 1);
 	memset(&charData[1], 0b10000000, 1);
 	segmentLength = 0;
 	bytesInCharacter = 1;
@@ -478,15 +478,19 @@ void HandleMotion(int x, int y, int mask)
 		selectedSquareX = (x > 7 * scale ? 7 * scale : x) / scale;
 		selectedSquareY = (y > 7 * scale ? 7 * scale : y) / scale;
 	}
-	else if (x>(secondaryGridx) && x<(secondaryGridx+4*scale) && y>(secondaryGridy) && y < (secondaryGridy + 4 * scale))
+	else
+	{
+		selectedSquareX = -1;
+		selectedSquareY = -1;
+	}
+	
+	if (x>(secondaryGridx) && x<(secondaryGridx+4*scale) && y>(secondaryGridy) && y < (secondaryGridy + 4 * scale))
 	{	
 		selectedBaselineX = ((x - (secondaryGridx)) / scale);
 		selectedBaselineY = ((y - (secondaryGridy)) / scale);
 	}
 	else
 	{
-		selectedSquareX = -1;
-		selectedSquareY = -1;
 		selectedBaselineX = -1;
 		selectedBaselineY = -1;
 	}
@@ -610,7 +614,7 @@ int main()
 		CNFGColor(0x444444);
 		CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
 		CNFGColor(0x884444);
-		CNFGTackRectangle(gridRepX + scale, gridRepY + 2 * scale, gridRepX + 2 * scale, gridRepY + 3 * scale);
+		CNFGTackRectangle(gridRepX + scale, gridRepY + 1 * scale, gridRepX + 2 * scale, gridRepY + 2 * scale);
 
 		int bQuit = 0; //flag in case we reach the last point of the character
 		const unsigned char* lmap; //Current point
