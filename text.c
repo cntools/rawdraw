@@ -33,6 +33,15 @@ int segmentLength = 0;	//how many points since the last segment cut
 unsigned char* tempFontData;
 int* tempCharIndex;
 
+//Data for the character visualization
+short centerSize = 10;	
+short gridW = 8;
+short gridH = 8;
+
+//Data for the baseline
+int gridRepX;
+int gridRepY;
+
 char coordToPos(int x, int y) { //Screen coordinates to grid position
 	x = (x > 7 * scale ? 7 * scale : x) / scale;
 	y = (y > 7 * scale ? 7 * scale : y) / scale;
@@ -41,28 +50,20 @@ char coordToPos(int x, int y) { //Screen coordinates to grid position
 
 void HandleButton(int x, int y, int button, int bDown) 
 {
-	
-	
-	if (bDown && button == 1)
-	{
-		if (selectedBaselineX >= 0 && selectedBaselineY >= 0)
-		{
+	if (bDown && button == 1){
+		if (selectedBaselineX >= 0 && selectedBaselineY >= 0){
 			memset(&charData[0],(selectedBaselineX << 2) + (selectedBaselineY),1);
-		}else if (selectedSquareX >= 0 && selectedSquareY >= 0) //If we left click inside the main grid
-		{
+		}else if (selectedSquareX >= 0 && selectedSquareY >= 0){
 			//		printf("Drawn points: %d\n", drawnPoints);
 			char coords = coordToPos(x, y); //Get the selected point
 
 
-
-			if (bytesInCharacter == 1 || coords != (charData[bytesInCharacter - 1] & 0b00111111)) //If we have no points or the last point was different from the current one, add a new point
-			{
-				if (bytesInCharacter >= 8 && ((bytesInCharacter & (bytesInCharacter - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this character
-				{
-					//				printf("Allocating %d\n", sizeof(char) * (drawnPoints << 1));
-
+			 //If we have no points or the last point was different from the current one, add a new point
+			if (bytesInCharacter == 1 || coords != (charData[bytesInCharacter - 1] & 0b00111111)){
+				//If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this character
+				if (bytesInCharacter >= 8 && ((bytesInCharacter & (bytesInCharacter - 1)) == 0)){
 					unsigned char* tmp = (unsigned char*)realloc(charArray[selectedChar], sizeof(char) * (bytesInCharacter << 1));
-					if (tmp != NULL && tmp != charArray[selectedChar]) { //If the memory was reallocated properly and we get a new pointer
+					if (tmp != NULL && tmp != charArray[selectedChar]) { 
 						charArray[selectedChar] = tmp; //Get the new Address
 						charData = tmp;
 					}
@@ -78,9 +79,7 @@ void HandleButton(int x, int y, int button, int bDown)
 					segmentLength++;
 				}
 				bytesInCharacter++;
-			}
-			else if (coords == (charData[bytesInCharacter - 1] & 0b00111111))  //else if we are clicking the same point again
-			{
+			} else if (coords == (charData[bytesInCharacter - 1] & 0b00111111)){
 
 
 				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] ^ 0b01000000, 1); //change the continuity flag
@@ -97,27 +96,20 @@ void HandleButton(int x, int y, int button, int bDown)
 
 			}
 		}
-	}
-	else if (bDown && button == 2) //If we are right clicking
-	{
-//		printf("Drawn points: %d\n", drawnPoints);
-		if (bytesInCharacter > 1) //And there are points drawn
-		{
+	} else if (bDown && button == 2){
+		if (bytesInCharacter > 1){
 			bytesInCharacter--;
 			memset(&charData[bytesInCharacter], 0b00000000, 1); //reset the last point's value
-			if (bytesInCharacter > 1)
-			{
+			if (bytesInCharacter > 1){
 				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] + 0b10000000, 1); //set the previous point's end of character flag to 1
-				if (bytesInCharacter >= 7 && (((bytesInCharacter+1) & (bytesInCharacter)) == 0)) //If we have allocated more ram than neccesary now, halve it, same formula as before
-				{
-				//	printf("Allocating %d\n", sizeof(char) * ((drawnPoints+1)));
+				//If we have allocated more ram than what's neccesary now, halve it, same formula as before
+				if (bytesInCharacter >= 7 && (((bytesInCharacter+1) & (bytesInCharacter)) == 0)){
 
 					unsigned char* tmp = (unsigned char*)realloc(charArray[selectedChar], sizeof(char) * (bytesInCharacter+1));
 					if (tmp != NULL) {
 						charArray[selectedChar] = tmp;
 						charData = tmp;
 					}
-					//printf("new size %d\n", drawnPoints + 1);
 				}
 			}
 		}
@@ -137,8 +129,7 @@ void CNFGDrawBigText(const char* text, short scale)
 	unsigned short index;
 	int bQuit = 0;
 	int segmentEnd = 0;
-	while (text[place])
-	{
+	while (text[place]){
 		unsigned char c = text[place];
 		switch (c)
 		{
@@ -153,8 +144,7 @@ void CNFGDrawBigText(const char* text, short scale)
 			index = tempCharIndex[c];
 			//printf("%d\n", tempCharIndex[c]);
 			
-			if (index == 0)
-			{
+			if (index == 0){
 				iox += 8 * scale;
 				break;
 			}
@@ -164,8 +154,7 @@ void CNFGDrawBigText(const char* text, short scale)
 			short xbase = ((*lmap) & 0b00001100) >> 2;
 			short ybase = (*lmap) & 0b00000011;
 			lmap++;
-			do
-			{
+			do{
 
 				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase*scale);
 				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
@@ -173,13 +162,11 @@ void CNFGDrawBigText(const char* text, short scale)
 				int x2 = 0;
 				int y2 = 0;
 				lmap++;
-				if (segmentEnd)
-				{
+				if (segmentEnd){
 					x2 = x1;
 					y2 = y1;
 				}
-				else
-				{
+				else{
 
 					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
 					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
@@ -223,35 +210,25 @@ void LoadFont()
 
 			memset(&(charArray[characterToLoad][0]), 0b00000101, 1);
 			memset(&(charArray[characterToLoad][1]), 0b10000000, 1);
-		}
-		else {
-
-			//If the character has data, add it
-			
+		} else{
 			unsigned char* characterData = &FontData[index];
 
 			unsigned char* characterDestination = charArray[characterToLoad];
 
 			int c = -1;
-			//memset(&characterDestination[0], 0b00000110, 1);
-			do
-			{
+			do{
 				c++;
 				characterDataBytes++;
-
-				if (characterDataBytes >= 8 && ((characterDataBytes & (characterDataBytes - 1)) == 0)) //If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
-				{
+				//If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this array
+				if (characterDataBytes >= 8 && ((characterDataBytes & (characterDataBytes - 1)) == 0)) {
 
 					unsigned char* tmp = (unsigned char*)realloc(charArray[characterToLoad], sizeof(char) * (characterDataBytes << 1));
-					if (tmp != NULL && tmp != charArray[characterToLoad]) { //If the memory was reallocated properly and we get a new pointer
-						charArray[characterToLoad] = tmp; //Get the new Address
+					if (tmp != NULL && tmp != charArray[characterToLoad]) { 
+						charArray[characterToLoad] = tmp;
 						characterDestination = tmp;
 					}
 				}
-				memset(&characterDestination[c], characterData[c], 1);
-					
-//				printf("%x\n", characterData[c]);
-				
+				memset(&characterDestination[c], characterData[c], 1);			
 
 			} while ((characterData[c] & 0b10000000) != 0b10000000);
 		}
@@ -293,12 +270,10 @@ void SaveFont(char* filename)
 		int c = -1;
 		
 		//If the character has lines from previously, count the amount of points and segments
-		if ((characterData[1] & 0b10000000) != 0b10000000)
-		{
+		if ((characterData[1] & 0b10000000) != 0b10000000){
 			characterIndex[characterToSave] = totalPoints + 1;
 
-			do
-			{
+			do{
 				
 				c++;
 				totalPoints++;
@@ -315,8 +290,7 @@ void SaveFont(char* filename)
 				//printf("%x\n", characterData[c]);
 
 			} while ((characterData[c] & 0b10000000) != 0b10000000);
-		}
-		else {
+		} else{
 			characterIndex[characterToSave] = 0;
 		}
 	}
@@ -358,8 +332,7 @@ void changeChar(int difference)
 	int c;
 
 	//If the character has lines from previously, count the amount of points and segments
-	if ((charData[1] & 0b10000000) != 0b10000000)
-	{
+	if ((charData[1] & 0b10000000) != 0b10000000){
 		bytesInCharacter++;
 		for (c = 0; (charData[c] & 0b10000000) != 0b10000000; c++) {
 
@@ -371,9 +344,7 @@ void changeChar(int difference)
 			}
 			bytesInCharacter++;
 		}
-	}
-	else
-	{	
+	} else{	
 		bytesInCharacter++;
 		memset(&charData[0],0b00000101,1);
 	}
@@ -399,8 +370,7 @@ void HandleDestroy() {
 
 void HandleKey( int keycode, int bDown )
 {
-	if (bDown)
-	{
+	if (bDown){
 		//printf("kc: %d\n",keycode);
 		switch (keycode)
 		{
@@ -473,24 +443,18 @@ void HandleMotion(int x, int y, int mask)
 	int secondaryGridx = 8 * scale + 10;
 	int secondaryGridy = 120;
 	//Update the selected point if the mouse is in the drawing grid.
-	if (x < 8 * scale && y < 8 * scale)
-	{
+	if (x < 8 * scale && y < 8 * scale){
 		selectedSquareX = (x > 7 * scale ? 7 * scale : x) / scale;
 		selectedSquareY = (y > 7 * scale ? 7 * scale : y) / scale;
-	}
-	else
-	{
+	}else{
 		selectedSquareX = -1;
 		selectedSquareY = -1;
 	}
 	
-	if (x>(secondaryGridx) && x<(secondaryGridx+4*scale) && y>(secondaryGridy) && y < (secondaryGridy + 4 * scale))
-	{	
+	if (x>(secondaryGridx) && x<(secondaryGridx+4*scale) && y>(secondaryGridy) && y < (secondaryGridy + 4 * scale)){	
 		selectedBaselineX = ((x - (secondaryGridx)) / scale);
 		selectedBaselineY = ((y - (secondaryGridy)) / scale);
-	}
-	else
-	{
+	}else{
 		selectedBaselineX = -1;
 		selectedBaselineY = -1;
 	}
@@ -516,8 +480,7 @@ void makeText(int offsetX,int offsetY,int scale)
 			CNFGPenY = offsetY + (c / 16) * 16 * scale / 2;
 
 			//if this is the selected character, draw a grey rectangle behind
-			if (c == selectedChar)
-			{
+			if (c == selectedChar){
 				CNFGColor(0x444444);
 				CNFGTackRectangle(CNFGPenX - 4 * scale / 2, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2, CNFGPenY + 12 * scale / 2);
 				CNFGTackRectangle(CNFGPenX - 4 * scale / 2 + 17 * 16, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2 + 17 * 16, CNFGPenY + 12 * scale / 2);
@@ -543,9 +506,147 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 	CNFGDrawBigText(testText, scale/2);
 }
 
+void drawCharacterGrid() 
+{
+	CNFGColor(0x444444);	
+
+	CNFGTackRectangle(0, 0, gridW * scale, gridH * scale);	
+
+	//Draw the squares
+	CNFGColor(0x0);
+	short gx;
+	short gy;
+	for (gy = 0; gy < gridW; gy++) {
+		for (gx = 0; gx < gridH; gx++) {
+			CNFGTackRectangle(gx * scale + (scale - centerSize) / 2, gy * scale + (scale - centerSize) / 2, gx * scale + (scale - centerSize) / 2 + centerSize, gy * scale + (scale - centerSize) / 2 + centerSize);
+		}
+	}
+
+
+}
+
+void prepareFrame(short* w, short* h) 
+{
+	CNFGClearFrame(); //Clearing the buffer
+	CNFGHandleInput(); //Handling all the buffer functions
+	CNFGGetDimensions(w, h); //Getting the current window size
+	CNFGPenX = 1; CNFGPenY = 1; //Position of the Pen, text will be made from here
+
+	drawCharacterGrid();
+}
+
+
+void drawLineFromLastPoint() 
+{
+	short x = (short)(((charData[bytesInCharacter - 1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
+	short y = (short)(((charData[bytesInCharacter - 1] & 0b00000111)) * scale + (scale - centerSize) / 2);
+	CNFGTackSegment(x + centerSize / 2, y + centerSize / 2, selectedSquareX * scale + scale / 2, selectedSquareY * scale + scale / 2);	//draw line from last point to selected point
+}
+
+void drawBaselineGrid() 
+{
+
+	CNFGColor(0x444444);
+	CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
+	CNFGColor(0x884444);
+	CNFGTackRectangle(gridRepX + scale, gridRepY + 1 * scale, gridRepX + 2 * scale, gridRepY + 2 * scale);
+
+	CNFGColor(0x000000);
+	for (int linePos = 1; linePos < 4; linePos++) {
+
+		CNFGTackSegment(gridRepX + linePos * scale, gridRepY, gridRepX + linePos * scale, gridRepY + 4 * scale);
+		CNFGTackSegment(gridRepX, gridRepY + linePos * scale, gridRepX + 4 * scale, gridRepY + linePos * scale);
+	}
+
+	if (selectedBaselineX >= 0 && selectedBaselineY >= 0) {
+		CNFGColor(0x444488);
+		CNFGTackRectangle(gridRepX + selectedBaselineX * scale, gridRepY + selectedBaselineY * scale, gridRepX + (selectedBaselineX + 1) * scale, gridRepY + (selectedBaselineY + 1) * scale);
+	}
+
+}
+
+void drawSelectedSlot() 
+{
+	CNFGColor(*currentColor);
+	CNFGTackRectangle(selectedSquareX * scale + (scale - centerSize * 2) / 2, selectedSquareY * scale + (scale - centerSize * 2) / 2, selectedSquareX * scale + (scale - centerSize * 2) / 2 + centerSize * 2, selectedSquareY * scale + (scale - centerSize * 2) / 2 + centerSize * 2);
+
+
+}
+
+void drawCharacterInfo()
+{
+	int yOff = 20 + (gridH)*scale;
+	makeText(10, yOff, 2);
+	CNFGPenX = 8 * scale + 10;
+	CNFGPenY = 10;
+
+	char characterInfo[32];
+	sprintf(characterInfo, "Character code: %d\nCharacter: %c\n", selectedChar, selectedChar);
+	CNFGDrawText(characterInfo, 5);
+
+	CNFGPenY = 90;
+	sprintf(characterInfo, "New Character:  %c\n", selectedChar);
 
 
 
+	CNFGDrawBigText(characterInfo, 2);
+}
+
+void drawCharacterTest()
+{
+
+	int yOff = 20 + (gridH)*scale + 10 + 16 * 8 * 2;
+	DrawTestText(10, yOff, 4);
+
+	CNFGPenY = yOff + 70;
+	CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
+}
+
+void drawCharacterLines(const unsigned char * lmap)
+{
+	int length = 0; //total character's points
+
+
+	short xbase = ((*lmap) & 0b00001100) >> 2;
+	short ybase = (*lmap) & 0b00000011;
+	lmap++;
+
+
+	CNFGColor(0x448844);
+	CNFGTackRectangle(gridRepX + xbase * scale, gridRepY + ybase * scale, gridRepX + (xbase + 1) * scale, gridRepY + (ybase + 1) * scale);
+
+	CNFGColor(0xffffff);
+
+	int bQuit = 0;
+	do {
+
+		short x1 = (short)((((*lmap) & 0b00111000) >> 3) * scale + (scale) / 2); //get the first point's coordinates
+		short y1 = (short)(((*lmap) & 0b00000111) * scale + (scale) / 2);
+
+
+		bQuit = *(lmap) & 0x80; //Check if this is the last point
+		lmap++;
+		if ((*(lmap - 1) & 0b01000000)) {
+			if (length == 0) { //and it had no length, aka it was a single point segment
+				CNFGTackRectangle(x1 - centerSize * 2, y1 - centerSize * 2, x1 + centerSize * 2, y1 + centerSize * 2); //draw a rectangle 
+			}
+			length = 0; //reset the lenght
+			continue;
+		}
+		else {	// if it wasnt the last point of the segment
+			length++; //add one to the segment's length
+		}
+		if (bQuit)continue; //if it was the last point of the character, skip everything else
+		if (bytesInCharacter > 1) {
+			//Draw a line from the previous point to this one
+			short x2 = (short)((((*(lmap)) & 0b00111000) >> 3) * scale + (scale) / 2);
+			short y2 = (short)(((*(lmap)) & 0b00000111) * scale + (scale) / 2);
+			CNFGTackSegment(x1, y1, x2, y2);
+		}
+
+	} while (!bQuit);
+
+}
 
 int main()
 {
@@ -560,159 +661,42 @@ int main()
 
 	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 1000, 800);
 
+	gridRepX = 8 * scale + 10;
+	gridRepY = 120;
+
+
 	while (1)
 	{
 		short w, h;
-		CNFGClearFrame(); //Clearing the buffer
-		CNFGHandleInput(); //Handling all the buffer functions
-		CNFGGetDimensions(&w, &h); //Getting the current window size
-		
-		CNFGPenX = 1; CNFGPenY = 1; //Position of the Pen, text will be made from here
-		
-		// Preparing the grid values, we use 3 bites for x and 3 for y so 8x8
-		short gridW = 8;
-		short gridH = 8;
-		
-		short centerSize = 10;	//Size of the center squares
-
-		
-		CNFGColor(0x444444);	//Color for the background rectangle
-		
-		CNFGTackRectangle(0, 0, gridW * scale, gridH * scale);	//Drawing the background rectangle
-
-
-		CNFGColor(0x0);
-		//current position for iterations
-		short gx;
-		short gy;
-		for (gy = 0; gy < gridW; gy++) 
-		{
-			for (gx = 0; gx < gridH; gx++)
-			{
-				//Drawing all the rectangles that signal the center of a grid position
-				CNFGTackRectangle(gx * scale + (scale - centerSize) / 2, gy * scale + (scale - centerSize) / 2, gx * scale + (scale - centerSize) / 2 + centerSize, gy * scale + (scale - centerSize) / 2 + centerSize);
-			}
-
-		}
+		prepareFrame(&w, &h);
 		
 		
-
 		CNFGColor(0xffffff); //Setting the color white for the lines
 		
 		//If we have already drawn a point
-		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000)
-		{
+		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000){
+			drawLineFromLastPoint();
 			
-			short x = (short)(((charData[bytesInCharacter - 1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
-			short y = (short)(((charData[bytesInCharacter - 1] & 0b00000111)) * scale + (scale - centerSize) / 2);
-			CNFGTackSegment(x + centerSize / 2, y + centerSize / 2, selectedSquareX * scale + scale / 2, selectedSquareY * scale + scale / 2);	//draw line from last point to selected point
 		}
 
+		drawBaselineGrid();
 
-		int gridRepX = 8 * scale + 10;
-		int gridRepY = 120;
-		CNFGColor(0x444444);
-		CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
-		CNFGColor(0x884444);
-		CNFGTackRectangle(gridRepX + scale, gridRepY + 1 * scale, gridRepX + 2 * scale, gridRepY + 2 * scale);
 
-		int bQuit = 0; //flag in case we reach the last point of the character
-		const unsigned char* lmap; //Current point
 		
-		if (bytesInCharacter)
-		{
-			int length = 0; //total character's points
-			lmap = &charData[0]; //start by the first point... of course.
+		 //Current point
+		
+		if (bytesInCharacter){
 
-
-			short xbase = ((*lmap) & 0b00001100)>>2;
-			short ybase = (*lmap) & 0b00000011;
-			lmap++;
-
+			drawCharacterLines(&charData[0]);
 			
-			CNFGColor(0x448844);
-			CNFGTackRectangle(gridRepX+ xbase *scale, gridRepY+ ybase *scale, gridRepX + (xbase +1) * scale, gridRepY + (ybase+1) * scale);
-			if (selectedBaselineX >= 0 && selectedBaselineY >= 0) {
-				CNFGColor(0x444488);
-				CNFGTackRectangle(gridRepX + selectedBaselineX * scale, gridRepY + selectedBaselineY * scale, gridRepX + (selectedBaselineX + 1) * scale, gridRepY + (selectedBaselineY + 1) * scale);
-			}
-			CNFGColor(0x000000);
-			for (int linePos = 1; linePos < 4; linePos++) {
-				
-				CNFGTackSegment(gridRepX + linePos * scale, gridRepY, gridRepX + linePos * scale, gridRepY + 4 * scale);
-				CNFGTackSegment(gridRepX , gridRepY + linePos * scale, gridRepX + 4 * scale, gridRepY + linePos * scale);
-			}
-			CNFGColor(0xffffff);
-
-			do
-			{
-
-				short x1 = (short)((((*lmap) & 0b00111000) >> 3) * scale + (scale) / 2); //get the first point's coordinates
-				short y1 = (short)(((*lmap) & 0b00000111) * scale + (scale) / 2); 
-
-
-				bQuit = *(lmap) & 0x80; //Check if this is the last point
-				lmap++; 
-				if ((*(lmap - 1) & 0b01000000)) //if it was the last point of the segment
-				{
-					if (length == 0) { //and it had no length, aka it was a single point segment
-						CNFGTackRectangle(x1 - centerSize*2, y1 - centerSize*2, x1 + centerSize*2, y1 + centerSize*2); //draw a rectangle 
-					}
-					length = 0; //reset the lenght
-					continue;
-				}
-				else {	// if it wasnt the last point of the segment
-					length++; //add one to the segment's length
-				}
-				if (bQuit)continue; //if it was the last point of the character, skip everything else
-				if (bytesInCharacter > 1) //if we had already drawn more points
-				{
-					//Draw a line from the previous point to this one
-					short x2 = (short)((((*(lmap)) & 0b00111000) >> 3) * scale + (scale) / 2);
-					short y2 = (short)(((*(lmap)) & 0b00000111) * scale + (scale) / 2);
-					CNFGTackSegment(x1, y1, x2, y2);
-				}
-				
-			} while (!bQuit);
 		}
 		
-		//Draw a bigger rectangle where our selection is
-		CNFGColor(*currentColor);
-		CNFGTackRectangle(selectedSquareX * scale + (scale - centerSize*2) / 2, selectedSquareY * scale + (scale - centerSize*2) / 2, selectedSquareX * scale + (scale - centerSize*2) / 2 + centerSize*2, selectedSquareY * scale + (scale - centerSize*2) / 2 + centerSize*2);
+		drawSelectedSlot();
 
-		//CNFGTackPixel(50, 50);
+		drawCharacterInfo();
 		
-		/*unsigned char* point;
-		for (point = lines[0]; (*point); point++)
-		{
-			printf("%c\n", point);
-		}*/
-
-		//draw the bottom text grid
-		int yOff = 20 + (gridH)*scale ;
-		makeText(10,yOff,2);
-		CNFGPenX = 8*scale+10;
-		CNFGPenY = 10;
+		drawCharacterTest();
 		
-		
-		char characterInfo[32];
-		sprintf(characterInfo,"Character code: %d\nCharacter: %c\n", selectedChar,selectedChar);
-		CNFGDrawText(characterInfo, 5);
-
-		CNFGPenY = 90;
-		sprintf(characterInfo, "New Character:  %c\n", selectedChar);
-		
-
-		
-		CNFGDrawBigText(characterInfo,2);
-		yOff += 10+16 * 8 * 2;
-		//draw the bottom test text
-		DrawTestText(10, yOff, 4);
-
-		CNFGPenY = yOff+70;
-		CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
-
-		//swap the buffer
 		CNFGSwapBuffers();
 	}
 }

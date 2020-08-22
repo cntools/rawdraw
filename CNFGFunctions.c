@@ -235,8 +235,7 @@ void CNFGDrawBigText(const char* text, short scale)
 	unsigned short index;
 	int bQuit = 0;
 	int segmentEnd = 0;
-	while (text[place])
-	{
+	while (text[place]){
 		unsigned char c = text[place];
 		switch (c)
 		{
@@ -249,8 +248,7 @@ void CNFGDrawBigText(const char* text, short scale)
 			break;
 		default:
 			index = CharIndex[c];
-			if (index == 0)
-			{
+			if (index == 0){
 				iox += 8 * scale;
 				break;
 			}
@@ -260,8 +258,7 @@ void CNFGDrawBigText(const char* text, short scale)
 			short xbase = ((*lmap) & 0b00001100)>>2;
 			short ybase = (*lmap) & 0b00000011;
 			lmap++;
-			do
-			{
+			do{
 
 				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase*scale);
 				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
@@ -269,13 +266,10 @@ void CNFGDrawBigText(const char* text, short scale)
 				int x2 = 0;
 				int y2 = 0;
 				lmap++;
-				if (segmentEnd)
-				{
+				if (segmentEnd){
 					x2 = x1;
 					y2 = y1;
-				}
-				else
-				{
+				} else{
 
 					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
 					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
