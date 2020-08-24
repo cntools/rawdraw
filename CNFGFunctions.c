@@ -249,14 +249,15 @@ void CNFGDrawBigText(const char* text, short scale)
 		default:
 			index = CharIndex[c];
 			if (index == 0){
-				iox += 8 * scale;
+				iox += 4 * scale;
 				break;
 			}
 
 			lmap = &FontData[index];
-			
-			short xbase = ((*lmap) & 0b00001100)>>2;
-			short ybase = (*lmap) & 0b00000011;
+
+			short charWidth = ((*lmap) & 0b11100000) >> 5;
+			short xbase = ((*lmap) & 0b00011000)>>3;
+			short ybase = (*lmap) & 0b00000111;
 			lmap++;
 			do{
 
@@ -281,8 +282,8 @@ void CNFGDrawBigText(const char* text, short scale)
 				bQuit = *(lmap-1 )& 0x80;
 				
 			} while (!bQuit);
-
-			iox += 8 * scale;
+			iox += (charWidth + 2) * scale;
+			//iox += 8 * scale;
 		}
 		place++;
 	}

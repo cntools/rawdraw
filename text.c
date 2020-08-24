@@ -14,11 +14,12 @@ unsigned char** charArray;
 
 
 
-short selectedSquareX, selectedSquareY;		// Coords of the chosen point
+short selectedSquareX = -1, selectedSquareY = -1;		// Coords of the chosen point
 short scale = 50;	//scale for the grid
+int halfScale;
 short bytesInCharacter = 1; //Number of bytes in this character
+short characterWidth;
 
-short selectedBaselineX, selectedBaselineY;
 
 int selectedChar = 48;	//Selected character 
 unsigned char* charData;	//Array of points for this character
@@ -41,6 +42,16 @@ short gridH = 8;
 //Data for the baseline
 int gridRepX;
 int gridRepY;
+short selectedBaselineX = -1, selectedBaselineY = -1;
+
+int widthSelectorY;
+short selectedWidth = -1;
+
+//Data for the text comparation
+const int characterScale = 3;
+
+
+void resetChar();
 
 char coordToPos(int x, int y) { //Screen coordinates to grid position
 	x = (x > 7 * scale ? 7 * scale : x) / scale;
@@ -52,9 +63,8 @@ void HandleButton(int x, int y, int button, int bDown)
 {
 	if (bDown && button == 1){
 		if (selectedBaselineX >= 0 && selectedBaselineY >= 0){
-			memset(&charData[0],(selectedBaselineX << 2) + (selectedBaselineY),1);
+			memset(&charData[0], (charData[0] & 0b11100000) | (selectedBaselineX << 3) | (selectedBaselineY),1);
 		}else if (selectedSquareX >= 0 && selectedSquareY >= 0){
-			//		printf("Drawn points: %d\n", drawnPoints);
 			char coords = coordToPos(x, y); //Get the selected point
 
 
@@ -96,6 +106,9 @@ void HandleButton(int x, int y, int button, int bDown)
 
 			}
 		}
+		else if (selectedWidth >= 0) {
+			memset(&charData[0], (charData[0] & 0b00011111)|(selectedWidth << 5), 1);
+		}
 	} else if (bDown && button == 2){
 		if (bytesInCharacter > 1){
 			bytesInCharacter--;
@@ -111,6 +124,9 @@ void HandleButton(int x, int y, int button, int bDown)
 						charData = tmp;
 					}
 				}
+			}
+			else {
+				resetChar();
 			}
 		}
 	}
@@ -145,14 +161,15 @@ void CNFGDrawBigText(const char* text, short scale)
 			//printf("%d\n", tempCharIndex[c]);
 			
 			if (index == 0){
-				iox += 8 * scale;
+				iox += 4 * scale;
 				break;
 			}
 
 			lmap = &tempFontData[index];
 
-			short xbase = ((*lmap) & 0b00001100) >> 2;
-			short ybase = (*lmap) & 0b00000011;
+			short charWidth = ((*lmap) & 0b11100000) >> 5;
+			short xbase = ((*lmap) & 0b00011000) >> 3;
+			short ybase = (*lmap) & 0b00000111;
 			lmap++;
 			do{
 
@@ -178,8 +195,8 @@ void CNFGDrawBigText(const char* text, short scale)
 				bQuit = *(lmap - 1) & 0x80;
 
 			} while (!bQuit);
-
-			iox += 8 * scale;
+			iox += (charWidth+2) * scale;
+			//iox += 8 * scale;
 		}
 		place++;
 	}
@@ -208,7 +225,7 @@ void LoadFont()
 		
 		if (!index) {
 
-			memset(&(charArray[characterToLoad][0]), 0b00000101, 1);
+			memset(&(charArray[characterToLoad][0]), 0b10001001, 1);
 			memset(&(charArray[characterToLoad][1]), 0b10000000, 1);
 		} else{
 			unsigned char* characterData = &FontData[index];
@@ -230,7 +247,7 @@ void LoadFont()
 				}
 				memset(&characterDestination[c], characterData[c], 1);			
 
-			} while ((characterData[c] & 0b10000000) != 0b10000000);
+			} while (c==0 || (characterData[c] & 0b10000000) != 0b10000000);
 		}
 	}
 	printf("Font Loaded\n");
@@ -289,8 +306,16 @@ void SaveFont(char* filename)
 
 				//printf("%x\n", characterData[c]);
 
-			} while ((characterData[c] & 0b10000000) != 0b10000000);
-		} else{
+			} while (c==0 || (characterData[c] & 0b10000000) != 0b10000000);
+		}
+		else if (characterData[1] & 0b01000000 == 0b01000000) {
+			totalPoints++;
+			characterIndex[characterToSave] = totalPoints;
+			AllCharacterData[totalPoints] = characterData[0];
+			totalPoints++;
+			AllCharacterData[totalPoints] = characterData[1];
+		}
+		else{
 			characterIndex[characterToSave] = 0;
 		}
 	}
@@ -330,11 +355,10 @@ void changeChar(int difference)
 	bytesInCharacter = 0;
 	//printf("0x%x\n", charData[0]);
 	int c;
-
+	bytesInCharacter++;
 	//If the character has lines from previously, count the amount of points and segments
 	if ((charData[1] & 0b10000000) != 0b10000000){
-		bytesInCharacter++;
-		for (c = 0; (charData[c] & 0b10000000) != 0b10000000; c++) {
+		for (c = 0;(charData[c] & 0b10000000) != 0b10000000 || c == 0; c++) {
 
 			if (charData[c] & 0b01000000 != 0b01000000) {
 				segmentLength = 0;
@@ -344,9 +368,12 @@ void changeChar(int difference)
 			}
 			bytesInCharacter++;
 		}
-	} else{	
-		bytesInCharacter++;
-		memset(&charData[0],0b00000101,1);
+	}
+	else if(charData[1] & 0b01000000 == 0b01000000) {
+		bytesInCharacter ++;
+	}
+	else {
+		memset(&charData[0],0b00001001,1);
 	}
 
 }
@@ -357,7 +384,7 @@ void resetChar()
 	free(charArray[selectedChar]);
 	charArray[selectedChar] = malloc(8 * sizeof(char));
 	charData = charArray[selectedChar];
-	memset(&charData[0], 0b00000101, 1);
+	memset(&charData[0], 0b00001001, 1);
 	memset(&charData[1], 0b10000000, 1);
 	segmentLength = 0;
 	bytesInCharacter = 1;
@@ -440,8 +467,7 @@ void HandleKey( int keycode, int bDown )
 
 void HandleMotion(int x, int y, int mask) 
 {
-	int secondaryGridx = 8 * scale + 10;
-	int secondaryGridy = 120;
+	
 	//Update the selected point if the mouse is in the drawing grid.
 	if (x < 8 * scale && y < 8 * scale){
 		selectedSquareX = (x > 7 * scale ? 7 * scale : x) / scale;
@@ -451,13 +477,23 @@ void HandleMotion(int x, int y, int mask)
 		selectedSquareY = -1;
 	}
 	
-	if (x>(secondaryGridx) && x<(secondaryGridx+4*scale) && y>(secondaryGridy) && y < (secondaryGridy + 4 * scale)){	
-		selectedBaselineX = ((x - (secondaryGridx)) / scale);
-		selectedBaselineY = ((y - (secondaryGridy)) / scale);
+	if (x>(gridRepX) && x<(gridRepX +4* halfScale) && y>(gridRepY) && y < (gridRepY + 8 * halfScale)){
+		selectedBaselineX = ((x - (gridRepX)) / halfScale);
+		selectedBaselineY = ((y - (gridRepY)) / halfScale);
 	}else{
 		selectedBaselineX = -1;
 		selectedBaselineY = -1;
 	}
+
+	
+	if (x > (gridRepX) && x<(gridRepX + 8 * halfScale) && y>(widthSelectorY) && y < (widthSelectorY + halfScale)) {
+		selectedWidth = ((x - (gridRepX)) / halfScale);
+	}
+	else {
+		selectedWidth = -1;
+	}
+
+	
 	
 }
 
@@ -483,15 +519,15 @@ void makeText(int offsetX,int offsetY,int scale)
 			if (c == selectedChar){
 				CNFGColor(0x444444);
 				CNFGTackRectangle(CNFGPenX - 4 * scale / 2, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2, CNFGPenY + 12 * scale / 2);
-				CNFGTackRectangle(CNFGPenX - 4 * scale / 2 + 17 * 16, CNFGPenY - 4 * scale / 2, CNFGPenX + 8 * scale / 2 + 17 * 16, CNFGPenY + 12 * scale / 2);
+				CNFGTackRectangle(CNFGPenX - 1 * scale / 2 + (17 * 16)*scale/2, CNFGPenY - 4 * scale / 2, CNFGPenX + 11 * scale / 2 + (17 * 16) * scale / 2, CNFGPenY + 12 * scale / 2);
 				CNFGColor(0xffffff);
 			}
 			CNFGDrawText(tw, scale);
-			CNFGPenX = offsetX + (c % 16) * 16 * scale / 2 +17*16;
+			CNFGPenX = offsetX + (c % 16) * 16 * scale / 2 + 17 * 16*scale/2;
 			CNFGDrawBigText(tw, scale/2);
 		}
 	}
-	CNFGTackSegment(offsetX+ 16 * 16,offsetY, offsetX  + 16 * 16, offsetY+256/16*16*scale/2);
+	CNFGTackSegment(offsetX+ 16 * 8*scale,offsetY, offsetX  + 16 * 8*scale, offsetY+256/16*16*scale/2);
 }
 
 
@@ -545,24 +581,58 @@ void drawLineFromLastPoint()
 
 void drawBaselineGrid() 
 {
+	CNFGColor(0xffffff);
+	CNFGPenY = gridRepY - 20;
+	CNFGPenX = gridRepX;
+	CNFGDrawBigText("Position offset:", 2);
+	CNFGPenY = gridRepY + 8 * halfScale + 8;
+	CNFGPenX = gridRepX;
+	CNFGDrawBigText("Character width:", 2);
 
 	CNFGColor(0x444444);
-	CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * scale, gridRepY + 4 * scale);
+	CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * halfScale, gridRepY + 8 * halfScale);
+	CNFGTackRectangle(gridRepX, gridRepY + 9 * halfScale + 8, gridRepX + 8 * halfScale, gridRepY + 10 * halfScale + 8);
+
 	CNFGColor(0x884444);
-	CNFGTackRectangle(gridRepX + scale, gridRepY + 1 * scale, gridRepX + 2 * scale, gridRepY + 2 * scale);
+	CNFGTackRectangle(gridRepX + halfScale, gridRepY + 1 * halfScale, gridRepX + 2 * halfScale, gridRepY + 2 * halfScale);
 
 	CNFGColor(0x000000);
 	for (int linePos = 1; linePos < 4; linePos++) {
 
-		CNFGTackSegment(gridRepX + linePos * scale, gridRepY, gridRepX + linePos * scale, gridRepY + 4 * scale);
-		CNFGTackSegment(gridRepX, gridRepY + linePos * scale, gridRepX + 4 * scale, gridRepY + linePos * scale);
+		CNFGTackSegment(gridRepX + linePos * halfScale, gridRepY, gridRepX + linePos * halfScale, gridRepY + 8 * halfScale);
+
+	}
+
+	for (int linePos = 1; linePos < 8; linePos++) {
+
+		CNFGTackSegment(gridRepX, gridRepY + linePos * halfScale, gridRepX + 4 * halfScale, gridRepY + linePos * halfScale);
+	}
+
+	for (int linePos = 1; linePos < 8; linePos++) {
+
+		CNFGTackSegment(gridRepX + linePos * halfScale, widthSelectorY, gridRepX + linePos * halfScale, widthSelectorY+halfScale);
+
 	}
 
 	if (selectedBaselineX >= 0 && selectedBaselineY >= 0) {
 		CNFGColor(0x444488);
-		CNFGTackRectangle(gridRepX + selectedBaselineX * scale, gridRepY + selectedBaselineY * scale, gridRepX + (selectedBaselineX + 1) * scale, gridRepY + (selectedBaselineY + 1) * scale);
+		CNFGTackRectangle(gridRepX + selectedBaselineX * halfScale, gridRepY + selectedBaselineY * halfScale, gridRepX + (selectedBaselineX + 1) * halfScale, gridRepY + (selectedBaselineY + 1) * halfScale);
+	}else if (selectedWidth >=0) {
+		CNFGColor(0x444488);
+		CNFGTackRectangle(gridRepX + selectedWidth * halfScale, widthSelectorY, gridRepX + (selectedWidth + 1)  * halfScale, widthSelectorY+ halfScale);
 	}
 
+
+	CNFGColor(0xffffff);
+	char number[2];
+	CNFGPenY = widthSelectorY+2;
+	for (int linePos = 1; linePos < 9; linePos++) {
+		CNFGPenX = gridRepX+ (linePos-1) *halfScale +2;
+		sprintf(number, "%d", linePos);
+		CNFGDrawBigText(number, 2);
+	}
+
+	
 }
 
 void drawSelectedSlot() 
@@ -573,15 +643,15 @@ void drawSelectedSlot()
 
 }
 
-void drawCharacterInfo()
+void drawCharacterInfo(int characterScate)
 {
 	int yOff = 20 + (gridH)*scale;
-	makeText(10, yOff, 2);
+	makeText(10, yOff, characterScate);
 	CNFGPenX = 8 * scale + 10;
 	CNFGPenY = 10;
 
 	char characterInfo[32];
-	sprintf(characterInfo, "Character code: %d\nCharacter: %c\n", selectedChar, selectedChar);
+	sprintf(characterInfo, "Character code: %d\t(0x%x)\nCharacter: %c\n", selectedChar, selectedChar, selectedChar);
 	CNFGDrawText(characterInfo, 5);
 
 	CNFGPenY = 90;
@@ -592,28 +662,44 @@ void drawCharacterInfo()
 	CNFGDrawBigText(characterInfo, 2);
 }
 
-void drawCharacterTest()
+void drawCharacterTest(int characterScale)
 {
 
-	int yOff = 20 + (gridH)*scale + 10 + 16 * 8 * 2;
+	int yOff = 20 + (gridH)*scale + 10 + 16 * 8 * 2*characterScale/2;
 	DrawTestText(10, yOff, 4);
 
 	CNFGPenY = yOff + 70;
 	CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
 }
 
-void drawCharacterLines(const unsigned char * lmap)
+void drawCharacterLines(unsigned char * lmap)
 {
 	int length = 0; //total character's points
 
+	short characterWidth = ((*lmap) & 0b11100000) >> 5;
 
-	short xbase = ((*lmap) & 0b00001100) >> 2;
-	short ybase = (*lmap) & 0b00000011;
+	short xbase = ((*lmap) & 0b00011000) >> 3;
+	short ybase = (*lmap) & 0b00000111;
 	lmap++;
+
+	CNFGColor(0x448844);
+	CNFGTackRectangle(gridRepX + xbase * halfScale, gridRepY + ybase * halfScale, gridRepX + (xbase + 1) * halfScale, gridRepY + (ybase + 1) * halfScale);
 
 
 	CNFGColor(0x448844);
-	CNFGTackRectangle(gridRepX + xbase * scale, gridRepY + ybase * scale, gridRepX + (xbase + 1) * scale, gridRepY + (ybase + 1) * scale);
+	CNFGTackRectangle(gridRepX + (characterWidth) * halfScale, widthSelectorY , gridRepX + (characterWidth +1) * halfScale, widthSelectorY + halfScale);
+
+	CNFGColor(0x222222);
+	CNFGTackRectangle((characterWidth)*scale+scale, 0, gridW * scale, gridH * scale);
+	CNFGColor(0x000000);
+	short gx;
+	short gy;
+	for (gy = 0; gy < gridW; gy++) {
+		for (gx = characterWidth; gx < gridH; gx++) {
+			CNFGTackRectangle(gx * scale + (scale - centerSize) / 2, gy * scale + (scale - centerSize) / 2, gx * scale + (scale - centerSize) / 2 + centerSize, gy * scale + (scale - centerSize) / 2 + centerSize);
+		}
+	}
+
 
 	CNFGColor(0xffffff);
 
@@ -637,6 +723,7 @@ void drawCharacterLines(const unsigned char * lmap)
 			length++; //add one to the segment's length
 		}
 		if (bQuit)continue; //if it was the last point of the character, skip everything else
+
 		if (bytesInCharacter > 1) {
 			//Draw a line from the previous point to this one
 			short x2 = (short)((((*(lmap)) & 0b00111000) >> 3) * scale + (scale) / 2);
@@ -652,18 +739,19 @@ int main()
 {
 	charArray = malloc(sizeof(char*) * num_chars);//Allocating the memory for the array of pointers that'll store every character's info
 	LoadFont();
-
+	halfScale = scale / 2;
 
 	charData = charArray[48]; //Selecting one random character
 
 	changeChar(0);
-	sprintf(testText, "'The quick brown fox jumps over the lazy dog' \"05+6=B\""); //Setting up the test text
+	sprintf(testText, "'The quick brown fox jumps over the lazy dog' \"05+6=B\" __"); //Setting up the test text
 
-	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 1000, 800);
+	CNFGSetup("Font Creation by https://github.com/efrenmanuel for rawdraw.", 950, 860);
 
 	gridRepX = 8 * scale + 10;
-	gridRepY = 120;
+	gridRepY = 140;
 
+	widthSelectorY = gridRepY + 9 * halfScale + 8;
 
 	while (1)
 	{
@@ -673,11 +761,6 @@ int main()
 		
 		CNFGColor(0xffffff); //Setting the color white for the lines
 		
-		//If we have already drawn a point
-		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000){
-			drawLineFromLastPoint();
-			
-		}
 
 		drawBaselineGrid();
 
@@ -690,12 +773,17 @@ int main()
 			drawCharacterLines(&charData[0]);
 			
 		}
-		
+		//If we have already drawn a point
+		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000) {
+			drawLineFromLastPoint();
+
+		}
+
 		drawSelectedSlot();
 
-		drawCharacterInfo();
+		drawCharacterInfo(characterScale);
 		
-		drawCharacterTest();
+		drawCharacterTest(characterScale);
 		
 		CNFGSwapBuffers();
 	}
