@@ -142,6 +142,7 @@ extern "C" {
 #ifdef USE_WINDOWS
 
 #include <windows.h>
+#include <stdint.h>
 
 OSG_PREFIX void OGSleep( int is )
 {
