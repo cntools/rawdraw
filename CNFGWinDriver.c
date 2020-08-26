@@ -14,6 +14,9 @@ static HWND lsHWND;
 static HDC lsWindowHDC;
 static HDC lsHDC;
 
+//Queue up lines and points for a faster render.
+#define BATCH_ELEMENTS
+
 #ifdef CNFGRASTERIZER
 #include "CNFGRasterizer.c"
 
@@ -270,9 +273,67 @@ static void InternalHandleResize()
 	SelectObject( lsHDC, lsBackBitmap );
 }
 
+#ifdef BATCH_ELEMENTS
+
+static int linelisthead;
+static int pointlisthead;
+static int polylisthead;
+static int polylistindex;
+static POINT linelist[4096*3];
+static DWORD twoarray[4096];
+static POINT pointlist[4096];
+static POINT polylist[8192];
+static INT   polylistcutoffs[8192];
+
+
+static int last_linex;
+static int last_liney;
+static int possible_lastline;
+
+void FlushTacking()
+{
+	int i;
+
+	if( twoarray[0] != 2 )
+		for( i = 0; i < 4096; i++ ) twoarray[i] = 2;
+
+	if( linelisthead )
+	{
+		PolyPolyline( lsHDC, linelist, twoarray, linelisthead );
+		linelisthead = 0;
+	}
+
+	if( polylistindex )
+	{
+		PolyPolygon( lsHDC, polylist, polylistcutoffs, polylistindex );
+		polylistindex = 0;
+		polylisthead = 0;
+	}
+
+	if( possible_lastline )
+		CNFGTackPixel( last_linex, last_liney );
+	possible_lastline = 0;
+
+	//XXX TODO: Consider locking the bitmap, and manually drawing the pixels.
+	if( pointlisthead )
+	{
+		for( i = 0; i < pointlisthead; i++ )
+		{
+			SetPixel( lsHDC, pointlist[i].x, pointlist[i].y, CNFGLastColor );
+		}
+		pointlisthead = 0;
+	}
+}
+#endif
+
 uint32_t CNFGColor( uint32_t RGB )
 {
 	if( CNFGLastColor == RGB ) return RGB;
+
+#ifdef BATCH_ELEMENTS
+	FlushTacking();
+#endif
+
 	CNFGLastColor = RGB;
 
 	DeleteObject( lsHBR );
@@ -286,16 +347,49 @@ uint32_t CNFGColor( uint32_t RGB )
 	return RGB;
 }
 
+
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
+#ifdef BATCH_ELEMENTS
+
+	if( ( x1 != last_linex || y1 != last_liney ) && possible_lastline )
+	{
+		CNFGTackPixel( last_linex, last_liney );
+	}
+
+	if( x1 == x2 && y1 == y2 )
+	{
+		CNFGTackPixel( x1, y1 );
+		possible_lastline = 0;
+		return;
+	}
+
+	last_linex = x2;
+	last_liney = y2;
+	possible_lastline = 1;
+
+	if( x1 != x2 || y1 != y2 )
+	{
+		linelist[linelisthead*2+0].x = x1;
+		linelist[linelisthead*2+0].y = y1;
+		linelist[linelisthead*2+1].x = x2;
+		linelist[linelisthead*2+1].y = y2;
+		linelisthead++;
+		if( linelisthead >= 2048 ) FlushTacking();
+	}
+#else
 	POINT pt[2] = { {x1, y1}, {x2, y2} };
 	Polyline( lsHDC, pt, 2 );
 	SetPixel( lsHDC, x1, y1, CNFGLastColor );
 	SetPixel( lsHDC, x2, y2, CNFGLastColor );
+#endif
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
+#ifdef BATCH_ELEMENTS
+	FlushTacking();
+#endif
 	RECT r;
 	if( x1 < x2 ) { r.left = x1; r.right = x2; }
 	else          { r.left = x2; r.right = x1; }
@@ -306,6 +400,9 @@ void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 
 void CNFGClearFrame()
 {
+#ifdef BATCH_ELEMENTS
+	FlushTacking();
+#endif
 	RECT r = { 0, 0, bufferx, buffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( CNFGBGColor );
@@ -315,24 +412,61 @@ void CNFGClearFrame()
 
 void CNFGTackPoly( RDPoint * points, int verts )
 {
-	int i;
-	POINT * t = (POINT*)alloca( sizeof( POINT ) * verts );
-	for( i = 0; i < verts; i++ )
+#ifdef BATCH_ELEMENTS
+	if( verts > 8192 )
 	{
-		t[i].x = points[i].x;
-		t[i].y = points[i].y;
+		FlushTacking();
+		//Fall-through
 	}
-	Polygon( lsHDC, t, verts );
+	else
+	{
+		if( polylistindex >= 8191 || polylisthead + verts >= 8191 )
+		{
+			FlushTacking();
+		}
+		int i;
+		for( i = 0; i < verts; i++ )
+		{
+			polylist[polylisthead].x = points[i].x;
+			polylist[polylisthead].y = points[i].y;
+			polylisthead++;
+		}
+		polylistcutoffs[polylistindex++] = verts;
+		return;
+	}
+#endif
+	{
+		int i;
+		POINT * t = (POINT*)alloca( sizeof( POINT ) * verts );
+		for( i = 0; i < verts; i++ )
+		{
+			t[i].x = points[i].x;
+			t[i].y = points[i].y;
+		}
+		Polygon( lsHDC, t, verts );
+	}
 }
 
 
 void CNFGTackPixel( short x1, short y1 )
 {
+#ifdef BATCH_ELEMENTS
+	pointlist[pointlisthead+0].x = x1;
+	pointlist[pointlisthead+0].y = y1;
+	pointlisthead++;
+
+	if( pointlisthead >=4096 ) FlushTacking();
+#else
 	SetPixel( lsHDC, x1, y1, CNFGLastColor );
+#endif
+
 }
 
 void CNFGSwapBuffers()
 {
+#ifdef BATCH_ELEMENTS
+	FlushTacking();
+#endif
 	int thisw, thish;
 
 	RECT r;

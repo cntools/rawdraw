@@ -80,10 +80,18 @@ void 	CNFGFlushRender();
 #ifdef CNFG3D
 
 #include <math.h>
+
+#ifdef CNFG_USE_DOUBLE_FUNCTIONS
+#define tdCOS cos
+#define tdSIN sin
+#define tdTAN tan
+#define tdSQRT sqrt
+#else
 #define tdCOS cosf
 #define tdSIN sinf
 #define tdTAN tanf
 #define tdSQRT sqrtf
+#endif
 #define tdMATCOPY(x,y) memcpy( x, y, 16*sizeof(float))
 #define tdQ_PI 3.141592653589
 #define tdDEGRAD (tdQ_PI/180.)
