@@ -142,6 +142,7 @@ extern "C" {
 #ifdef USE_WINDOWS
 
 #include <windows.h>
+#include <stdint.h>
 
 OSG_PREFIX void OGSleep( int is )
 {
@@ -507,4 +508,3 @@ OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
 #endif //OSG_NO_IMPLEMENTATION
 
 #endif //_OS_GENERIC_H
-
