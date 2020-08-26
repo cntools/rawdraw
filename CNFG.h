@@ -1,3 +1,4 @@
+
 /* Copyright 2010-2020 <>< Charles Lohr and other various authors as attributed.
 	Licensed under the MIT/x11 or NewBSD License you choose.
 
@@ -80,10 +81,18 @@ void 	CNFGFlushRender();
 #ifdef CNFG3D
 
 #include <math.h>
+
+#ifdef CNFG_USE_DOUBLE_FUNCTIONS
+#define tdCOS cos
+#define tdSIN sin
+#define tdTAN tan
+#define tdSQRT sqrt
+#else
 #define tdCOS cosf
 #define tdSIN sinf
 #define tdTAN tanf
 #define tdSQRT sqrtf
+#endif
 #define tdMATCOPY(x,y) memcpy( x, y, 16*sizeof(float))
 #define tdQ_PI 3.141592653589
 #define tdDEGRAD (tdQ_PI/180.)
@@ -150,4 +159,3 @@ extern const unsigned short FontCharMap[256];
 #endif
 
 #endif
-
