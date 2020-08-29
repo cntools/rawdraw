@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+
 #include "../CNFG.h"
 #include "../os_generic.h"
-#include "../CNFG3D.h"
 
 #if defined( CNFGOGL )
 #define TITLESTRING "Fontsize test with OpenGL"
@@ -38,11 +39,7 @@ void HandleDestroy()
 int main()
 {
 
-	int i, x, y;
-	double ThisTime;
-	double LastFPSTime = OGGetAbsoluteTime();
-	double LastFrameTime = OGGetAbsoluteTime();
-	double SecToWait;
+	int i;
 
 	CNFGBGColor = 0x800000;
 	CNFGDialogColor = 0x444444;
