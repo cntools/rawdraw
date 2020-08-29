@@ -146,8 +146,8 @@ float tdPerlin2D( float x, float y );
 
 #endif
 
-extern const unsigned char FontCharData[1902];
-extern const unsigned short FontCharMap[256];
+extern const unsigned char RawdrawFontCharData[1405];
+extern const unsigned short RawdrawFontCharMap[256];
 
 #ifdef __cplusplus
 };
