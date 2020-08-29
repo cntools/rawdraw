@@ -1,6 +1,8 @@
 .vs/*
 Debug/*
 Release/*
+TextTool/FontBackup.c
+TextTool/text
 *.exe
 ogltest
 rawdraw

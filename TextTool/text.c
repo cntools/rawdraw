@@ -135,7 +135,7 @@ void HandleButton(int x, int y, int button, int bDown)
 }
 
 
-void CNFGDrawBigText(const char* text, short scale)
+void CNFGDrawNiceText(const char* text, short scale)
 {
 	//memset(tempCharIndex, 0, 256);
 	const unsigned char* lmap;
@@ -525,7 +525,7 @@ void makeText(int offsetX,int offsetY,int scale)
 			}
 			CNFGDrawText(tw, scale);
 			CNFGPenX = offsetX + (c % 16) * 16 * scale / 2 + 17 * 16*scale/2;
-			CNFGDrawBigText(tw, scale/2);
+			CNFGDrawNiceText(tw, scale/2);
 		}
 	}
 	CNFGTackSegment(offsetX+ 16 * 8*scale,offsetY, offsetX  + 16 * 8*scale, offsetY+256/16*16*scale/2);
@@ -540,7 +540,7 @@ void DrawTestText(int offsetX, int offsetY, int scale)
 	CNFGPenY = offsetY;
 	CNFGDrawText(testText, scale);
 	CNFGPenY = offsetY+5*scale;
-	CNFGDrawBigText(testText, scale/2);
+	CNFGDrawNiceText(testText, scale/2);
 }
 
 void drawCharacterGrid() 
@@ -585,10 +585,10 @@ void drawBaselineGrid()
 	CNFGColor(0xffffff);
 	CNFGPenY = gridRepY - 20;
 	CNFGPenX = gridRepX;
-	CNFGDrawBigText("Position offset:", 2);
+	CNFGDrawNiceText("Position offset:", 2);
 	CNFGPenY = gridRepY + 8 * halfScale + 8;
 	CNFGPenX = gridRepX;
-	CNFGDrawBigText("Character width:", 2);
+	CNFGDrawNiceText("Character width:", 2);
 
 	CNFGColor(0x444444);
 	CNFGTackRectangle(gridRepX, gridRepY, gridRepX + 4 * halfScale, gridRepY + 8 * halfScale);
@@ -630,7 +630,7 @@ void drawBaselineGrid()
 	for (int linePos = 1; linePos < 9; linePos++) {
 		CNFGPenX = gridRepX+ (linePos-1) *halfScale +2;
 		sprintf(number, "%d", linePos);
-		CNFGDrawBigText(number, 2);
+		CNFGDrawNiceText(number, 2);
 	}
 
 	
@@ -660,7 +660,7 @@ void drawCharacterInfo(int characterScate)
 
 
 
-	CNFGDrawBigText(characterInfo, 2);
+	CNFGDrawNiceText(characterInfo, 2);
 }
 
 void drawCharacterTest(int characterScale)
@@ -670,7 +670,7 @@ void drawCharacterTest(int characterScale)
 	DrawTestText(10, yOff, 4);
 
 	CNFGPenY = yOff + 70;
-	CNFGDrawBigText("Tool made by https://github.com/efrenmanuel", 2);
+	CNFGDrawNiceText("Tool made by https://github.com/efrenmanuel", 2);
 }
 
 void drawCharacterLines(unsigned char * lmap)

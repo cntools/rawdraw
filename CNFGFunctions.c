@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #define _CNFG_C
 
 #include "CNFG.h"
-
+#include "TextTool/FontData.h"
 
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
@@ -146,7 +146,6 @@ const unsigned char RawdrawFontCharData[1405] = {
 //Set this if you are only using CNFG to create an OpenGL context.
 #ifndef CNFGCONTEXTONLY
 
-
 void CNFGDrawText( const char * text, short scale )
 {
 	const unsigned char * lmap;
@@ -207,6 +206,73 @@ void CNFGDrawText( const char * text, short scale )
 		place++;
 	}
 }
+
+#ifndef FONT_CREATION_TOOL
+void CNFGDrawNiceText(const char* text, short scale)
+{
+	const unsigned char* lmap;
+	float iox = (float)CNFGPenX; //x offset
+	float ioy = (float)CNFGPenY; //y offset
+
+	int place = 0;
+	unsigned short index;
+	int bQuit = 0;
+	int segmentEnd = 0;
+	while (text[place]) {
+		unsigned char c = text[place];
+		switch (c)
+		{
+		case 9: // tab
+			iox += 16 * scale;
+			break;
+		case 10: // linefeed
+			iox = (float)CNFGPenX;
+			ioy += 6 * scale;
+			break;
+		default:
+			index = CharIndex[c];
+			if (index == 0) {
+				iox += 4 * scale;
+				break;
+			}
+
+			lmap = &FontData[index];
+
+			short charWidth = ((*lmap) & 0b11100000) >> 5;
+			short xbase = ((*lmap) & 0b00011000) >> 3;
+			short ybase = (*lmap) & 0b00000111;
+			lmap++;
+			do {
+
+				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
+				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+				segmentEnd = *lmap & 0x40;
+				int x2 = 0;
+				int y2 = 0;
+				lmap++;
+				if (segmentEnd) {
+					x2 = x1;
+					y2 = y1;
+				}
+				else {
+
+					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
+					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+
+				}
+
+
+				CNFGTackSegment(x1, y1, x2, y2);
+				bQuit = *(lmap - 1) & 0x80;
+
+			} while (!bQuit);
+			iox += (charWidth + 2) * scale;
+			//iox += 8 * scale;
+		}
+		place++;
+	}
+}
+#endif
 
 
 void CNFGDrawBox( short x1, short y1, short x2, short y2 )
