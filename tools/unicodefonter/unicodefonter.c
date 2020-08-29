@@ -1,4 +1,4 @@
-//Copyright 2010 Charles Lohr - under the NewBSD license.
+//Copyright 2010-2020 <>< Charles Lohr - under the NewBSD license.
 //Generator for FontCharMap and FontCharData included in CNFGFunctions.c
 #include <stdio.h>
 
@@ -243,45 +243,6 @@ unsigned CodePage437PlusUnicode[256][33] = {
 	{ 5, 0, 0, 0, 4,  0, 2, 1, 1,  1, 1, 2, 2,  2, 2, 1, 3,  1, 3, 0, 2 }, // little thorn
 	{ 6, 0, 2, 0, 3,  0, 3, 1, 4,  2, 2, 2, 3,  2, 3, 0, 5,  0, 1, 0, 1,  2, 1, 2, 1 }, //y with dots
 };
-/*
-void DrawText( const char * text, XSegment * buf, int * pos, int maxpos, int size )
-{
-	float iox = xo;
-	float ioy = yo;
-	if( *pos == maxpos ) return;
-
-	int place = 0;
-	while( text[place] )
-	{
-		unsigned char c = text[place];
-
-		switch( c )
-		{
-		case 9:
-			iox += 12 * size;
-			break;
-		case 10:
-			iox = xo;
-			ioy += 6 * size;
-			break;
-		default:
-			unsigned * lmap = CodePage437PlusUnicode[c];
-			for( unsigned i = 0; i < lmap[0]; i++ )
-			{
-				buf[*pos].x1 = lmap[i*4+1]*size + iox;
-				buf[*pos].y1 = lmap[i*4+2]*size + ioy;
-				buf[*pos].x2 = lmap[i*4+3]*size + iox;
-				buf[*pos].y2 = lmap[i*4+4]*size + ioy;
-				(*pos)++;
-				if( *pos == maxpos ) return;
-			}
-			iox += 3 * size;
-		}
-		place++;
-	}
-}
-
-*/
 
 int main()
 {
@@ -289,11 +250,14 @@ int main()
 	unsigned char TMap[20000];
 	unsigned short Offsets[256]; 
 	unsigned c;
-	for( c = 0; c < 256; c++ )
+
+	int outCodePos = 0;
+	//Synthesize bitstream for this character.
+	unsigned char BitsToMap[4096];
+
+	int emitchars = 256;
+	for( c = 0; c < emitchars; c++ )
 	{
-		//Synthesize bitstream for this character.
-		unsigned char BitsToMap[256];
-		
 		unsigned * ttm = CodePage437PlusUnicode[c];
 		if( ttm[0] > 256 )
 		{
@@ -301,7 +265,7 @@ int main()
 			return -1;
 		}
 
-		unsigned int codelen = ttm[0]*2;
+		unsigned int codelen = ttm[0];
 		if( codelen == 0 )
 		{
 			Offsets[c] = 65535;
@@ -309,17 +273,84 @@ int main()
 		}
 
 		int i;
+		int thisCodePos = outCodePos;
+
+		int monitorchar = 254;
+
+		if( c == monitorchar ) printf( "CODELEN = %d\n", codelen );
+
+		int do_pen = 1;
 		for( i = 0; i < codelen; i++ )
 		{
-			unsigned x = ttm[i*2+1];
-			unsigned y = ttm[i*2+2];
-			unsigned char code = ( x << 4 ) | y;
+			unsigned x1 = ttm[i*4+1];
+			unsigned y1 = ttm[i*4+2];
+			unsigned x2 = ttm[i*4+3];
+			unsigned y2 = ttm[i*4+4];
+
+			unsigned char code1 = ( x1 << 4 ) | y1;
+			unsigned char code2 = ( x2 << 4 ) | y2;
 
 			if( i == codelen - 1 )
-				code |= 0x80;
+				code2 |= 0x80;
 
-			BitsToMap[i] = code;
+			unsigned char skipnext;
+			skipnext = 0;
+
+			if( c == monitorchar )
+			{
+				printf( "%d %d   %d %d   %d %d\n", x1, y1, x2, y2, code1, code2 );
+			}
+
+			if( x1 == x2 && y1 == y2 )
+			{
+				//Drawing a dot.
+				code2 |= 0x08;
+				BitsToMap[outCodePos++] = code2;
+				do_pen = 1;
+				if( c == monitorchar )
+					printf( "EMIT.: %02x\n", code2 );
+				continue;
+			}
+
+			int continuation = 0;
+
+			if( i < codelen - 1 )
+			{
+				unsigned xnext = ttm[i*4+5];
+				unsigned ynext = ttm[i*4+6];
+				if( xnext == x2 && ynext == y2 )
+				{
+					continuation = 1;
+				}
+			}
+
+			if( c == monitorchar )
+				printf( "%d, %d  - %d, %d   CONT->%d DO_PEN->%d\n", x1, y1, x2, y2, continuation, do_pen );
+
+			if( do_pen )
+			{
+				BitsToMap[outCodePos++] = code1;
+				if( c == monitorchar )
+					printf( "EMIT0: %02x\n", code1 );
+			}
+
+			do_pen = 0;
+
+			if( !continuation )
+			{
+				code2 |= 0x08;
+				do_pen = 1;
+			}
+
+			BitsToMap[outCodePos++] = code2;
+			if( c == monitorchar )
+				printf( "EMIT1: %02x\n", code2 );
 		}
+
+		if( c == monitorchar ) printf( "thisCodePos: %d\n", thisCodePos );
+		Offsets[c] = thisCodePos;
+
+#if 0
 //		printf( "%d -- %d\n", c, codelen );
 
 		bool bFound = false;
@@ -351,10 +382,11 @@ int main()
 				TMap[TMapPos++] = BitsToMap[j];
 		}
 		fprintf( stderr, "match found.\n" );
+#endif
 	}
 
-	printf( "const unsigned short FontCharMap[256] = {" );
-	for( c = 0; c < 256; c++ )
+	printf( "const unsigned short RawdrawFontCharMap[%d] = {", emitchars );
+	for( c = 0; c < emitchars; c++ )
 	{
 		if( c % 16 == 0 )
 		{
@@ -363,12 +395,12 @@ int main()
 		printf( "%d, ", Offsets[c] );
 	}
 	printf( "};\n\n" );
-	printf( "const unsigned char FontCharData[%d] = {", TMapPos );
-	for( unsigned i = 0; i < TMapPos; i++ )
+	printf( "const unsigned char RawdrawFontCharData[%d] = {", outCodePos );
+	for( unsigned i = 0; i < outCodePos; i++ )
 	{
 		if( i % 16 == 0 ) 
 			printf( "\n\t" );
-		printf( "0x%02x, ", TMap[i] );
+		printf( "0x%02x, ", BitsToMap[i] );
 	}
 	printf( "};\n\n" );
 }
