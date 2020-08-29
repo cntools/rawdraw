@@ -1,5 +1,6 @@
 #define FONT_CREATION_TOOL
 #define CNFG_IMPLEMENTATION
+#define FONT_DEVELOPER
 
 #include "FontData.h"
 #include "CNFG.h"
@@ -650,7 +651,7 @@ void drawCharacterInfo(int characterScate)
 	CNFGPenX = 8 * scale + 10;
 	CNFGPenY = 10;
 
-	char characterInfo[32];
+	char characterInfo[128];
 	sprintf(characterInfo, "Character code: %d\t(0x%x)\nCharacter: %c\n", selectedChar, selectedChar, selectedChar);
 	CNFGDrawText(characterInfo, 5);
 

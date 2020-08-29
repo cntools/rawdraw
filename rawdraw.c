@@ -231,7 +231,7 @@ int main()
 
 				CNFGPenX = ( c % 16 ) * 16+5;
 				CNFGPenY = ( c / 16 ) * 16+5;
-				CNFGDrawBigText( tw, 1 );
+				CNFGDrawText( tw, 1 );
 			}
 		}
 
