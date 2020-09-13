@@ -64,13 +64,13 @@ void HandleButton(int x, int y, int button, int bDown)
 {
 	if (bDown && button == 1){
 		if (selectedBaselineX >= 0 && selectedBaselineY >= 0){
-			memset(&charData[0], (charData[0] & 0b11100000) | (selectedBaselineX << 3) | (selectedBaselineY),1);
+			memset(&charData[0], (charData[0] & 0xE0) | (selectedBaselineX << 3) | (selectedBaselineY),1); //0xE0
 		}else if (selectedSquareX >= 0 && selectedSquareY >= 0){
 			char coords = coordToPos(x, y); //Get the selected point
 
 
 			 //If we have no points or the last point was different from the current one, add a new point
-			if (bytesInCharacter == 1 || coords != (charData[bytesInCharacter - 1] & 0b00111111)){
+			if (bytesInCharacter == 1 || coords != (charData[bytesInCharacter - 1] & 0x3F)){ //0b00111111
 				//If we have used 8 or more bytes and the current count is a power of 2 (8,16,32...) double the amount of memory for this character
 				if (bytesInCharacter >= 8 && ((bytesInCharacter & (bytesInCharacter - 1)) == 0)){
 					unsigned char* tmp = (unsigned char*)realloc(charArray[selectedChar], sizeof(char) * (bytesInCharacter << 1));
@@ -80,21 +80,21 @@ void HandleButton(int x, int y, int button, int bDown)
 					}
 				}
 
-				charData[bytesInCharacter] = coords + 0b10000000; //Set the current point's position to the selected point's and add the "end of character flag"
-				//printf("coords: %x, %x\N", coords, coords + 0b10000000);
+				charData[bytesInCharacter] = coords + 0x80; //Set the current point's position to the selected point's and add the "end of character flag"
+				//printf("coords: %x, %x\N", coords, coords + 0x80);
 				if (bytesInCharacter > 1) //and if we have another point from before
 				{
 
 					currentColor = &colorContinuing;
-					memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] - 0b10000000, 1); //remove the previous byte's end of character flag
+					memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] - 0x80, 1); //remove the previous byte's end of character flag
 					segmentLength++;
 				}
 				bytesInCharacter++;
-			} else if (coords == (charData[bytesInCharacter - 1] & 0b00111111)){
+			} else if (coords == (charData[bytesInCharacter - 1] & 0x3F)){
 
 
-				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] ^ 0b01000000, 1); //change the continuity flag
-				if (charData[bytesInCharacter - 1] & 0b01000000)
+				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] ^ 0x40, 1); //change the continuity flag
+				if (charData[bytesInCharacter - 1] & 0x40)
 				{
 					currentColor = &colorNotContinuing;
 				}
@@ -108,14 +108,14 @@ void HandleButton(int x, int y, int button, int bDown)
 			}
 		}
 		else if (selectedWidth >= 0) {
-			memset(&charData[0], (charData[0] & 0b00011111)|(selectedWidth << 5), 1);
+			memset(&charData[0], (charData[0] & 0x1F)|(selectedWidth << 5), 1);
 		}
 	} else if (bDown && button == 2){
 		if (bytesInCharacter > 1){
 			bytesInCharacter--;
-			memset(&charData[bytesInCharacter], 0b00000000, 1); //reset the last point's value
+			memset(&charData[bytesInCharacter], 0x0, 1); //reset the last point's value
 			if (bytesInCharacter > 1){
-				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] + 0b10000000, 1); //set the previous point's end of character flag to 1
+				memset(&charData[bytesInCharacter - 1], charData[bytesInCharacter - 1] + 0x80, 1); //set the previous point's end of character flag to 1
 				//If we have allocated more ram than what's neccesary now, halve it, same formula as before
 				if (bytesInCharacter >= 7 && (((bytesInCharacter+1) & (bytesInCharacter)) == 0)){
 
@@ -168,14 +168,14 @@ void CNFGDrawNiceText(const char* text, short scale)
 
 			lmap = &tempFontData[index];
 
-			short charWidth = ((*lmap) & 0b11100000) >> 5;
-			short xbase = ((*lmap) & 0b00011000) >> 3;
-			short ybase = (*lmap) & 0b00000111;
+			short charWidth = ((*lmap) & 0xE0) >> 5;
+			short xbase = ((*lmap) & 0x18) >> 3;
+			short ybase = (*lmap) & 0x07;
 			lmap++;
 			do{
 
-				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase*scale);
-				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+				int x1 = ((((*lmap) & 0x38) >> 3) * scale + iox + xbase*scale);
+				int y1 = (((*lmap) & 0x07) * scale + ioy + ybase * scale);
 				segmentEnd = *lmap & 0x40;
 				int x2 = 0;
 				int y2 = 0;
@@ -186,8 +186,8 @@ void CNFGDrawNiceText(const char* text, short scale)
 				}
 				else{
 
-					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
-					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+					x2 = ((((*lmap) & 0x38) >> 3) * scale + iox + xbase * scale);
+					y2 = (((*lmap) & 0x07) * scale + ioy + ybase * scale);
 
 				}
 
@@ -226,8 +226,8 @@ void LoadFont()
 		
 		if (!index) {
 
-			memset(&(charArray[characterToLoad][0]), 0b10001001, 1);
-			memset(&(charArray[characterToLoad][1]), 0b10000000, 1);
+			memset(&(charArray[characterToLoad][0]), 0x89, 1);
+			memset(&(charArray[characterToLoad][1]), 0x80, 1);
 		} else{
 			unsigned char* characterData = &FontData[index];
 
@@ -248,7 +248,7 @@ void LoadFont()
 				}
 				memset(&characterDestination[c], characterData[c], 1);			
 
-			} while (c==0 || (characterData[c] & 0b10000000) != 0b10000000);
+			} while (c==0 || (characterData[c] & 0x80) != 0x80);
 		}
 	}
 	printf("Font Loaded\n");
@@ -264,7 +264,7 @@ void LoadFont()
 
 	for (int i = 0; i < num_chars; i++) {
 		charArray[i] = malloc(8 * sizeof(char)); //allocating 8 points (bytes/characters) per character
-		memset(charArray[i], 0b10000000, 1);
+		memset(charArray[i], 0x80, 1);
 	}
 	printf("No Font Loaded\n");
 }
@@ -276,7 +276,7 @@ void SaveFont(char* filename)
 	FILE* f = fopen(filename, "wb");
 	int characterIndex[256];
 	unsigned char* AllCharacterData = malloc(sizeof(char) * 8);
-	memset(&AllCharacterData[0], 0b10000000, 1);
+	memset(&AllCharacterData[0], 0x80, 1);
 
 	int totalPoints = 0;
 
@@ -288,7 +288,7 @@ void SaveFont(char* filename)
 		int c = -1;
 		
 		//If the character has lines from previously, count the amount of points and segments
-		if ((characterData[1] & 0b10000000) != 0b10000000){
+		if ((characterData[1] & 0x80) != 0x80){
 			characterIndex[characterToSave] = totalPoints + 1;
 
 			do{
@@ -307,9 +307,9 @@ void SaveFont(char* filename)
 
 				//printf("%x\n", characterData[c]);
 
-			} while (c==0 || (characterData[c] & 0b10000000) != 0b10000000);
+			} while (c==0 || (characterData[c] & 0x80) != 0x80);
 		}
-		else if (characterData[1] & 0b01000000 == 0b01000000) {
+		else if (characterData[1] & 0x40 == 0x40) {
 			totalPoints++;
 			characterIndex[characterToSave] = totalPoints;
 			AllCharacterData[totalPoints] = characterData[0];
@@ -358,10 +358,10 @@ void changeChar(int difference)
 	int c;
 	bytesInCharacter++;
 	//If the character has lines from previously, count the amount of points and segments
-	if ((charData[1] & 0b10000000) != 0b10000000){
-		for (c = 0;(charData[c] & 0b10000000) != 0b10000000 || c == 0; c++) {
+	if ((charData[1] & 0x80) != 0x80){
+		for (c = 0;(charData[c] & 0x80) != 0x80 || c == 0; c++) {
 
-			if (charData[c] & 0b01000000 != 0b01000000) {
+			if (charData[c] & 0x40 != 0x40) {
 				segmentLength = 0;
 			}
 			else {
@@ -370,11 +370,11 @@ void changeChar(int difference)
 			bytesInCharacter++;
 		}
 	}
-	else if(charData[1] & 0b01000000 == 0b01000000) {
+	else if(charData[1] & 0x40 == 0x40) {
 		bytesInCharacter ++;
 	}
 	else {
-		memset(&charData[0],0b00001001,1);
+		memset(&charData[0],0x09,1);
 	}
 
 }
@@ -385,8 +385,8 @@ void resetChar()
 	free(charArray[selectedChar]);
 	charArray[selectedChar] = malloc(8 * sizeof(char));
 	charData = charArray[selectedChar];
-	memset(&charData[0], 0b00001001, 1);
-	memset(&charData[1], 0b10000000, 1);
+	memset(&charData[0], 0x09, 1);
+	memset(&charData[1], 0x80, 1);
 	segmentLength = 0;
 	bytesInCharacter = 1;
 
@@ -575,8 +575,8 @@ void prepareFrame(short* w, short* h)
 
 void drawLineFromLastPoint() 
 {
-	short x = (short)(((charData[bytesInCharacter - 1] & 0b00111000) >> 3) * scale + (scale - centerSize) / 2);
-	short y = (short)(((charData[bytesInCharacter - 1] & 0b00000111)) * scale + (scale - centerSize) / 2);
+	short x = (short)(((charData[bytesInCharacter - 1] & 0x38) >> 3) * scale + (scale - centerSize) / 2);
+	short y = (short)(((charData[bytesInCharacter - 1] & 0x07)) * scale + (scale - centerSize) / 2);
 	CNFGTackSegment(x + centerSize / 2, y + centerSize / 2, selectedSquareX * scale + scale / 2, selectedSquareY * scale + scale / 2);	//draw line from last point to selected point
 }
 
@@ -677,10 +677,10 @@ void drawCharacterLines(unsigned char * lmap)
 {
 	int length = 0; //total character's points
 
-	short characterWidth = ((*lmap) & 0b11100000) >> 5;
+	short characterWidth = ((*lmap) & 0xE0) >> 5;
 
-	short xbase = ((*lmap) & 0b00011000) >> 3;
-	short ybase = (*lmap) & 0b00000111;
+	short xbase = ((*lmap) & 0x18) >> 3;
+	short ybase = (*lmap) & 0x07;
 	lmap++;
 
 	CNFGColor(0x448844);
@@ -707,13 +707,13 @@ void drawCharacterLines(unsigned char * lmap)
 	int bQuit = 0;
 	do {
 
-		short x1 = (short)((((*lmap) & 0b00111000) >> 3) * scale + (scale) / 2); //get the first point's coordinates
-		short y1 = (short)(((*lmap) & 0b00000111) * scale + (scale) / 2);
+		short x1 = (short)((((*lmap) & 0x38) >> 3) * scale + (scale) / 2); //get the first point's coordinates
+		short y1 = (short)(((*lmap) & 0x07) * scale + (scale) / 2);
 
 
 		bQuit = *(lmap) & 0x80; //Check if this is the last point
 		lmap++;
-		if ((*(lmap - 1) & 0b01000000)) {
+		if ((*(lmap - 1) & 0x40)) {
 			if (length == 0) { //and it had no length, aka it was a single point segment
 				CNFGTackRectangle(x1 - centerSize * 2, y1 - centerSize * 2, x1 + centerSize * 2, y1 + centerSize * 2); //draw a rectangle 
 			}
@@ -727,8 +727,8 @@ void drawCharacterLines(unsigned char * lmap)
 
 		if (bytesInCharacter > 1) {
 			//Draw a line from the previous point to this one
-			short x2 = (short)((((*(lmap)) & 0b00111000) >> 3) * scale + (scale) / 2);
-			short y2 = (short)(((*(lmap)) & 0b00000111) * scale + (scale) / 2);
+			short x2 = (short)((((*(lmap)) & 0x38) >> 3) * scale + (scale) / 2);
+			short y2 = (short)(((*(lmap)) & 0x07) * scale + (scale) / 2);
 			CNFGTackSegment(x1, y1, x2, y2);
 		}
 
@@ -775,7 +775,7 @@ int main()
 			
 		}
 		//If we have already drawn a point
-		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0b01000000) != 0b01000000) {
+		if (bytesInCharacter > 1 && bytesInCharacter && selectedSquareX >= 0 && selectedSquareY >= 0 && (charData[bytesInCharacter - 1] & 0x40) != 0x40) {
 			drawLineFromLastPoint();
 
 		}
