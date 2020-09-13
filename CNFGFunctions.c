@@ -238,14 +238,14 @@ void CNFGDrawNiceText(const char* text, short scale)
 
 			lmap = &FontData[index];
 
-			short charWidth = ((*lmap) & 0b11100000) >> 5;
-			short xbase = ((*lmap) & 0b00011000) >> 3;
-			short ybase = (*lmap) & 0b00000111;
+			short charWidth = ((*lmap) & 0xE0) >> 5; //0b11100000
+			short xbase = ((*lmap) & 0x18) >> 3; //0b00011000
+			short ybase = (*lmap) & 0x07; //0b00000111
 			lmap++;
 			do {
 
-				int x1 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
-				int y1 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+				int x1 = ((((*lmap) & 0x38) >> 3) * scale + iox + xbase * scale); //0b00111000
+				int y1 = (((*lmap) & 0x07) * scale + ioy + ybase * scale);
 				segmentEnd = *lmap & 0x40;
 				int x2 = 0;
 				int y2 = 0;
@@ -256,8 +256,8 @@ void CNFGDrawNiceText(const char* text, short scale)
 				}
 				else {
 
-					x2 = ((((*lmap) & 0b00111000) >> 3) * scale + iox + xbase * scale);
-					y2 = (((*lmap) & 0b00000111) * scale + ioy + ybase * scale);
+					x2 = ((((*lmap) & 0x38) >> 3) * scale + iox + xbase * scale);
+					y2 = (((*lmap) & 0x07) * scale + ioy + ybase * scale);
 
 				}
 
