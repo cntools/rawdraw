@@ -83,8 +83,10 @@ CHEWTYPEDEF( void, glNamedBufferSubData, , (buffer,offset,size,data), GLuint buf
 CHEWTYPEDEF2( void, glActiveTexture, glActiveTextureCHEW, , (texture) , GLenum texture )
 CHEWTYPEDEF2( void, glSampleCoverage, glSampleCoverageCHEW, , (value,invert), GLfloat value, GLboolean invert )
 
+#ifndef EGL_LEAN_AND_MEAN
 CHEWTYPEDEF( void, glDebugMessageCallback, , (callback,userParam), GLDEBUGPROC callback, const void * userParam )
 CHEWTYPEDEF( void, glDebugMessageControl, , (source,type,severity,count,ids,enabled), GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
+#endif
 
 CHEWTYPEDEF2( void, glGenerateMipmap, glGenerateMipmapCHEW, , (index), GLuint index )
 
