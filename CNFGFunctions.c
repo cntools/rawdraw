@@ -25,7 +25,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 #define _CNFG_C
 
 #include "CNFG.h"
+#ifdef _CNFG_FANCYFONT
 #include "TextTool/FontData.h"
+#endif
 
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
@@ -208,6 +210,8 @@ void CNFGDrawText( const char * text, short scale )
 }
 
 #ifndef FONT_CREATION_TOOL
+#ifdef _CNFG_FANCYFONT
+
 void CNFGDrawNiceText(const char* text, short scale)
 {
 	const unsigned char* lmap;
@@ -273,7 +277,7 @@ void CNFGDrawNiceText(const char* text, short scale)
 	}
 }
 #endif
-
+#endif
 
 void CNFGDrawBox( short x1, short y1, short x2, short y2 )
 {
