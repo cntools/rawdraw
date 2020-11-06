@@ -22,12 +22,13 @@ typedef struct {
 extern int CNFGPenX, CNFGPenY;
 extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
-extern uint32_t CNFGDialogColor; //background for boxes
+//extern uint32_t CNFGDialogColor; //background for boxes DEPRECATED
 
 void CNFGDrawText( const char * text, short scale );
-void CNFGDrawBox( short x1, short y1, short x2, short y2 );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
-void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
+//Deprecated
+//void CNFGDrawBox( short x1, short y1, short x2, short y2 );
+//void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
 
 //To be provided by driver.
 uint32_t CNFGColor( uint32_t RGB );
