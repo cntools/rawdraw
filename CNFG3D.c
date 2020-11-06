@@ -6,8 +6,25 @@
 #ifdef CNFG3D
 
 #include "CNFG.h"
+
+#ifdef __wasm__
+double sin( double v );
+double cos( double v );
+double tan( double v );
+double sqrt( double v );
+float sinf( float v );
+float cosf( float v );
+float tanf( float v );
+float sqrtf( float v );
+void tdMATCOPY( float * x, const float * y )
+{
+	int i;
+	for( i = 0; i < 16; i++ ) x[i] = y[i];
+}
+#else
 #include <string.h>
 #include <stdio.h>
+#endif
 
 #ifdef CNFG3D_USE_OGL_MAJOR
 #define m00 0
@@ -245,6 +262,7 @@ void tdMultiply( float * fin1, float * fin2, float * fout )
 	tdMATCOPY( fout, fotmp );
 }
 
+#ifndef __wasm__
 void tdPrint( const float * f )
 {
 	int i;
@@ -262,6 +280,7 @@ void tdPrint( const float * f )
 #endif
 	printf( "}\n" );
 }
+#endif
 
 void tdTransposeSelf( float * f )
 {
@@ -405,7 +424,7 @@ void tdPush()
 	if( gsMPlace[gsMMode] > tdMATRIXMAXDEPTH - 2 )
 		return;
 
-	tdMATCOPY( &gsMatricies[gsMMode][gsMPlace[gsMMode] + 1], &gsMatricies[gsMMode][gsMPlace[gsMMode]] );
+	tdMATCOPY( gsMatricies[gsMMode][gsMPlace[gsMMode] + 1], gsMatricies[gsMMode][gsMPlace[gsMMode]] );
 	gsMPlace[gsMMode]++;
 
 	gSMatrix = gsMatricies[gsMMode][gsMPlace[gsMMode]];

@@ -85,7 +85,11 @@
 #endif
 
 #ifndef OSG_PREFIX
+#ifdef __wasm__
+#define OSG_PREFIX
+#else
 #define OSG_PREFIX static inline
+#endif
 #endif
 
 //In case you want to hook the closure of a thread, i.e. if your system has thread-local storage.
@@ -311,6 +315,11 @@ OSG_PREFIX void OGSetTLS( og_tls_t key, void * data )
 {
 	TlsSetValue( (DWORD)(intptr_t)key, data );
 }
+
+#elif defined( __wasm__ )
+
+//We don't actually have any function defintions here.
+//The outside system will handle it.
 
 #else
 

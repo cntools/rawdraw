@@ -8,6 +8,8 @@
 #include "CNFGEGLLeanAndMean.c"
 #elif defined( __android__ ) || defined( ANDROID )
 #include "CNFGEGLDriver.c"
+#elif defined( __wasm__ )
+#include "CNFGWASMDriver.c"
 #else
 #include "CNFGXDriver.c"
 #endif
