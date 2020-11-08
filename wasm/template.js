@@ -1,21 +1,20 @@
 //Portions of code from zNoctum and redline2466
 
-//Our memory should be publicly accessable on the global object/
-//So, we use 'var'.  Also note that we're starting with a lot of pages.
-var memory = new WebAssembly.Memory({initial:200});
-var HEAP8 = new Int8Array(memory.buffer);
-var HEAPU8 = new Uint8Array(memory.buffer);
-var HEAP16 = new Int16Array(memory.buffer);
-var HEAPU16 = new Uint16Array(memory.buffer);
-var HEAP32 = new Uint32Array(memory.buffer);
-var HEAPU32 = new Uint32Array(memory.buffer);
-var HEAPF32 = new Float32Array(memory.buffer);
-var HEAPF64 = new Float64Array(memory.buffer);
+//Global memory for application.
+let memory = new WebAssembly.Memory({initial:200});
+let HEAP8 = new Int8Array(memory.buffer);
+let HEAPU8 = new Uint8Array(memory.buffer);
+let HEAP16 = new Int16Array(memory.buffer);
+let HEAPU16 = new Uint16Array(memory.buffer);
+let HEAP32 = new Uint32Array(memory.buffer);
+let HEAPU32 = new Uint32Array(memory.buffer);
+let HEAPF32 = new Float32Array(memory.buffer);
+let HEAPF64 = new Float64Array(memory.buffer);
 
 let toUtf8Decoder = new TextDecoder( "utf-8" );
 function toUTF8(ptr) {
-	var len = 0|0; ptr |= 0;
-	for( var i = ptr; HEAPU8[i] != 0; i++) len++;
+	let len = 0|0; ptr |= 0;
+	for( let i = ptr; HEAPU8[i] != 0; i++) len++;
 	return toUtf8Decoder.decode(HEAPU8.subarray(ptr, ptr+len));
 }
 
@@ -25,29 +24,32 @@ let sleeping = false;
 let fullscreen = false;
 
 //Configure WebGL Stuff (allow to be part of global context)
-var canvas = document.getElementById('canvas');
-var wgl = canvas.getContext('webgl');
-var wgl_shader = null; //Standard flat color shader
-var wgl_blit = null;   //Blitting shader for texture
-var wgl_tex = null;    //Texture handle for blitting.
+let canvas = document.getElementById('canvas');
+let wgl = canvas.getContext('webgl');
+let wgl_shader = null; //Standard flat color shader
+let wgl_blit = null;   //Blitting shader for texture
+let wgl_tex = null;    //Texture handle for blitting.
+let arraybufferV = null;
+let arraybufferC = null;
+
 
 //Utility stuff for WebGL sahder creation.
 function wgl_makeShader( vertText, fragText )
 {
-	var vert = wgl.createShader(wgl.VERTEX_SHADER);
+	let vert = wgl.createShader(wgl.VERTEX_SHADER);
 	wgl.shaderSource(vert, vertText );
 	wgl.compileShader(vert);
 	if (!wgl.getShaderParameter(vert, wgl.COMPILE_STATUS)) {
 			alert(wgl.getShaderInfoLog(vert));
 	}
 
-	var frag = wgl.createShader(wgl.FRAGMENT_SHADER);
+	let frag = wgl.createShader(wgl.FRAGMENT_SHADER);
 	wgl.shaderSource(frag, fragText );
 	wgl.compileShader(frag);
 	if (!wgl.getShaderParameter(frag, wgl.COMPILE_STATUS)) {
 			alert(wgl.getShaderInfoLog(frag));
 	}
-	var ret = wgl.createProgram();
+	let ret = wgl.createProgram();
 	wgl.attachShader(ret, frag);
 	wgl.attachShader(ret, vert);
 	wgl.linkProgram(ret);
@@ -77,8 +79,8 @@ function wgl_makeShader( vertText, fragText )
 	wgl.useProgram(wgl_shader);
 
 	//Get some vertex/color buffers, to put geometry in.
-	var arraybufferV = wgl.createBuffer();
-	var arraybufferC = wgl.createBuffer();
+	arraybufferV = wgl.createBuffer();
+	arraybufferC = wgl.createBuffer();
 
 	//We're using two buffers, so just enable them, now.
 	wgl.enableVertexAttribArray(0);
@@ -180,8 +182,8 @@ const imports = {
 			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_WRAP_S, wgl.CLAMP_TO_EDGE);
 			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_MIN_FILTER, wgl.NEAREST);
 
-			wgl.texImage2D(wgl.TEXTURE_2D, 0, wgl.RGBA, w, h,
-				0, wgl.RGBA, wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
+			wgl.texImage2D(wgl.TEXTURE_2D, 0, wgl.RGBA, w, h, 0, wgl.RGBA,
+				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
 			FastPipeGeometryJS( 
 				new Float32Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
