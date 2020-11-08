@@ -87,9 +87,11 @@ int __attribute__((export_name("main"))) main()
 		CNFGPenX = 100;
 		CNFGPenY = 100;
 
-		CNFGDrawText("+hello!!",4 );
-		CNFGSwapBuffers();
-		continue;
+//quick minitest
+//		CNFGDrawText("+hello!!",4 );
+//		CNFGSwapBuffers();
+//		continue;
+
 		// Mesh in background
 		DrawHeightmap();
 

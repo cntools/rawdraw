@@ -23,7 +23,7 @@ void free(void* ptr) {  }
 extern void CNFGUpdateScreenWithBitmapInternal( uint32_t * data, int w, int h );
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
-	CNFGUpdateScreenWithBitmapInternal( data, w, h );
+	CNFGBlitImage( data, 0, 0, w, h );
 	CNFGSwapBuffersInternal();
 }
 
@@ -102,8 +102,11 @@ void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2,
 void CNFGTackPixel( short x1, short y1 )
 {
 	const float l2 = wgl_last_width_over_2;
-	EmitQuad( x1-l2, y1-l2, x1+l2, y1-l2, x1-l2, y1+l2, x1+l2, y1+l2 );
+	EmitQuad( x1-l2+0.5, y1-l2+0.5, x1+l2+0.5, y1-l2+0.5, x1-l2+0.5, y1+l2+0.5, x1+l2+0.5, y1+l2+0.5 );
 }
+
+void print( double idebug );
+
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
@@ -112,7 +115,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	float imag = 1./sqrtf(dx*dx+dy*dy);
 	float orthox = dy*wgl_last_width_over_2*imag;
 	float orthoy =-dx*wgl_last_width_over_2*imag;
-	EmitQuad( x1 - orthox, y1 - orthoy, x1 + orthox, y1 + orthoy, x2 - orthox, y2 - orthoy, x2 + orthox, y2 + orthoy );
+	EmitQuad( (short)(x1 - orthox+0.5), (short)(y1 - orthoy+0.5), (short)(x1 + orthox+0.5), (short)(y1 + orthoy+0.5), (short)(x2 - orthox+0.5), (short)(y2 - orthoy+0.5), (short)( x2 + orthox +0.5), (short)( y2 + orthoy +0.5) );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )

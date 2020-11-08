@@ -32,7 +32,15 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
 
 //To be provided by driver.
 uint32_t CNFGColor( uint32_t RGB );
+
+//This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
+
+//This is only supported on a FEW architectures, but allows arbitrary
+//image blitting.  Note that the alpha channel behavior is different
+//on different systems.
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+
 void CNFGTackPixel( short x1, short y1 );
 void CNFGTackSegment( short x1, short y1, short x2, short y2 );
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 );
