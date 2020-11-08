@@ -57,7 +57,7 @@ float sqrtf( float f );
 
 
 //Geometry batching system - so we can batch geometry and deliver it all at once.
-#define VERTCOUNT 8192
+#define VERTCOUNT 8192 //98,304 bytes.
 float vertdataV[VERTCOUNT*2];
 uint32_t vertdataC[VERTCOUNT];
 int vertplace;
