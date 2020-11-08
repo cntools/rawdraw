@@ -2,7 +2,7 @@
 
 #ifdef CNFGRASTERIZER
 #include "CNFG.h"
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <stdint.h>
 
 static uint32_t * buffer = 0;
@@ -18,6 +18,9 @@ void CNFGInternalResize( short x, short y )
 	buffer = malloc( bufferx * buffery * 4 );
 }
 
+#ifdef __wasm__
+#define SWAPS(x) x
+#else
 static uint32_t SWAPS( uint32_t r )
 {
 	uint32_t ret = (r&0xFF)<<16;
@@ -27,7 +30,7 @@ static uint32_t SWAPS( uint32_t r )
 	ret |= r;
 	return ret;
 }
-
+#endif
 uint32_t CNFGColor( uint32_t RGB )
 {
 	CNFGLastColor = SWAPS(RGB);
