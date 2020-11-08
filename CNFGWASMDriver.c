@@ -115,6 +115,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	float imag = 1./sqrtf(dx*dx+dy*dy);
 	float orthox = dy*wgl_last_width_over_2*imag;
 	float orthoy =-dx*wgl_last_width_over_2*imag;
+	//This logic is incorrect. XXX FIXME.
 	EmitQuad( (short)(x1 - orthox+0.5), (short)(y1 - orthoy+0.5), (short)(x1 + orthox+0.5), (short)(y1 + orthoy+0.5), (short)(x2 - orthox+0.5), (short)(y2 - orthoy+0.5), (short)( x2 + orthox +0.5), (short)( y2 + orthoy +0.5) );
 }
 
