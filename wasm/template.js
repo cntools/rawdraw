@@ -107,7 +107,7 @@ function FrameStart()
 	//Update geometry transform (Scale/shift)
 	wgl.uniform4f( wglUXFRM, 
 		1./wgl.viewportWidth, -1./wgl.viewportHeight,
-		-0.5-0.5/wgl.viewportWidth, .5+0.5/wgl.viewportHeight );
+		-0.5, .5 );
 }
 
 function SystemStart( title, w, h )

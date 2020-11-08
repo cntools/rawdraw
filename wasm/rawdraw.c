@@ -11,7 +11,7 @@
 double OGGetAbsoluteTime();
 void OGUSleep( int us );
 void prints( const char * sdebug );
-void print( int idebug );
+void print( double idebug );
 double sin( double x );
 double cos( double x );
 
@@ -84,7 +84,12 @@ int __attribute__((export_name("main"))) main()
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFFFF );
 		CNFGGetDimensions( &screenx, &screeny );
+		CNFGPenX = 100;
+		CNFGPenY = 100;
 
+		CNFGDrawText("+hello!!",4 );
+		CNFGSwapBuffers();
+		continue;
 		// Mesh in background
 		DrawHeightmap();
 
