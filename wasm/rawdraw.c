@@ -89,12 +89,12 @@ int __attribute__((export_name("main"))) main()
 		DrawHeightmap();
 
 		// Square behind text
-		CNFGColor( 0xFF444444 );
+		CNFGColor( 0xff444444 );
 		CNFGTackRectangle( 0, 0+50, 345, 345+50 );
 
 		// Text stuff in upper left.
 		pos = 0;
-		CNFGColor( 0xFFffffff );
+		CNFGColor( 0xffffffff );
 		for( i = 0; i < 1; i++ )
 		{
 			int c;

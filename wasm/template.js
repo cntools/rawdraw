@@ -19,19 +19,20 @@ function toUTF8(ptr) {
 }
 
 let wasmExports;
-const DATA_ADDR = 16; // Where the unwind/rewind data structure will live.
+const DATA_ADDR = 16|0; // Where the unwind/rewind data structure will live.
 let sleeping = false;
 let fullscreen = false;
 
 //Configure WebGL Stuff (allow to be part of global context)
 let canvas = document.getElementById('canvas');
 let wgl = canvas.getContext('webgl');
-let wgl_shader = null; //Standard flat color shader
-let wgl_blit = null;   //Blitting shader for texture
-let wgl_tex = null;    //Texture handle for blitting.
-let arraybufferV = null;
-let arraybufferC = null;
-
+let wglShader = null; //Standard flat color shader
+let wglBlit = null;   //Blitting shader for texture
+let wglTex = null;    //Texture handle for blitting.
+let wglABV = null;    //Array buffer for vertices
+let wglABC = null;    //Array buffer for colors.
+let wglUXFRM = null;  //Uniform location for transform on solid colors
+let wglUXFRMBlit = null; //Uniform location for transform on blitter
 
 //Utility stuff for WebGL sahder creation.
 function wgl_makeShader( vertText, fragText )
@@ -60,31 +61,33 @@ function wgl_makeShader( vertText, fragText )
 
 {
 	//We load two shaders, one is a solid-color shader, for most rawdraw objects.
-	wgl_shader = wgl_makeShader( 
-		"uniform vec2 sw, sa; attribute vec2 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0*sw-sa, 0.0, 0.5 ); vc = a1; }",
-		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.xyz,1.0); }" );
+	wglShader = wgl_makeShader( 
+		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); vc = a1; }",
+		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.xyzw); }" );
 
-	swloc = wgl.getUniformLocation(wgl_shader, "sw" );
-	saloc = wgl.getUniformLocation(wgl_shader, "sa" );
+	wglUXFRM = wgl.getUniformLocation(wglShader, "xfrm" );
 
 	//We load two shaders, the other is a texture shader, for blitting things.
-	wgl_blit = wgl_makeShader( 
-		"uniform vec2 sw, sa;attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*sw-sa, 0.0, 0.5 ); tc = a1.xy; }",
+	wglBlit = wgl_makeShader( 
+		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); tc = a1.xy; }",
 		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
 
-	swlocBlit = wgl.getUniformLocation(wgl_blit, "sw" );
-	salocBlit = wgl.getUniformLocation(wgl_blit, "sa" );
+	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
 
 	//Compile the shaders.
-	wgl.useProgram(wgl_shader);
+	wgl.useProgram(wglShader);
 
 	//Get some vertex/color buffers, to put geometry in.
-	arraybufferV = wgl.createBuffer();
-	arraybufferC = wgl.createBuffer();
+	wglABV = wgl.createBuffer();
+	wglABC = wgl.createBuffer();
 
 	//We're using two buffers, so just enable them, now.
 	wgl.enableVertexAttribArray(0);
 	wgl.enableVertexAttribArray(1);
+
+	//Enable alpha blending
+	wgl.enable(wgl.BLEND);
+	wgl.blendFunc(wgl.SRC_ALPHA, wgl.ONE_MINUS_SRC_ALPHA);
 }
 
 //Do webgl work that must happen every frame.
@@ -100,11 +103,11 @@ function FrameStart()
 	//Make sure viewport and input to shader is correct.
 	//We do this so we can pass literal coordinates into the shader.
 	wgl.viewport( 0, 0, wgl.viewportWidth, wgl.viewportHeight );
-	wgl.uniform2f( swloc, 1./wgl.viewportWidth, -1./wgl.viewportHeight );
-	//XXX Is the nudge correct?
-	//0.5, -.5 to fix center.
-	//0.5/... to fix kerning so lines show up in middle of pixels.
-	wgl.uniform2f( saloc, 0.5+0.5/wgl.viewportWidth, -.5-0.5/wgl.viewportHeight );
+
+	//Update geometry transform (Scale/shift)
+	wgl.uniform4f( wglUXFRM, 
+		1./wgl.viewportWidth, -1./wgl.viewportHeight,
+		-0.5-0.5/wgl.viewportWidth, .5+0.5/wgl.viewportHeight );
 }
 
 function SystemStart( title, w, h )
@@ -119,10 +122,10 @@ function SystemStart( title, w, h )
 
 function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 {
-	wgl.bindBuffer(wgl.ARRAY_BUFFER, arraybufferV);
+	wgl.bindBuffer(wgl.ARRAY_BUFFER, wglABV);
 	wgl.bufferData(wgl.ARRAY_BUFFER, vertsF, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(0, 2, wgl.FLOAT, false, 0, 0);
-	wgl.bindBuffer(wgl.ARRAY_BUFFER, arraybufferC);
+	wgl.bindBuffer(wgl.ARRAY_BUFFER, wglABC);
 	wgl.bufferData(wgl.ARRAY_BUFFER, colorsI, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
 	wgl.drawArrays(wgl.TRIANGLES, 0, vertcount );
@@ -132,6 +135,10 @@ function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 //To use functions here, just call them.  Surprisingly, signatures justwork.
 const imports = {
 	env: {
+		//Mapping our array buffer into the system.
+		memory: memory,
+
+		//Various draw-functions.
 		FastPipeGeometry : (vertsF, colorsI, vertcount )=>
 		{
 			//Take a float* and uint32_t* of vertices, and flat-render them.
@@ -158,24 +165,21 @@ const imports = {
 			HEAP16[pw>>1] = canvas.width;
 			HEAP16[ph>>1] = canvas.height;
 		},
-		CNFGHandleInput: () => {
-			//?? Do something here?
-		},
-		CNFGUpdateScreenWithBitmapInternal : (memptr, w, h ) => {
+		CNFGBlitImage : (memptr, x, y, w, h ) => {
 			if( w <= 0 || h <= 0 ) return;
 
-			//if( wgl_dcount > 0 ) WGLFBuffer();
-
-			wgl.useProgram(wgl_blit);
+			wgl.useProgram(wglBlit);
 
 			//Most of the time we don't use textures, so don't initiate at start.
-			if( wgl_tex == null )	wgl_tex = wgl.createTexture(); 
+			if( wglTex == null )	wglTex = wgl.createTexture(); 
 
 			wgl.activeTexture(wgl.TEXTURE0);
-			wgl.bindTexture(wgl.TEXTURE_2D, wgl_tex);
+			wgl.bindTexture(wgl.TEXTURE_2D, wglTex);
 
-			wgl.uniform2f( swlocBlit, 1./wgl.viewportWidth, -1./wgl.viewportHeight );
-			wgl.uniform2f( salocBlit, 0.5, -.5 );  //Note that unlike saloc, we don't have an extra offset.
+			//Note that unlike the normal color operation, we don't have an extra offset.
+			wgl.uniform4f( wglUXFRMBlit,
+				1./wgl.viewportWidth, -1./wgl.viewportHeight,
+				-.5+x/wgl.viewportWidth, .5-y/wgl.viewportHeight );
 
 			//These parameters are required.  Not sure why the defaults don't work.
 			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_WRAP_T, wgl.CLAMP_TO_EDGE);
@@ -190,7 +194,7 @@ const imports = {
 				new Uint8Array( [0,0,0,0,255,0,0,0,255,255,0,0,0,0,0,0,255,255,0,0,0,255,0,0] ),
 				6 );
 
-			wgl.useProgram(wgl_shader);
+			wgl.useProgram(wglShader);
 		},
 		CNFGSwapBuffersInternal: () => {
 			if (!sleeping) {
@@ -199,7 +203,7 @@ const imports = {
 				// which for simplicity we can start right after the data structure itself.
 				HEAP32[DATA_ADDR >> 2] = DATA_ADDR + 8;
 				// The end of the stack will not be reached here anyhow.
-				HEAP32[DATA_ADDR + 4 >> 2] = 1024;
+				HEAP32[DATA_ADDR + 4 >> 2] = 1024|0;
 				wasmExports.asyncify_start_unwind(DATA_ADDR);
 				sleeping = true;
 				// Resume after the proper delay.
@@ -252,9 +256,6 @@ const imports = {
 				sleeping = false;
 			}
 		},
-
-		//Mapping our array buffer into the system.
-		memory: memory,
 
 		//Quick-and-dirty debug.
 		print: console.log,
