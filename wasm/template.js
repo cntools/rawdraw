@@ -20,7 +20,7 @@ function toUTF8(ptr) {
 
 let wasmExports;
 const DATA_ADDR = 16|0; // Where the unwind/rewind data structure will live.
-let sleeping = false;
+let rendering = false;
 let fullscreen = false;
 
 //Configure WebGL Stuff (allow to be part of global context)
@@ -122,11 +122,12 @@ function SystemStart( title, w, h )
 
 function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 {
-	wgl.bindBuffer(wgl.ARRAY_BUFFER, wglABV);
-	wgl.bufferData(wgl.ARRAY_BUFFER, vertsF, wgl.DYNAMIC_DRAW);
+	const ab = wgl.ARRAY_BUFFER;
+	wgl.bindBuffer(ab, wglABV);
+	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(0, 2, wgl.FLOAT, false, 0, 0);
-	wgl.bindBuffer(wgl.ARRAY_BUFFER, wglABC);
-	wgl.bufferData(wgl.ARRAY_BUFFER, colorsI, wgl.DYNAMIC_DRAW);
+	wgl.bindBuffer(ab, wglABC);
+	wgl.bufferData(ab, colorsI, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
 	wgl.drawArrays(wgl.TRIANGLES, 0, vertcount );
 }
@@ -174,7 +175,8 @@ const imports = {
 			if( wglTex == null )	wglTex = wgl.createTexture(); 
 
 			wgl.activeTexture(wgl.TEXTURE0);
-			wgl.bindTexture(wgl.TEXTURE_2D, wglTex);
+			const t2d = wgl.ARRAY_BUFFER;
+			wgl.bindTexture(t2d, wglTex);
 
 			//Note that unlike the normal color operation, we don't have an extra offset.
 			wgl.uniform4f( wglUXFRMBlit,
@@ -182,11 +184,11 @@ const imports = {
 				-.5+x/wgl.viewportWidth, .5-y/wgl.viewportHeight );
 
 			//These parameters are required.  Not sure why the defaults don't work.
-			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_WRAP_T, wgl.CLAMP_TO_EDGE);
-			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_WRAP_S, wgl.CLAMP_TO_EDGE);
-			wgl.texParameteri(wgl.TEXTURE_2D, wgl.TEXTURE_MIN_FILTER, wgl.NEAREST);
+			wgl.texParameteri(t2d, wgl.TEXTURE_WRAP_T, wgl.CLAMP_TO_EDGE);
+			wgl.texParameteri(t2d, wgl.TEXTURE_WRAP_S, wgl.CLAMP_TO_EDGE);
+			wgl.texParameteri(t2d, wgl.TEXTURE_MIN_FILTER, wgl.NEAREST);
 
-			wgl.texImage2D(wgl.TEXTURE_2D, 0, wgl.RGBA, w, h, 0, wgl.RGBA,
+			wgl.texImage2D(t2d, 0, wgl.RGBA, w, h, 0, wgl.RGBA,
 				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
 			FastPipeGeometryJS( 
@@ -197,7 +199,7 @@ const imports = {
 			wgl.useProgram(wglShader);
 		},
 		CNFGSwapBuffersInternal: () => {
-			if (!sleeping) {
+			if (!rendering) {
 				// We are called in order to start a sleep/unwind.
 				// Fill in the data structure. The first value has the stack location,
 				// which for simplicity we can start right after the data structure itself.
@@ -205,7 +207,7 @@ const imports = {
 				// The end of the stack will not be reached here anyhow.
 				HEAP32[DATA_ADDR + 4 >> 2] = 1024|0;
 				wasmExports.asyncify_start_unwind(DATA_ADDR);
-				sleeping = true;
+				rendering = true;
 				// Resume after the proper delay.
 				requestAnimationFrame(function() {
 					FrameStart();
@@ -217,7 +219,7 @@ const imports = {
 			} else {
 				// We are called as part of a resume/rewind. Stop sleeping.
 				wasmExports.asyncify_stop_rewind();
-				sleeping = false;
+				rendering = false;
 			}
 		},
 		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
@@ -232,31 +234,6 @@ const imports = {
 		cosf : Math.cos,
 		tanf : Math.tan,
 
-		OGUSleep: (us) => {
-			if (!sleeping) {
-				// We are called in order to start a sleep/unwind.
-				//console.log('sleep...');
-				// Fill in the data structure. The first value has the stack location,
-				// which for simplicity we can start right after the data structure itself.
-				HEAP32[DATA_ADDR >> 2] = DATA_ADDR + 8;
-				// The end of the stack will not be reached here anyhow.
-				HEAP32[DATA_ADDR + 4 >> 2] = 1024;
-				wasmExports.asyncify_start_unwind(DATA_ADDR);
-				sleeping = true;
-				// Resume after the proper delay.
-				setTimeout(function() {
-					wasmExports.asyncify_start_rewind(DATA_ADDR);
-					// The code is now ready to rewind; to start the process, enter the
-					// first function that should be on the call stack.
-					wasmExports.main();
-				}, us/1000);
-			} else {
-				// We are called as part of a resume/rewind. Stop sleeping.
-				wasmExports.asyncify_stop_rewind();
-				sleeping = false;
-			}
-		},
-
 		//Quick-and-dirty debug.
 		print: console.log,
 		prints: (str) => { console.log(toUTF8(str)); },
@@ -268,11 +245,7 @@ const imports = {
 	// Actually load the WASM blob.
 	let blob = atob('${BLOB}');
 	let array = new Uint8Array(new ArrayBuffer(blob.length));
-	let i = 0|0;
-	for(i = 0; i < blob.length; i++) {
-		array[i] = blob.charCodeAt(i);
-	}
-
+	for(let i = 0; i < blob.length; i++) array[i] = blob.charCodeAt(i);
 
 	WebAssembly.instantiate(array, imports).then(
 		function(wa) { 
