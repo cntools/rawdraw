@@ -135,6 +135,34 @@ function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 //This defines the list of imports, the things that C will be importing from Javascript.
 //To use functions here, just call them.  Surprisingly, signatures justwork.
 const imports = {
+
+	bynsyncify : {
+		//Any javascript functions which may unwind the stack should be placed here.
+		CNFGSwapBuffersInternal: () => {
+			if (!rendering) {
+				// We are called in order to start a sleep/unwind.
+				// Fill in the data structure. The first value has the stack location,
+				// which for simplicity we can start right after the data structure itself.
+				HEAP32[DATA_ADDR >> 2] = DATA_ADDR + 8;
+				// The end of the stack will not be reached here anyhow.
+				HEAP32[DATA_ADDR + 4 >> 2] = 1024|0;
+				wasmExports.asyncify_start_unwind(DATA_ADDR);
+				rendering = true;
+				// Resume after the proper delay.
+				requestAnimationFrame(function() {
+					FrameStart();
+					wasmExports.asyncify_start_rewind(DATA_ADDR);
+					// The code is now ready to rewind; to start the process, enter the
+					// first function that should be on the call stack.
+					wasmExports.main();
+				});
+			} else {
+				// We are called as part of a resume/rewind. Stop sleeping.
+				wasmExports.asyncify_stop_rewind();
+				rendering = false;
+			}
+		},
+	},
 	env: {
 		//Mapping our array buffer into the system.
 		memory: memory,
@@ -197,30 +225,6 @@ const imports = {
 				6 );
 
 			wgl.useProgram(wglShader);
-		},
-		CNFGSwapBuffersInternal: () => {
-			if (!rendering) {
-				// We are called in order to start a sleep/unwind.
-				// Fill in the data structure. The first value has the stack location,
-				// which for simplicity we can start right after the data structure itself.
-				HEAP32[DATA_ADDR >> 2] = DATA_ADDR + 8;
-				// The end of the stack will not be reached here anyhow.
-				HEAP32[DATA_ADDR + 4 >> 2] = 1024|0;
-				wasmExports.asyncify_start_unwind(DATA_ADDR);
-				rendering = true;
-				// Resume after the proper delay.
-				requestAnimationFrame(function() {
-					FrameStart();
-					wasmExports.asyncify_start_rewind(DATA_ADDR);
-					// The code is now ready to rewind; to start the process, enter the
-					// first function that should be on the call stack.
-					wasmExports.main();
-				});
-			} else {
-				// We are called as part of a resume/rewind. Stop sleeping.
-				wasmExports.asyncify_stop_rewind();
-				rendering = false;
-			}
 		},
 		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
 

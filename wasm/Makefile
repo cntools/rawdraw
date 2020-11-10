@@ -14,6 +14,8 @@ CFLAGS+=-DWASM -nostdlib --target=wasm32 \
 		-Wl,--allow-undefined \
 		-Wl,--import-memory
 
+WOFLAGS:=--asyncify --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify-ignore-indirect
+
 opt.js : template.js main.wasm
 	bash -c 'export BLOB=$$(cat main.wasm | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" ); envsubst < template.js > opt.js'
 	#Comment the below line out if you don't want to uglify the javascript.
@@ -24,7 +26,8 @@ index.html : template.ht opt.js
 
 main.wasm: rawdraw.c
 	$(CLANG) $(CFLAGS) $^ -o $@
-	$(WASMOPT) --asyncify -Oz main.wasm -o main.wasm
+	$(WASMOPT) $(WOFLAGS) -Oz main.wasm -o main.wasm
+	wasm-objdump -d main.wasm > main.wat
 
 clean:
 	rm -rf main.wasm opt.js index.html
