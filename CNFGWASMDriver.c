@@ -2,7 +2,7 @@
 #include <CNFG.h>
 #include <stdint.h>
 
-extern void CNFGSwapBuffersInternal();
+extern void __attribute__((import_module("bynsyncify"))) CNFGSwapBuffersInternal();
 
 
 #ifdef CNFGRASTERIZER
@@ -52,7 +52,6 @@ void CNFGHandleInput()
 //Forward declarations that we get from either WASM or our javascript code.
 void CNFGClearFrameInternal( uint32_t bgcolor );
 void FastPipeGeometry( float * fv, uint8_t * col, int vertcount );
-void CNFGSwapBuffersInternal();
 float sqrtf( float f );
 
 
