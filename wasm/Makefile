@@ -27,7 +27,7 @@ index.html : template.ht opt.js
 main.wasm: rawdraw.c
 	$(CLANG) $(CFLAGS) $^ -o $@
 	$(WASMOPT) $(WOFLAGS) -Oz main.wasm -o main.wasm
-	wasm-objdump -d main.wasm > main.wat
+	#wasm-objdump -d main.wasm > main.disassembly.txt
 
 clean:
 	rm -rf main.wasm opt.js index.html
