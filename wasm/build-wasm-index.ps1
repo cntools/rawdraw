@@ -54,7 +54,7 @@ $ContentJS = Get-Content $TemplateJS -Raw
 
 $Output = $ContentJS.Replace('${BLOB}', $WASMasB64);
 
-if (Get-Command "terserx" -ErrorAction SilentlyContinue) 
+if (Get-Command "terser" -ErrorAction SilentlyContinue) 
 {
     Set-Content $IntermediateJS  -Value $Output
     Write-Host ("Before minifaction: {0:N0} B" -f ($Output).length)
