@@ -107,7 +107,7 @@ function FrameStart()
 	//Update geometry transform (Scale/shift)
 	wgl.uniform4f( wglUXFRM, 
 		1./wgl.viewportWidth, -1./wgl.viewportHeight,
-		-0.5 - 0.5/wgl.viewportWidth , 0.5 - 0.5/wgl.viewportHeight );
+		-0.5, 0.5);
 }
 
 function SystemStart( title, w, h )
@@ -125,7 +125,7 @@ function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 	const ab = wgl.ARRAY_BUFFER;
 	wgl.bindBuffer(ab, wglABV);
 	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
-	wgl.vertexAttribPointer(0, 2, wgl.FLOAT, false, 0, 0);
+	wgl.vertexAttribPointer(0, 2, wgl.SHORT, false, 0, 0);
 	wgl.bindBuffer(ab, wglABC);
 	wgl.bufferData(ab, colorsI, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
@@ -172,7 +172,7 @@ const imports = {
 		{
 			//Take a float* and uint32_t* of vertices, and flat-render them.
 			FastPipeGeometryJS(
-				HEAPF32.slice(vertsF>>2,(vertsF>>2)+vertcount*2),
+				HEAPU16.slice(vertsF>>1,(vertsF>>1)+vertcount*2),
 				HEAPU8.slice(colorsI,(colorsI)+vertcount*4),
 				vertcount );
 		},
@@ -220,7 +220,7 @@ const imports = {
 				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
 			FastPipeGeometryJS( 
-				new Float32Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
+				new Uint16Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
 				new Uint8Array( [0,0,0,0,255,0,0,0,255,255,0,0,0,0,0,0,255,255,0,0,0,255,0,0] ),
 				6 );
 

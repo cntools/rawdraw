@@ -79,7 +79,6 @@ int __attribute__((export_name("main"))) main()
 		//at least currently, we do that out-of-band.
 		CNFGHandleInput();
 
-		CNFGSetLineWidth(3);
 
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFFFF );
@@ -97,7 +96,12 @@ int __attribute__((export_name("main"))) main()
 
 		// Square behind text
 		CNFGColor( 0xff444444 );
-		CNFGTackRectangle( 0, 0+50, 345, 345+50 );
+		CNFGSetLineWidth(1);
+		CNFGTackSegment( 0, 50, 100, 50 );
+		CNFGTackSegment( 0, 50, 0, 150 );
+		CNFGTackRectangle( 2, 2+50, 345, 345+50 );
+
+		CNFGSetLineWidth(3);
 
 		// Text stuff in upper left.
 		pos = 0;

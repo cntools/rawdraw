@@ -51,13 +51,13 @@ void CNFGHandleInput()
 
 //Forward declarations that we get from either WASM or our javascript code.
 void CNFGClearFrameInternal( uint32_t bgcolor );
-void FastPipeGeometry( float * fv, uint8_t * col, int vertcount );
+void FastPipeGeometry( short * fv, uint8_t * col, int vertcount );
 float sqrtf( float f );
 
 
 //Geometry batching system - so we can batch geometry and deliver it all at once.
 #define VERTCOUNT 8192 //98,304 bytes.
-float vertdataV[VERTCOUNT*2];
+short vertdataV[VERTCOUNT*2];
 uint32_t vertdataC[VERTCOUNT];
 int vertplace;
 float wgl_last_width_over_2 = .5;
@@ -81,11 +81,11 @@ void CNFGSwapBuffers()
 	CNFGSwapBuffersInternal( );
 }
 
-void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
+void EmitQuad( short cx0, short cy0, short cx1, short cy1, short cx2, short cy2, short cx3, short cy3 ) 
 {
 	//Because quads are really useful, but it's best to keep them all triangles if possible.
 	if( vertplace >= VERTCOUNT-6 ) FastPipeEmit();
-	float * fv = &vertdataV[vertplace*2];
+	short * fv = &vertdataV[vertplace*2];
 	fv[0] = cx0; fv[1] = cy0;
 	fv[2] = cx1; fv[3] = cy1;
 	fv[4] = cx2; fv[5] = cy2;
@@ -100,7 +100,8 @@ void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2,
 
 void CNFGTackPixel( short x1, short y1 )
 {
-	const float l2 = wgl_last_width_over_2;
+	x1++; y1++;
+	const short l2 = wgl_last_width_over_2;
 	EmitQuad( x1-l2, y1-l2, x1+l2, y1-l2, x1-l2, y1+l2, x1+l2, y1+l2 );
 }
 
@@ -122,10 +123,10 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	float orthox = dy*wgl_last_width_over_2;
 	float orthoy =-dx*wgl_last_width_over_2;
 
-	ix2 += dx/2;
-	iy2 += dy/2;
-	ix1 -= dx/2;
-	iy1 -= dy/2;
+	ix2 += dx/2 + 1;
+	iy2 += dy/2 + 1;
+	ix1 -= dx/2 - 1;
+	iy1 -= dy/2 - 1;
 
 	//This logic is incorrect. XXX FIXME.
 	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
@@ -133,10 +134,10 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-	float ix1 = x1 + 0.5;
-	float iy1 = y1 + 0.5;
-	float ix2 = x2 + 0.5;
-	float iy2 = y2 + 0.5;
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
 	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
 }
 
@@ -151,7 +152,7 @@ void CNFGTackPoly( RDPoint * points, int verts )
 
 	for( i = 0; i < tris; i++ )
 	{
-		float * fv = &vertdataV[vertplace*2];
+		short * fv = &vertdataV[vertplace*2];
 		fv[0] = ptrsrc[0];
 		fv[1] = ptrsrc[1];
 		fv[2] = ptrsrc[2];
@@ -175,7 +176,7 @@ uint32_t CNFGColor( uint32_t RGB )
 
 void	CNFGSetLineWidth( short width )
 {
-	wgl_last_width_over_2 = width/2 + 0.5;
+	wgl_last_width_over_2 = width/2.0;// + 0.5;
 }
 
 void CNFGHandleInput()
