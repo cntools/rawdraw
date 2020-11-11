@@ -102,11 +102,11 @@ void CNFGTackPixel( short x1, short y1 )
 {
 	x1++; y1++;
 	const short l2 = wgl_last_width_over_2;
-	EmitQuad( x1-l2, y1-l2, x1+l2, y1-l2, x1-l2, y1+l2, x1+l2, y1+l2 );
+	const short l2u = wgl_last_width_over_2+0.5;
+	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
 }
 
 void print( double idebug );
-
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
