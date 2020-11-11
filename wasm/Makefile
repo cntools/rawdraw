@@ -1,5 +1,12 @@
 all : index.html
 
+#For tools (Works in Ubuntu 20.04 (Including WSL), Mint)
+# sudo apt-get install clang-10 lld-10 binaryen
+# sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-10 20
+# sudo update-alternatives --install /usr/bin/wasm-ld wasm-ld /usr/bin/wasm-ld-10 20
+
+#node-uglify lld clang-10 lld-10 binaryen
+
 #Path to rawdraw
 CFLAGS:=-I..
 
