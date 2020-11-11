@@ -101,7 +101,7 @@ int __attribute__((export_name("main"))) main()
 		CNFGTackSegment( 0, 50, 0, 150 );
 		CNFGTackRectangle( 2, 2+50, 345, 345+50 );
 
-		CNFGSetLineWidth(3);
+		CNFGSetLineWidth(1);
 
 		// Text stuff in upper left.
 		pos = 0;

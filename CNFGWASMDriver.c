@@ -5,59 +5,22 @@
 extern void __attribute__((import_module("bynsyncify"))) CNFGSwapBuffersInternal();
 
 
-#ifdef CNFGRASTERIZER
-
-
-//XXX TODO: NEED MEMORY ALLOCATOR
-extern unsigned char __heap_base;
-unsigned int bump_pointer = (unsigned int)&__heap_base;
-void* malloc(unsigned long size) {
-	unsigned int ptr = bump_pointer;
-	bump_pointer += size;
-	return (void *)ptr;
-}
-void free(void* ptr) {  }
-
-#include "CNFGRasterizer.c"
-
-extern void CNFGUpdateScreenWithBitmapInternal( uint32_t * data, int w, int h );
-void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
-{
-	CNFGBlitImage( data, 0, 0, w, h );
-	CNFGSwapBuffersInternal();
-}
-
-
-void	CNFGSetLineWidth( short width )
-{
-	//Rasterizer does not support line width.
-}
-
-void CNFGHandleInput()
-{
-	//Do nothing.
-	//Input is handled on swap frame.
-}
-
-#endif
-
-
-
-
-
 #ifndef CNFGRASTERIZER
 
 //The normal path.
 
 //Forward declarations that we get from either WASM or our javascript code.
 void CNFGClearFrameInternal( uint32_t bgcolor );
-void FastPipeGeometry( short * fv, uint8_t * col, int vertcount );
+
+//Just FYI we use floats for geometry instead of shorts becase it is harder
+//to triangularize a diagonal line int triangles with shorts and have it look good.
+void FastPipeGeometry( float * fv, uint8_t * col, int vertcount );
 float sqrtf( float f );
 
 
 //Geometry batching system - so we can batch geometry and deliver it all at once.
 #define VERTCOUNT 8192 //98,304 bytes.
-short vertdataV[VERTCOUNT*2];
+float vertdataV[VERTCOUNT*2];
 uint32_t vertdataC[VERTCOUNT];
 int vertplace;
 float wgl_last_width_over_2 = .5;
@@ -81,11 +44,12 @@ void CNFGSwapBuffers()
 	CNFGSwapBuffersInternal( );
 }
 
-void EmitQuad( short cx0, short cy0, short cx1, short cy1, short cx2, short cy2, short cx3, short cy3 ) 
+void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
 {
 	//Because quads are really useful, but it's best to keep them all triangles if possible.
+	//This lets us draw arbitrary quads.
 	if( vertplace >= VERTCOUNT-6 ) FastPipeEmit();
-	short * fv = &vertdataV[vertplace*2];
+	float * fv = &vertdataV[vertplace*2];
 	fv[0] = cx0; fv[1] = cy0;
 	fv[2] = cx1; fv[3] = cy1;
 	fv[4] = cx2; fv[5] = cy2;
@@ -123,10 +87,10 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	float orthox = dy*wgl_last_width_over_2;
 	float orthoy =-dx*wgl_last_width_over_2;
 
-	ix2 += dx/2 + 1;
-	iy2 += dy/2 + 1;
-	ix1 -= dx/2 - 1;
-	iy1 -= dy/2 - 1;
+	ix2 += dx/2 + 0.5;
+	iy2 += dy/2 + 0.5;
+	ix1 -= dx/2 - 0.5;
+	iy1 -= dy/2 - 0.5;
 
 	//This logic is incorrect. XXX FIXME.
 	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
@@ -152,7 +116,7 @@ void CNFGTackPoly( RDPoint * points, int verts )
 
 	for( i = 0; i < tris; i++ )
 	{
-		short * fv = &vertdataV[vertplace*2];
+		float * fv = &vertdataV[vertplace*2];
 		fv[0] = ptrsrc[0];
 		fv[1] = ptrsrc[1];
 		fv[2] = ptrsrc[2];
@@ -177,6 +141,40 @@ uint32_t CNFGColor( uint32_t RGB )
 void	CNFGSetLineWidth( short width )
 {
 	wgl_last_width_over_2 = width/2.0;// + 0.5;
+}
+
+void CNFGHandleInput()
+{
+	//Do nothing.
+	//Input is handled on swap frame.
+}
+
+#else
+	
+//Rasterizer - if you want to do this, you will need to enable blitting in the javascript.
+//XXX TODO: NEED MEMORY ALLOCATOR
+extern unsigned char __heap_base;
+unsigned int bump_pointer = (unsigned int)&__heap_base;
+void* malloc(unsigned long size) {
+	unsigned int ptr = bump_pointer;
+	bump_pointer += size;
+	return (void *)ptr;
+}
+void free(void* ptr) {  }
+
+#include "CNFGRasterizer.c"
+
+extern void CNFGUpdateScreenWithBitmapInternal( uint32_t * data, int w, int h );
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
+{
+	CNFGBlitImage( data, 0, 0, w, h );
+	CNFGSwapBuffersInternal();
+}
+
+
+void	CNFGSetLineWidth( short width )
+{
+	//Rasterizer does not support line width.
 }
 
 void CNFGHandleInput()

@@ -28,11 +28,12 @@ let canvas = document.getElementById('canvas');
 let wgl = canvas.getContext('webgl');
 let wglShader = null; //Standard flat color shader
 let wglBlit = null;   //Blitting shader for texture
-let wglTex = null;    //Texture handle for blitting.
 let wglABV = null;    //Array buffer for vertices
 let wglABC = null;    //Array buffer for colors.
 let wglUXFRM = null;  //Uniform location for transform on solid colors
-let wglUXFRMBlit = null; //Uniform location for transform on blitter
+
+//let wglTex = null;    //Texture handle for blitting.
+//let wglUXFRMBlit = null; //Uniform location for transform on blitter
 
 //Utility stuff for WebGL sahder creation.
 function wgl_makeShader( vertText, fragText )
@@ -67,13 +68,15 @@ function wgl_makeShader( vertText, fragText )
 
 	wglUXFRM = wgl.getUniformLocation(wglShader, "xfrm" );
 
+/*
+	//We are not currently supporting the software renderer.
 	//We load two shaders, the other is a texture shader, for blitting things.
 	wglBlit = wgl_makeShader( 
 		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); tc = a1.xy; }",
 		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
 
 	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
-
+*/
 	//Compile the shaders.
 	wgl.useProgram(wglShader);
 
@@ -125,7 +128,7 @@ function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 	const ab = wgl.ARRAY_BUFFER;
 	wgl.bindBuffer(ab, wglABV);
 	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
-	wgl.vertexAttribPointer(0, 2, wgl.SHORT, false, 0, 0);
+	wgl.vertexAttribPointer(0, 2, wgl.FLOAT, false, 0, 0);
 	wgl.bindBuffer(ab, wglABC);
 	wgl.bufferData(ab, colorsI, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
@@ -172,7 +175,7 @@ const imports = {
 		{
 			//Take a float* and uint32_t* of vertices, and flat-render them.
 			FastPipeGeometryJS(
-				HEAPU16.slice(vertsF>>1,(vertsF>>1)+vertcount*2),
+				HEAPF32.slice(vertsF>>2,(vertsF>>2)+vertcount*2),
 				HEAPU8.slice(colorsI,(colorsI)+vertcount*4),
 				vertcount );
 		},
@@ -194,6 +197,7 @@ const imports = {
 			HEAP16[pw>>1] = canvas.width;
 			HEAP16[ph>>1] = canvas.height;
 		},
+		/* We are not currently supporting the blitter (It works, but not efficient or smart 
 		CNFGBlitImage : (memptr, x, y, w, h ) => {
 			if( w <= 0 || h <= 0 ) return;
 
@@ -226,6 +230,7 @@ const imports = {
 
 			wgl.useProgram(wglShader);
 		},
+		*/
 		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
 
 		Add1 : (i) => { return i+1; }, //Super simple function for speed testing.
