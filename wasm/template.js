@@ -203,7 +203,7 @@ const imports = {
 			if( wglTex == null )	wglTex = wgl.createTexture(); 
 
 			wgl.activeTexture(wgl.TEXTURE0);
-			const t2d = wgl.ARRAY_BUFFER;
+			const t2d = wgl.TEXTURE_2D;
 			wgl.bindTexture(t2d, wglTex);
 
 			//Note that unlike the normal color operation, we don't have an extra offset.
