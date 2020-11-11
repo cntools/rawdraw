@@ -14,6 +14,8 @@ $TemplateHT = 'template.ht'
 $TemplateJS = 'template.js'
 $MainWASM = 'main.wasm'
 $InputC = 'rawdraw.c'
+$IntermediateJS = 'main.js.tmp'
+$IntermediateJSMin = 'main.js.tmp.min'
 
 Write-Host "Using Clang at $Clang"
 Write-Host "Compiling $InputC..."
@@ -52,11 +54,13 @@ $ContentJS = Get-Content $TemplateJS -Raw
 
 $Output = $ContentJS.Replace('${BLOB}', $WASMasB64);
 
-if (Get-Command "terser" -ErrorAction SilentlyContinue) 
+if (Get-Command "terserx" -ErrorAction SilentlyContinue) 
 {
-    Set-Content main.js -Value $Output
-    terser main.js > main.min.js
-    $Output = Get-Content main.min.js -Raw
+    Set-Content $IntermediateJS  -Value $Output
+    Write-Host ("Before minifaction: {0:N0} B" -f ($Output).length)
+    terser $IntermediateJS > $IntermediateJSMin
+    $Output = Get-Content $IntermediateJSMin  -Raw
+    Write-Host ("After minifacation: {0:N0} B" -f ($Output).length)
 }
 else
 {
