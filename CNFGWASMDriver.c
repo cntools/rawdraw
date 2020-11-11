@@ -101,7 +101,7 @@ void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2,
 void CNFGTackPixel( short x1, short y1 )
 {
 	const float l2 = wgl_last_width_over_2;
-	EmitQuad( x1-l2+0.5, y1-l2+0.5, x1+l2+0.5, y1-l2+0.5, x1-l2+0.5, y1+l2+0.5, x1+l2+0.5, y1+l2+0.5 );
+	EmitQuad( x1-l2, y1-l2, x1+l2, y1-l2, x1-l2, y1+l2, x1+l2, y1+l2 );
 }
 
 void print( double idebug );
@@ -109,18 +109,35 @@ void print( double idebug );
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
-	float dx = x2-x1;
-	float dy = y2-y1;
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
+
+	float dx = ix2-ix1;
+	float dy = iy2-iy1;
 	float imag = 1./sqrtf(dx*dx+dy*dy);
-	float orthox = dy*wgl_last_width_over_2*imag;
-	float orthoy =-dx*wgl_last_width_over_2*imag;
+	dx *= imag;
+	dy *= imag;
+	float orthox = dy*wgl_last_width_over_2;
+	float orthoy =-dx*wgl_last_width_over_2;
+
+	ix2 += dx/2;
+	iy2 += dy/2;
+	ix1 -= dx/2;
+	iy1 -= dy/2;
+
 	//This logic is incorrect. XXX FIXME.
-	EmitQuad( (short)(x1 - orthox+0.5), (short)(y1 - orthoy+0.5), (short)(x1 + orthox+0.5), (short)(y1 + orthoy+0.5), (short)(x2 - orthox+0.5), (short)(y2 - orthoy+0.5), (short)( x2 + orthox +0.5), (short)( y2 + orthoy +0.5) );
+	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-	EmitQuad( x1,y1,x2,y1,x1,y2,x2,y2 );
+	float ix1 = x1 + 0.5;
+	float iy1 = y1 + 0.5;
+	float ix2 = x2 + 0.5;
+	float iy2 = y2 + 0.5;
+	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
