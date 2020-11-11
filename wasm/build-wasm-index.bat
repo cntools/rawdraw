@@ -5,7 +5,7 @@ rem Install Binaryen to C:\binaryen\ or set parameter below (Recommends binaryen
 set CLANG="C:\Program Files\LLVM\bin\clang"
 set WASMOPT="C:\binaryen\binaryen-version_98\bin\wasm-opt"
 
-echo off
+@echo off
 set OUTFILE=index.html
 set TEMPLATEHT=template.ht
 set TEMPLATEJS=template.js
@@ -15,7 +15,7 @@ echo on
 %CLANG% -I.. -DWASM -nostdlib --target=wasm32 -flto -Oz -Wl,--lto-O3 -Wl,--no-entry -Wl,--allow-undefined -Wl,--import-memory -o main.wasm rawdraw.c
 %WASMOPT% --asyncify --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify-ignore-indirect -Oz main.wasm -o main.wasm
 
-echo off
+@echo off
 echo #include "stdio.h" > process.c
 echo #include "stdlib.h" >> process.c
 echo #include "string.h" >> process.c
@@ -52,6 +52,7 @@ echo   char * JSPost = strstr( tmpJSStr, "${BLOB}" ); >> process.c
 echo   JSPost[0] = 0; JSPost += strlen( "${BLOB}" ); >> process.c
 echo   fprintf( fOUT, "%%s", tmpHTStr ); fprintf( fOUT, "%%s", tmpJSStr ); fprintf( fOUT,"%%s", base64( mainWStr, mainWLen ) ); fprintf( fOUT, "%%s\n", JSPost ); fprintf( fOUT, "%%s\n", HTPost ); >> process.c
 echo } >> process.c
-echo on
 %CLANG% -D_CRT_SECURE_NO_WARNINGS process.c -o process.exe
 process
+dir index.html
+echo on
