@@ -49,6 +49,8 @@ $AsyncProc.WaitForExit();
 
 Write-Host 'Merging files...'
 $WASMasB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PSScriptRoot\$MainWASM"))
+Remove-Item $MainWASM
+
 $ContentHT = Get-Content $TemplateHT -Raw
 $ContentJS = Get-Content $TemplateJS -Raw
 
@@ -61,11 +63,14 @@ if (Get-Command "terser" -ErrorAction SilentlyContinue)
     terser $IntermediateJS > $IntermediateJSMin
     $Output = Get-Content $IntermediateJSMin  -Raw
     Write-Host ("After minifacation: {0:N0} B" -f ($Output).length)
+	Remove-Item $IntermediateJS
+	Remove-Item $IntermediateJSMin
 }
 else
 {
-    Write-Host( "terser not found. Not uglifying javascript." );
+    Write-Host 'terser not found. Not uglifying javascript.';
 }
+
 $Output = $ContentHT.Replace('${JAVASCRIPT_DATA}', $Output);
 
 Set-Content $OutFile -Value $Output
