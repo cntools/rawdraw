@@ -15,7 +15,6 @@ $TemplateJS = 'template.js'
 $MainWASM = 'main.wasm'
 $InputC = 'rawdraw.c'
 $IntermediateJS = 'main.js.tmp'
-$IntermediateJSMin = 'main.js.tmp.min'
 
 Write-Host "Using Clang at $Clang"
 Write-Host "Compiling $InputC..."
@@ -60,11 +59,9 @@ if (Get-Command "terser" -ErrorAction SilentlyContinue)
 {
     Set-Content $IntermediateJS  -Value $Output
     Write-Host ("Before minifaction: {0:N0} B" -f ($Output).length)
-    terser $IntermediateJS > $IntermediateJSMin
-    $Output = Get-Content $IntermediateJSMin  -Raw
+    $Output = terser $IntermediateJS
     Write-Host ("After minifacation: {0:N0} B" -f ($Output).length)
 	Remove-Item $IntermediateJS
-	Remove-Item $IntermediateJSMin
 }
 else
 {
