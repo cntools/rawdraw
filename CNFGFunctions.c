@@ -21,6 +21,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 */
 
+
 #ifndef _CNFG_C
 #define _CNFG_C
 
@@ -314,7 +315,7 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 		}
 	}
 
-	*w = charsx * textsize * 3 + textsize;
+	*w = charsx * textsize * 3-1*textsize;
 	*h = charsy * textsize * 6;
 }
 
@@ -325,7 +326,7 @@ void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
 
 	CNFGGetTextExtents( text, &w, &h, textsize );
 	
-	CNFGDrawBox( (short)x, (short)y, (short)(x + w), (short)(y + h) );
+	CNFGDrawBox( (short)x, (short)y, (short)(x + w + 2*textsize), (short)(y + h) );
 	CNFGPenX = x + textsize;
 	CNFGPenY = y + textsize;
 	CNFGDrawText( text, textsize );
