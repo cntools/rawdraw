@@ -170,7 +170,6 @@ int main()
 	int linesegs = 0;
 
 	CNFGBGColor = 0x800000;
-	CNFGDialogColor = 0x444444;
 	CNFGSetup( "Test Bench", 640, 480 );
 	// CNFGSetupFullscreen( "Test Bench", 0 );
 
@@ -214,7 +213,8 @@ int main()
 */
 
 		// Square behind text
-		CNFGDrawBox( 0, 0, 260, 260 );
+		CNFGColor( 0x444444 );
+		CNFGTackRectangle( 0, 0, 260, 260 );
 
 		CNFGPenX = 10; CNFGPenY = 10;
 

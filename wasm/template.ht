@@ -1,0 +1,23 @@
+ <!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Test</title>
+		<style>
+			body { background-color: #000080; }
+			document : {overflow: hidden; width=100%; height=100%;}
+		</style>
+	</head>
+	<body>
+		<div STYLE="position:absolute;width:640;z-index:10;color:white;a:red">
+			This is a demonstration of rawdrawwasm, a minimal technique to use C with rawdraw with WASM and without Emscripten.
+			This file is a single-file HTML file. Thanks to @zNoctum and @redline2466.  Check out the info surrounding this project <A HREF=https://github.com/cnlohr/rawdrawwasm/ style="color:red">here</a>.  This is now part of <a href=https://github.com/cntools/rawdraw  style="color:red">rawdraw</a>.
+		</div>
+		<div STYLE="positon:absolute;z-index:3">
+			<canvas width=500 height=500 id=canvas></canvas>
+		</div>
+		<script>
+${JAVASCRIPT_DATA}
+		</script>
+	</body>
+</html>

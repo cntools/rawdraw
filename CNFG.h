@@ -22,16 +22,25 @@ typedef struct {
 extern int CNFGPenX, CNFGPenY;
 extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
-extern uint32_t CNFGDialogColor; //background for boxes
+//extern uint32_t CNFGDialogColor; //background for boxes DEPRECATED
 
 void CNFGDrawText( const char * text, short scale );
-void CNFGDrawBox( short x1, short y1, short x2, short y2 );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
-void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
+//Deprecated
+//void CNFGDrawBox( short x1, short y1, short x2, short y2 );
+//void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
 
 //To be provided by driver.
 uint32_t CNFGColor( uint32_t RGB );
+
+//This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
+
+//This is only supported on a FEW architectures, but allows arbitrary
+//image blitting.  Note that the alpha channel behavior is different
+//on different systems.
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+
 void CNFGTackPixel( short x1, short y1 );
 void CNFGTackSegment( short x1, short y1, short x2, short y2 );
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 );
@@ -79,7 +88,9 @@ void 	CNFGFlushRender();
 
 #ifdef CNFG3D
 
+#ifndef __wasm__
 #include <math.h>
+#endif
 
 #ifdef CNFG_USE_DOUBLE_FUNCTIONS
 #define tdCOS cos
@@ -92,7 +103,13 @@ void 	CNFGFlushRender();
 #define tdTAN tanf
 #define tdSQRT sqrtf
 #endif
+
+#ifdef __wasm__
+void tdMATCOPY( float * x, const float * y ); //Copy y into x
+#else
 #define tdMATCOPY(x,y) memcpy( x, y, 16*sizeof(float))
+#endif
+
 #define tdQ_PI 3.141592653589
 #define tdDEGRAD (tdQ_PI/180.)
 #define tdRADDEG (180./tdQ_PI)
