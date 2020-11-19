@@ -17,6 +17,11 @@ static HDC lsHDC;
 //Queue up lines and points for a faster render.
 #define BATCH_ELEMENTS
 
+void CNFGChangeWindowTitle( const char * windowtitle )
+{
+	SetWindowTextA( lsHWND, windowtitle );
+}
+
 #ifdef CNFGRASTERIZER
 #include "CNFGRasterizer.c"
 
@@ -60,7 +65,6 @@ void CNFGGetDimensions( short * x, short * y )
 	*x = bufferx;
 	*y = buffery;
 }
-
 
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
