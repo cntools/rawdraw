@@ -1,6 +1,5 @@
 /*
  * Definitions for non-literal keys.
- * TODO: Keycodes for Windows are not defined just yet.
  */
 
 #ifndef _RDKEY_H
@@ -12,15 +11,14 @@ extern "C" {
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 
-// TODO
-#define CNFG_KEY_SHIFT NULL
-#define CNFG_KEY_BACKSPACE NULL
-#define CNFG_KEY_DELETE NULL
-#define CNFG_KEY_LEFT_ARROW NULL
-#define CNFG_KEY_RIGHT_ARROW NULL
-#define CNFG_KEY_TOP_ARROW NULL
-#define CNFG_KEY_BOTTOM_ARROW NULL
-#define CNFG_KEY_ESCAPE NULL
+#define CNFG_KEY_SHIFT 0x10
+#define CNFG_KEY_BACKSPACE 0x08
+#define CNFG_KEY_DELETE 0x2E
+#define CNFG_KEY_LEFT_ARROW 0x25
+#define CNFG_KEY_RIGHT_ARROW 0x27
+#define CNFG_KEY_TOP_ARROW 0x26
+#define CNFG_KEY_BOTTOM_ARROW 0x28
+#define CNFG_KEY_ESCAPE 0x1B
 
 #elif defined( EGL_LEAN_AND_MEAN ) // doesn't have any keys
 #elif defined( __android__ ) || defined( ANDROID ) // ^
