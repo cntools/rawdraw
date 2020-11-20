@@ -19,6 +19,7 @@ extern "C" {
 #define CNFG_KEY_TOP_ARROW 0x26
 #define CNFG_KEY_BOTTOM_ARROW 0x28
 #define CNFG_KEY_ESCAPE 0x1B
+#define CNFG_KEY_ENTER 0x0D
 
 #elif defined( EGL_LEAN_AND_MEAN ) // doesn't have any keys
 #elif defined( __android__ ) || defined( ANDROID ) // ^
@@ -32,6 +33,7 @@ extern "C" {
 #define CNFG_KEY_TOP_ARROW 38
 #define CNFG_KEY_BOTTOM_ARROW 40
 #define CNFG_KEY_ESCAPE 27
+#define CNFG_KEY_ENTER 13
 
 #else // most likely x11
 
@@ -43,6 +45,7 @@ extern "C" {
 #define CNFG_KEY_TOP_ARROW 65362
 #define CNFG_KEY_BOTTOM_ARROW 65364
 #define CNFG_KEY_ESCAPE 65307
+#define CNFG_KEY_ENTER 65293
 
 #endif
 
