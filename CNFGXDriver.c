@@ -143,23 +143,7 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 {
 	XFlush(CNFGDisplay);
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
-
-/*
-	//Not sure of purpose of this.  If we find it, let me know, if this code is still commented after 2019-12-31, please remove it.
-	XGetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
-	if (!CNFGClassHint) {
-		CNFGClassHint = XAllocClassHint();
-		if (CNFGClassHint) {
-			CNFGClassHint->res_name = "rawdraw";
-			CNFGClassHint->res_class = "rawdraw";
-			XSetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
-		} else {
-			fprintf( stderr, "Failed to allocate XClassHint!\n" );
-		}
-	} else {
-		fprintf( stderr, "Pre-existing XClassHint\n" );
-	}
-*/
+	
 	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
 
 
