@@ -3,8 +3,8 @@
  * TODO: Keycodes for Windows are not defined just yet.
  */
 
-#ifndef _CNFG_H
-#define _CNFG_H
+#ifndef _RDKEY_H
+#define _RDKEY_H
 
 #ifdef __cplusplus
 extern "C" {
