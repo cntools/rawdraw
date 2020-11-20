@@ -46,7 +46,7 @@ int main()
 	int linesegs = 0;
 
 	CNFGBGColor = 0x800000;
-	CNFGDialogColor = 0x444444;
+	//Deprecated CNFGDialogColor = 0x444444;
 	CNFGPrepareForTransparency();
 	CNFGSetupFullscreen( "Test Bench", 0 );
 

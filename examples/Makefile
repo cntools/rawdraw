@@ -19,7 +19,9 @@ fontsize : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
 fontsize_ogl : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -lX11 -lXinerama -lGL -DCNFGOGL -Wall
 
+fontsize.exe : fontsize.c ../CNFGFunctions.c ../CNFGWinDriver.c ../CNFG3D.c
+	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32 $(CFLAGS)
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl fontsize fontsize_ogl
+	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl fontsize fontsize_ogl fontsize.exe
 

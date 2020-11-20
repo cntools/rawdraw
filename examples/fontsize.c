@@ -42,7 +42,7 @@ int main()
 	int i;
 
 	CNFGBGColor = 0x800000;
-	CNFGDialogColor = 0x444444;
+	// Deprecated CNFGDialogColor = 0x444444;
 	CNFGSetup( TITLESTRING, 1220, 480 );
 
 
