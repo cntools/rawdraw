@@ -3,6 +3,7 @@
 #include <math.h>
 
 
+#include "../RDKey.h"
 #include "../CNFG.h"
 #include "../os_generic.h"
 
@@ -16,7 +17,7 @@
 
 void HandleKey( int keycode, int bDown )
 {
-	if( keycode == 65307 ) exit( 0 );
+	if( keycode == CNFG_KEY_ESCAPE ) exit( 0 );
 	printf( "Key: %d -> %d\n", keycode, bDown );
 }
 
