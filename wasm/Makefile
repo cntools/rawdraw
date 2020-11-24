@@ -12,7 +12,8 @@ CFLAGS:=-I..
 
 CLANG?=clang
 WASMOPT?=wasm-opt
-UGLIFYJS?=uglifyjs
+TERSER?=terser
+TERSERFLAGS?= -ecma 2017 -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=false
 
 CFLAGS+=-DWASM -nostdlib --target=wasm32 \
 		-flto -Oz \
@@ -26,7 +27,7 @@ WOFLAGS:=--asyncify --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify
 opt.js : template.js main.wasm
 	bash -c 'export BLOB=$$(cat main.wasm | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" ); envsubst < template.js > opt.js'
 	#Comment the below line out if you don't want to uglify the javascript.
-	$(UGLIFYJS) opt.js -o opt.js
+	$(TERSER) $(TERSERFLAGS) opt.js -o opt.js
 
 index.html : template.ht opt.js
 	bash -c 'export JAVASCRIPT_DATA=$$(cat opt.js); envsubst < template.ht > $@'

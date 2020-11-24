@@ -44,12 +44,13 @@ short screenx, screeny;
 float Heightmap[HMX*HMY];
 void DrawHeightmap();
 
+unsigned fpsframes = 0;
+double fpstime = 0;
 
 int __attribute__((export_name("main"))) main()
 {
 	int i, x, y;
-	unsigned fpsframes = 0;
-	double fpstime = OGGetAbsoluteTime();
+	fpstime = OGGetAbsoluteTime();
 
 	//Setup colors.
 	CNFGBGColor = 0xff800000;
@@ -68,7 +69,14 @@ int __attribute__((export_name("main"))) main()
 
 	prints( "Main started.  This will appear in your browser console." );
 
-	while(1)
+#ifdef RAWDRAW_USE_LOOP_FUNCTION
+	return 0;
+}
+int __attribute__((export_name("loop"))) loop()
+{
+#else
+while(1)
+#endif
 	{
 		int i, pos;
 		float f;
