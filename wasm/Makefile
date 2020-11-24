@@ -25,9 +25,10 @@ CFLAGS+=-DWASM -nostdlib --target=wasm32 \
 WOFLAGS:=--asyncify --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify-ignore-indirect
 
 opt.js : template.js main.wasm
-	bash -c 'export BLOB=$$(cat main.wasm | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" ); envsubst < template.js > opt.js'
+	bash -c 'export BLOB=$$(cat main.wasm | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" ); envsubst < template.js > mid.js'
 	#Comment the below line out if you don't want to uglify the javascript.
-	$(TERSER) $(TERSERFLAGS) opt.js -o opt.js
+	$(TERSER) $(TERSERFLAGS) mid.js -o opt.js
+	rm mid.js
 
 index.html : template.ht opt.js
 	bash -c 'export JAVASCRIPT_DATA=$$(cat opt.js); envsubst < template.ht > $@'

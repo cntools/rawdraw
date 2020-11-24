@@ -2,14 +2,14 @@
 
 //Global memory for application.
 let memory = new WebAssembly.Memory({initial:200});
-//slet HEAP8 = new Int8Array(memory.buffer);
+let HEAP8 = new Int8Array(memory.buffer);
 let HEAPU8 = new Uint8Array(memory.buffer);
 let HEAP16 = new Int16Array(memory.buffer);
-//let HEAPU16 = new Uint16Array(memory.buffer);
-//let HEAP32 = new Uint32Array(memory.buffer);
+let HEAPU16 = new Uint16Array(memory.buffer);
+let HEAP32 = new Uint32Array(memory.buffer);
 let HEAPU32 = new Uint32Array(memory.buffer);
 let HEAPF32 = new Float32Array(memory.buffer);
-//let HEAPF64 = new Float64Array(memory.buffer);
+let HEAPF64 = new Float64Array(memory.buffer);
 
 let toUtf8Decoder = new TextDecoder( "utf-8" );
 function toUTF8(ptr) {
@@ -26,6 +26,11 @@ let fullscreen = false;
 //Configure WebGL Stuff (allow to be part of global context)
 let canvas = document.getElementById('canvas');
 let wgl = canvas.getContext('webgl');
+if( !wgl )
+{
+	//Janky - on Firefox 83, with NVIDIA GPU, you need to ask twice.
+	wgl = canvas.getContext('webgl');
+}
 let wglShader = null; //Standard flat color shader
 let wglABV = null;    //Array buffer for vertices
 let wglABC = null;    //Array buffer for colors.
