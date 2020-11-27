@@ -7,8 +7,9 @@
 
 #define CNFG3D
 #define CNFG_IMPLEMENTATION
-//#define CNFGOGL
+#define CNFGOGL
 //#define CNFGRASTERIZER
+//#define CNFG_WINDOWS_DISABLE_BATCH
 
 #include "CNFG.h"
 
@@ -117,11 +118,11 @@ void DrawHeightmap()
 		pto[4].x = ptd[0]; pto[4].y = ptd[1];
 		pto[5].x = pta[0]; pto[5].y = pta[1];
 
-//		CNFGColor(((x+y)&1)?0xFFFFFF:0x000000);
+//		CNFGColor(((x+y)&1)?0xFFFFFFFF:0x000000FF);
 
 		float bright = tdDot( normal, lightdir );
 		if( bright < 0 ) bright = 0;
-		CNFGColor( 0xFF000000 | (int)( bright * 50 ) );
+		CNFGColor( 0xff | (((int)( bright * 50 ))<<24) );
 
 //		CNFGTackPoly( &pto[0], 3 );		CNFGTackPoly( &pto[3], 3 );
 
@@ -169,7 +170,7 @@ int main()
 	double SecToWait;
 	int linesegs = 0;
 
-	CNFGBGColor = 0x800000;
+	CNFGBGColor = 0x000080FF; //Darkblue
 	CNFGSetup( "Test Bench", 640, 480 );
 	// CNFGSetupFullscreen( "Test Bench", 0 );
 
@@ -215,14 +216,14 @@ int main()
 */
 
 		// Square behind text
-		CNFGColor( 0xFF444444 );
+		CNFGColor( 0x444444FF );
 		CNFGTackRectangle( 0, 0, 260, 260 );
 
 		CNFGPenX = 10; CNFGPenY = 10;
 
 		// Text
 		pos = 0;
-		CNFGColor( 0xFFffffff );
+		CNFGColor( 0xffffffff );
 		for( i = 0; i < 1; i++ )
 		{
 			int c;
@@ -244,7 +245,7 @@ int main()
 		for( i = 0; i < 400; i++ )
 		{
 			RDPoint pp[3];
-			CNFGColor( 0xFF00FF00 );
+			CNFGColor( 0x00FF00FF ); //Green
 			pp[0].x = (short)(50*sin((float)(i+iframeno)*.01) + (i%20)*30);
 			pp[0].y = (short)(50*cos((float)(i+iframeno)*.01) + (i/20)*20);
 			pp[1].x = (short)(20*sin((float)(i+iframeno)*.01) + (i%20)*30);

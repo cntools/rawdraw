@@ -15,7 +15,13 @@ static HDC lsWindowHDC;
 static HDC lsHDC;
 
 //Queue up lines and points for a faster render.
+#ifndef CNFG_WINDOWS_DISABLE_BATCH
 #define BATCH_ELEMENTS
+#endif
+
+#define COLORSWAPS( RGB ) \
+		((((RGB )& 0xFF000000)>>24) | ( ((RGB )& 0xFF0000 ) >> 8 ) | ( ((RGB )& 0xFF00 )<<8 ))
+
 
 void CNFGChangeWindowTitle( const char * windowtitle )
 {
@@ -32,6 +38,7 @@ void InternalHandleResize()
 	CNFGInternalResize( bufferx, buffery );
 	lsBitmap = CreateBitmap( bufferx, buffery, 1, 32, buffer );
 	SelectObject( lsHDC, lsBitmap );
+	CNFGInternalResize( bufferx, buffery);
 }
 #else
 static short bufferx, buffery;
@@ -45,6 +52,10 @@ static HGLRC           hRC=NULL;
 static void InternalHandleResize() { }
 void CNFGSwapBuffers()
 {
+#ifdef CNFG_BATCH
+	CNFGFlushRender();
+#endif
+
 	SwapBuffers(lsWindowHDC);
 }
 #endif
@@ -60,6 +71,7 @@ void CNFGGetDimensions( short * x, short * y )
 	{
 		lastx = bufferx;
 		lasty = buffery;
+		CNFGInternalResize( lastx, lasty );
 		InternalHandleResize();
 	}
 	*x = bufferx;
@@ -229,6 +241,10 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 
 	InternalHandleResize();
 
+#ifdef CNFG_BATCH
+	CNFGSetupBatchInternal();
+#endif
+
 	return 0;
 }
 
@@ -332,6 +348,7 @@ void FlushTacking()
 
 uint32_t CNFGColor( uint32_t RGB )
 {
+	RGB = COLORSWAPS( RGB );
 	if( CNFGLastColor == RGB ) return RGB;
 
 #ifdef BATCH_ELEMENTS
@@ -409,7 +426,7 @@ void CNFGClearFrame()
 #endif
 	RECT r = { 0, 0, bufferx, buffery };
 	DeleteObject( lsClearBrush  );
-	lsClearBrush = CreateSolidBrush( CNFGBGColor );
+	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
 	SelectObject( lsHDC, lsClearBrush );
 	FillRect( lsHDC, &r, lsClearBrush);
 }

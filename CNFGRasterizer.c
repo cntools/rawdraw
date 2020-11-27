@@ -20,6 +20,8 @@ void CNFGInternalResize( short x, short y )
 
 #ifdef __wasm__
 #define SWAPS(x) x
+#elif 1
+#define SWAPS(x) (x>>8)
 #else
 static uint32_t SWAPS( uint32_t r )
 {
@@ -27,7 +29,7 @@ static uint32_t SWAPS( uint32_t r )
 	r>>=8;
 	ret |= (r&0xff)<<8;
 	r>>=8;
-	ret |= r;
+	ret |= (r&0xff);
 	return ret;
 }
 #endif

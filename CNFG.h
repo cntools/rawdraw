@@ -27,6 +27,12 @@ extern "C" {
 
 	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
 		get an OpenGL context.
+		
+Usually tested combinations:
+ * TCC On Windows with:
+    - CNFGOGL on or CNFGOGL off.  If CNFGOGL is off you can use
+			CNFG_WINDOWS_DISABLE_BATCH to disable all batching.
+	- CNFGRASTERIZER
 */
 
 
@@ -49,8 +55,10 @@ extern uint32_t CNFGLastColor;
 void CNFGDrawText( const char * text, short scale );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
 
-//To be provided by driver.
-uint32_t CNFGColor( uint32_t RGB );
+//To be provided by driver. Rawdraw uses colors in the format 0xRRGGBBAA
+//Note that some backends do not support alpha of any kind.
+//Some platforms also support alpha blending.  So, be sure to set alpha to 0xFF
+uint32_t CNFGColor( uint32_t RGBA );
 
 //This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
@@ -107,13 +115,20 @@ void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 //Note that these are the functions that are used on the backends which support this
 //sort of thing.
 #ifdef CNFG_BATCH
-void 	CNFGFlushRender();
+
+//These need to be defined for the specific driver.  Note that CNFGEmitBackendTriangles is provided if on OpenGL.
 void	CNFGEmitBackendTriangles( float * vertices, uint32_t * colors, int num_vertices );
 void 	CNFGClearFrame();
 void 	CNFGSwapBuffers();
 void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
-void 	CNFGEmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ); //NEAT THING: It doesn't have to be axis-aligned.
-void	CNFGInternalResize( short x, short y );
+
+void 	CNFGFlushRender(); //Call this before swapping buffers.
+void	CNFGInternalResize( short x, short y ); //Driver calls this after resize happens.
+void	CNFGSetupBatchInternal(); //Driver calls this after setup is complete.
+
+//Useful function for emitting a non-axis-aligned quad.
+void 	CNFGEmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 );
+
 extern int 	CNFGVertPlace;
 extern float CNFGVertDataV[CNFG_BATCH*3];
 extern uint32_t CNFGVertDataC[CNFG_BATCH];
