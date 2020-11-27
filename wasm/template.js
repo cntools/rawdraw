@@ -26,14 +26,16 @@ let fullscreen = false;
 //Configure WebGL Stuff (allow to be part of global context)
 let canvas = document.getElementById('canvas');
 let wgl = canvas.getContext('webgl');
+if( !wgl )
+{
+	//Janky - on Firefox 83, with NVIDIA GPU, you need to ask twice.
+	wgl = canvas.getContext('webgl');
+}
 let wglShader = null; //Standard flat color shader
-let wglBlit = null;   //Blitting shader for texture
 let wglABV = null;    //Array buffer for vertices
 let wglABC = null;    //Array buffer for colors.
 let wglUXFRM = null;  //Uniform location for transform on solid colors
 
-//let wglTex = null;    //Texture handle for blitting.
-//let wglUXFRMBlit = null; //Uniform location for transform on blitter
 
 //Utility stuff for WebGL sahder creation.
 function wgl_makeShader( vertText, fragText )
@@ -68,15 +70,6 @@ function wgl_makeShader( vertText, fragText )
 
 	wglUXFRM = wgl.getUniformLocation(wglShader, "xfrm" );
 
-/*
-	//We are not currently supporting the software renderer.
-	//We load two shaders, the other is a texture shader, for blitting things.
-	wglBlit = wgl_makeShader( 
-		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); tc = a1.xy; }",
-		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
-
-	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
-*/
 	//Compile the shaders.
 	wgl.useProgram(wglShader);
 
@@ -137,35 +130,7 @@ function FastPipeGeometryJS( vertsF, colorsI, vertcount )
 
 //This defines the list of imports, the things that C will be importing from Javascript.
 //To use functions here, just call them.  Surprisingly, signatures justwork.
-const imports = {
-
-	bynsyncify : {
-		//Any javascript functions which may unwind the stack should be placed here.
-		CNFGSwapBuffersInternal: () => {
-			if (!rendering) {
-				// We are called in order to start a sleep/unwind.
-				// Fill in the data structure. The first value has the stack location,
-				// which for simplicity we can start right after the data structure itself.
-				HEAP32[DATA_ADDR >> 2] = DATA_ADDR + 8;
-				// The end of the stack will not be reached here anyhow.
-				HEAP32[DATA_ADDR + 4 >> 2] = 1024|0;
-				wasmExports.asyncify_start_unwind(DATA_ADDR);
-				rendering = true;
-				// Resume after the proper delay.
-				requestAnimationFrame(function() {
-					FrameStart();
-					wasmExports.asyncify_start_rewind(DATA_ADDR);
-					// The code is now ready to rewind; to start the process, enter the
-					// first function that should be on the call stack.
-					wasmExports.main();
-				});
-			} else {
-				// We are called as part of a resume/rewind. Stop sleeping.
-				wasmExports.asyncify_stop_rewind();
-				rendering = false;
-			}
-		},
-	},
+let imports = {
 	env: {
 		//Mapping our array buffer into the system.
 		memory: memory,
@@ -197,8 +162,70 @@ const imports = {
 			HEAP16[pw>>1] = canvas.width;
 			HEAP16[ph>>1] = canvas.height;
 		},
-		/* We are not currently supporting the blitter (It works, but not efficient or smart 
-		CNFGBlitImage : (memptr, x, y, w, h ) => {
+		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
+
+		Add1 : (i) => { return i+1; }, //Super simple function for speed testing.
+
+		//Tricky - math functions just automatically link through.
+		sin : Math.sin, 
+		cos : Math.cos,
+		tan : Math.tan,
+		sinf : Math.sin,
+		cosf : Math.cos,
+		tanf : Math.tan,
+
+		//Quick-and-dirty debug.
+		print: console.log,
+		prints: (str) => { console.log(toUTF8(str)); },
+	}
+};
+
+if( !RAWDRAW_USE_LOOP_FUNCTION )
+{
+	imports.bynsyncify = {
+		//Any javascript functions which may unwind the stack should be placed here.
+		CNFGSwapBuffersInternal: () => {
+			if (!rendering) {
+				// We are called in order to start a sleep/unwind.
+				// Fill in the data structure. The first value has the stack location,
+				// which for simplicity we can start right after the data structure itself.
+				HEAPU32[DATA_ADDR >> 2] = DATA_ADDR + 8;
+				// The end of the stack will not be reached here anyhow.
+				HEAPU32[DATA_ADDR + 4 >> 2] = 1024|0;
+				wasmExports.asyncify_start_unwind(DATA_ADDR);
+				rendering = true;
+				// Resume after the proper delay.
+				requestAnimationFrame(function() {
+					FrameStart();
+					wasmExports.asyncify_start_rewind(DATA_ADDR);
+					// The code is now ready to rewind; to start the process, enter the
+					// first function that should be on the call stack.
+					wasmExports.main();
+				});
+			} else {
+				// We are called as part of a resume/rewind. Stop sleeping.
+				wasmExports.asyncify_stop_rewind();
+				rendering = false;
+			}
+		}
+	}
+}
+
+if( RAWDRAW_NEED_BLITTER )
+{
+	let wglBlit = null;   //Blitting shader for texture
+	let wglTex = null;    //Texture handle for blitting.
+	let wglUXFRMBlit = null; //Uniform location for transform on blitter
+
+	//We are not currently supporting the software renderer.
+	//We load two shaders, the other is a texture shader, for blitting things.
+	wglBlit = wgl_makeShader( 
+		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); tc = a1.xy; }",
+		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
+
+	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
+
+	imports.env.CNFGBlitImage = (memptr, x, y, w, h ) => {
 			if( w <= 0 || h <= 0 ) return;
 
 			wgl.useProgram(wglBlit);
@@ -224,31 +251,13 @@ const imports = {
 				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
 			FastPipeGeometryJS( 
-				new Uint16Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
+				new Float32Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
 				new Uint8Array( [0,0,0,0,255,0,0,0,255,255,0,0,0,0,0,0,255,255,0,0,0,255,0,0] ),
 				6 );
 
 			wgl.useProgram(wglShader);
-		},
-		*/
-		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
-
-		Add1 : (i) => { return i+1; }, //Super simple function for speed testing.
-
-		//Tricky - math functions just automatically link through.
-		sin : Math.sin, 
-		cos : Math.cos,
-		tan : Math.tan,
-		sinf : Math.sin,
-		cosf : Math.cos,
-		tanf : Math.tan,
-
-		//Quick-and-dirty debug.
-		print: console.log,
-		prints: (str) => { console.log(toUTF8(str)); },
-	}
-};
-
+		};
+}
 
 {
 	// Actually load the WASM blob.
@@ -278,6 +287,18 @@ const imports = {
 			//Actually invoke main().  Note that, upon "CNFGSwapBuffers" this will 'exit'
 			//But, will get re-entered from the swapbuffers animation callback.
 			instance.exports.main();
+			
+			if( RAWDRAW_USE_LOOP_FUNCTION )
+			{
+				function floop() {
+					FrameStart();
+					requestAnimationFrame(floop);
+					// The code is now ready to rewind; to start the process, enter the
+					// first function that should be on the call stack.
+					wasmExports.loop();
+				}
+				floop();
+			}
 		 } );
 
 	//Code here would continue executing, but this code is executed *before* main.

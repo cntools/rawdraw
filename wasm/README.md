@@ -1,5 +1,17 @@
 # rawdrawwasm
 
+rawdrawwasm
+
+## Prerequisites
+
+```
+sudo apt-get install npm binaryen clang
+sudo npm install terser -g
+```
+
+
+## Old Notes
+
 My stab at rawdraw on wasm.  This is based on:
  https://github.com/zNoctum/wasm-tool
 and has inspiration from:

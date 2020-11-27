@@ -47,6 +47,7 @@ $AsyncProc = Start-Process -NoNewWindow -FilePath $WASMOpt -PassThru -ArgumentLi
 $AsyncProc.WaitForExit();
 
 Write-Host 'Merging files...'
+Write-Host ("WASM Binary size: {0:N0} B" -f (Get-Item $PSScriptRoot\$MainWASM).length)
 $WASMasB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PSScriptRoot\$MainWASM"))
 Remove-Item $MainWASM
 
@@ -59,7 +60,11 @@ if (Get-Command "terser" -ErrorAction SilentlyContinue)
 {
     Set-Content $IntermediateJS  -Value $Output
     Write-Host ("Before minifaction: {0:N0} B" -f ($Output).length)
-    $Output = terser $IntermediateJS
+    $Output = terser -ecma 2017 `
+        -d RAWDRAW_USE_LOOP_FUNCTION=false `
+        -d RAWDRAW_NEED_BLITTER=false `
+        $IntermediateJS
+
     Write-Host ("After minifacation: {0:N0} B" -f ($Output).length)
 	Remove-Item $IntermediateJS
 }
