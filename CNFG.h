@@ -33,7 +33,7 @@ Usually tested combinations:
 
 	NOTE: Sometimes you can also use CNFGOGL + CNFGRASTERIZER
 
- * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER
+ * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER (Recommended turn rasterizer off)
  * ANDROID (But this automatically sets CNFGRASTERIZER OFF and CNFGOGL ON)
 */
 

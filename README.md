@@ -16,12 +16,27 @@ Want to use OpenGL really quickly?  Use rawdraw.
 
 For embedded platforms, `CNFGRASTERIZER` is usually the back end which allows
 you to have high level commands on a framebuffer.  It's what was used in ESP
-Channel 3.
+Channel 3.  You can even play with the rasterizer on every mode except the
+Android port by defining it.  You can even be twisted on Windows, Linux and
+on WASM (Web) and define it.
 
 This is **not** like SDL - some drivers have different quirks, some have
 more features implemented than others, and a major goal is not to abstract
 very much, but almost to provide an exmaple how to use graphics on a specific
 platform.
+
+## Platform statuses
+
+ * Windows, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (GDI32) does not support alpha-blitting, or variable line width.
+ * Linux, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (X11) doe not support alpha-blitting, or variable line thickness
+.
+ * Android, 100% Support for CNFGOGL (It is forced on) CNFGRASTERIZER not allowed.
+ * WASM, 100% Support for CNFGOGL
+ * Other EGL (Like Raspberry Pi Raw Metal) Platforms, same as Android, but fixed window size.
+ * EGL, CNFGOGL represent OpenGL or OpenGL ES depending on platform support.
+ * Vulkan support in progress.
+ * CNFG3D Support has been ported with fixed-precision numericals to ESP8266.
+ * Mac/OSX Support currently unknown.  Legacy files moved here: https://github.com/cntools/rawdrawtools/tree/main/attic
 
 
 ## Usage in project
@@ -39,11 +54,13 @@ To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 A more comprehensive example can be found in `rawdraw.c`, but a basic example
 is as follows:
 
-```
+```c
+
+
 //Make it so we don't need to include any other C files in our build.
 #define CNFG_IMPLEMENTATION
 
-#include <CNFG.h>
+#include "CNFG.h"
 
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
@@ -54,14 +71,50 @@ int main()
 	CNFGSetup( "Example App", 1024, 768 );
 	while(1)
 	{
+		CNFGBGColor = 0x000080ff; //Dark Blue Background
+
 		short w, h;
 		CNFGClearFrame();
 		CNFGHandleInput();
 		CNFGGetDimensions( &w, &h );
-		CNFGColor( 0xffffff );
+
+		//Change color to white.
+		CNFGColor( 0xffffffff ); 
+
 		CNFGPenX = 1; CNFGPenY = 1;
 		CNFGDrawText( "Hello, World", 2 );
-		CNFGSwapBuffers();
+		//Draw a white pixel at 3,0 30 
+		CNFGTackPixel( 30, 30 );         
+
+		//Draw a line from 50,50 to 100,50
+		CNFGTackSegment( 50, 50, 100, 50 );
+
+		//Dark Red Color Select
+		CNFGColor( 0x800000FF ); 
+
+		//Draw 50x50 box starting at 100,50
+		CNFGTackRectangle( 100, 50, 150, 100 ); 
+
+		//Bright Purple Select
+		CNFGColor( 0x800000FF ); 
+
+		//Draw a triangle
+		RDPoint points[3] = { { 30, 36}, {20, 50}, { 40, 50 } };
+		CNFGTackPoly( points, 3 );
+
+		//Draw a bunch of random pixels as a blitted image.
+		{
+			static uint32_t data[64*64];
+			int x, y;
+
+			for( y = 0; y < 64; y++ ) for( x = 0; x < 64; x++ )
+				data[x+y*64] = 0xff | (rand()<<8);
+
+			CNFGBlitImage( data, 150, 30, 64, 64 );
+		}
+
+		//Display the image and wait for time to display next frame.
+		CNFGSwapBuffers();		
 	}
 }
 ```
@@ -70,12 +123,12 @@ int main()
 
 Windows compile:
 ```
-C:\tcc\tcc rawdraw.c -Irawdraw -lopengl32 -lgdi32 -luser32
+C:\tcc\tcc simple.c -Irawdraw -lopengl32 -lgdi32 -luser32 C:\windows\system32\msvcrt.dll
 ```
 
 Linux compile:
 ```
-gcc -o rawdraw rawdraw.c -lm -lX11
+gcc -o simple simple.c -lm -lX11
 ```
 
 Note, with the STB-style header, you don't need to
@@ -89,9 +142,9 @@ CNFG Configuration options include:
 * `CNFG_IMPLEMENTATION` = Include code for implementation.
 * `__android__` = build Android port
 * `WINDOWS`, `WIN32`, `WIN64` = Windows build
-* `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides rasterized graphics functions.
-* `CNFGRASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
 * `CNFGOGL` = Make underlying functions use OpenGL if possible.
+* `CNFGRASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
+* `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides *rasterized* graphics functions.  Only use this option with the rasterizer.
 
 Platform-Specific
 * `HAS_XSHAPE` = Include extra functions for handling on-screen display functionality in X11.
@@ -120,24 +173,9 @@ semaphores as well as getting the current time.  It has the following configurat
 `OSG_PREFIX` - Override function prefix
 `OSG_NOSTATIC` - Do not declare the functions as static.
 
-### TextTool/Text.c
+### TextTool/Text.c etc...
 
-Tool to create custom fonts for rawdraw's CNFGDrawNiceText function.
-
-Controls: 
-* WASD to select the character to edit
-* Click a dot in the main grid to start a line/add a line to the segment.
-* Click again the same point to end the segment (to make a line that's not connected or a point).
-* Right click to remove the last point.
-	
-Position Offset selection grid: each square represents a pixel of difference (that scales with the font), with the blue square being the default position and the green square the current one.
-
-Width selector: Represents how wide the character will be when drawn.
-
-When closing it'll override the FontData.c file.
-When selecting another character it'll save into FontDataBackup.c.
-
-To load the changes the next time you open the program, you will need to recompile text.c, otherwise you will load the old data and potentially lose your last session's changes.
+There is a sister repository, https://github.com/cntools/rawdrawtools which houses a text tool.
 
 ## Warnings
 

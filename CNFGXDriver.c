@@ -437,7 +437,7 @@ void CNFGSwapBuffers()
 
 #else //CNFGOGL
 
-
+#ifndef CNFGRASTERIZER
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
 	static int depth;
@@ -460,6 +460,7 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 	//Draw image to pixmap (not a screen flip)
 	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
 }
+#endif
 
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {

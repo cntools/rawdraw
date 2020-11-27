@@ -673,7 +673,6 @@ fail:
 
 void CNFGSetupBatchInternal()
 {
-	printf( "CNFGSetupBatchInternal()\n" );
 	short w, h;
 
 	CNFGLoadExtensionsInternal();
@@ -712,7 +711,6 @@ void CNFGSetupBatchInternal()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 
 	CNFGVertPlace = 0;
-	printf( "CNFGSetupBatchInternal() Complete\n" );
 }
 
 #ifndef CNFGRASTERIZER
