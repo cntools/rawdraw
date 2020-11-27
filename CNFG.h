@@ -13,7 +13,30 @@
 extern "C" {
 #endif
 
+/* Rawdraw flags:
+	CNFG3D -> Enable the weird 3D functionality that rawdraw has to allow you to
+		write apps which emit basic rawdraw primitives but look 3D!
+
+		CNFG_USE_DOUBLE_FUNCTIONS -> Use double-precision floating point for CNFG3D.
+
+	CNFGOGL -> Use an OpenGL Backend for all rawdraw functionality.
+		->Caveat->If using CNFG_HAS_XSHAPE, then, we do something realy wacky.
+
+	CNFGRASTERIZER -> Software-rasterize the rawdraw calls, and, use
+		CNFGUpdateScreenWithBitmap to send video to webpage.
+
+	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
+		get an OpenGL context.
+*/
+
+
 #include <stdint.h>
+
+//System logic
+#if ( defined( CNFGOGL ) || defined( __wasm__ ) ) && !defined(CNFG_HAS_XSHAPE)
+#define CNFG_BATCH 8192 //131,072 bytes.
+#endif
+
 
 typedef struct {
     short x, y; 
@@ -22,19 +45,17 @@ typedef struct {
 extern int CNFGPenX, CNFGPenY;
 extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
-//extern uint32_t CNFGDialogColor; //background for boxes DEPRECATED
 
 void CNFGDrawText( const char * text, short scale );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
-//Deprecated
-//void CNFGDrawBox( short x1, short y1, short x2, short y2 );
-//void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
 
 //To be provided by driver.
 uint32_t CNFGColor( uint32_t RGB );
 
 //This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
+
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 
 //This is only supported on a FEW architectures, but allows arbitrary
 //image blitting.  Note that the alpha channel behavior is different
@@ -60,7 +81,6 @@ void HandleButton( int x, int y, int button, int bDown );
 void HandleMotion( int x, int y, int mask );
 void HandleDestroy();
 
-
 //Internal function for resizing rasterizer for rasterizer-mode.
 void CNFGInternalResize( short x, short y ); //don't call this.
 
@@ -83,7 +103,22 @@ void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 //If you're using a batching renderer, for instance on Android or an OpenGL
 //You will need to call this function inbetewen swtiching properties of drawing.  This is usually
 //only needed if you calling OpenGL / OGLES functions directly and outside of CNFG.
+//
+//Note that these are the functions that are used on the backends which support this
+//sort of thing.
+#ifdef CNFG_BATCH
 void 	CNFGFlushRender();
+void	CNFGEmitBackendTriangles( float * vertices, uint32_t * colors, int num_vertices );
+void 	CNFGClearFrame();
+void 	CNFGSwapBuffers();
+void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+void 	CNFGEmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ); //NEAT THING: It doesn't have to be axis-aligned.
+void	CNFGInternalResize( short x, short y );
+extern int 	CNFGVertPlace;
+extern float CNFGVertDataV[CNFG_BATCH*3];
+extern uint32_t CNFGVertDataC[CNFG_BATCH];
+#endif
+
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 
