@@ -16,15 +16,11 @@ extern "C" {
 /* Rawdraw flags:
 	CNFG3D -> Enable the weird 3D functionality that rawdraw has to allow you to
 		write apps which emit basic rawdraw primitives but look 3D!
-
 		CNFG_USE_DOUBLE_FUNCTIONS -> Use double-precision floating point for CNFG3D.
-
 	CNFGOGL -> Use an OpenGL Backend for all rawdraw functionality.
 		->Caveat->If using CNFG_HAS_XSHAPE, then, we do something realy wacky.
-
 	CNFGRASTERIZER -> Software-rasterize the rawdraw calls, and, use
 		CNFGUpdateScreenWithBitmap to send video to webpage.
-
 	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
 		get an OpenGL context.
 		
@@ -37,6 +33,7 @@ Usually tested combinations:
 
 	NOTE: Sometimes you can also use CNFGOGL + CNFGRASTERIZER
 
+ * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER
 
 */
 
