@@ -20,7 +20,7 @@ rawdraw_egl : rawdraw.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
 rawdraw : rawdraw.c
-	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL -lm -ldl
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -lm -ldl
 
 rawdraw_ogl : rawdraw.c
 	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL -lm -ldl

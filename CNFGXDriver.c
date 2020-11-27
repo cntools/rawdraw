@@ -106,10 +106,6 @@ void	CNFGClearTransparencyLevel()
 }
 #endif
 
-#ifdef CNFGCONTEXTONLY
-void CNFGInternalResize( short x, short y ) { }
-#endif
-
 #ifdef CNFGOGL
 #include <GL/glx.h>
 #include <GL/glxext.h>
@@ -439,6 +435,7 @@ void   CNFGSetVSync( int vson )
 	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
 }
 
+#ifndef CNFGRASTERIZER
 void CNFGSwapBuffers()
 {
 	if( CNFGWindowInvisible ) return;
@@ -459,24 +456,29 @@ void CNFGSwapBuffers()
 		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
 #endif
 }
+#endif //CNFGRASTERIZER
+
 #endif
 
 #if !defined( CNFGOGL)
 #define AGLF(x) x
 #else
 #define AGLF(x) static inline BACKEND_##x
+#endif
+
 #if defined( CNFGRASTERIZER ) 
 #include "CNFGRasterizer.c"
-#endif
+#undef AGLF
+#define AGLF(x) static inline BACKEND_##x
 #endif
 
 uint32_t AGLF(CNFGColor)( uint32_t RGB )
 {
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	CNFGLastColor = RGB;
+	unsigned char red = ( RGB >> 24 ) & 0xFF;
+	unsigned char grn = ( RGB >> 16 ) & 0xFF;
+	unsigned char blu = ( RGB >> 8 ) & 0xFF;
 	unsigned long color = (red<<16)|(grn<<8)|(blu);
+	CNFGLastColor = color;
 	XSetForeground(CNFGDisplay, CNFGGC, color);
 	return color;
 }

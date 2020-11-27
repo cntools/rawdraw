@@ -29,10 +29,15 @@ extern "C" {
 		get an OpenGL context.
 		
 Usually tested combinations:
- * TCC On Windows with:
+ * TCC On Windows and X11 (Linux) with:
     - CNFGOGL on or CNFGOGL off.  If CNFGOGL is off you can use
 			CNFG_WINDOWS_DISABLE_BATCH to disable all batching.
+		-or-
 	- CNFGRASTERIZER
+
+	NOTE: Sometimes you can also use CNFGOGL + CNFGRASTERIZER
+
+
 */
 
 

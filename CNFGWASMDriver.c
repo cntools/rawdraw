@@ -3,19 +3,19 @@
 #include <stdint.h>
 
 extern void __attribute__((import_module("bynsyncify"))) CNFGSwapBuffersInternal();
+void print( double idebug );
 
 
 //Forward declarations that we get from either WASM or our javascript code.
 void CNFGClearFrameInternal( uint32_t bgcolor );
 
 //The WASM driver handles internal resizing automatically.
+#ifndef CNFGRASTERIZER
+
 void	CNFGInternalResize( short x, short y )
 {
 }
 
-#ifndef CNFGRASTERIZER
-
-void print( double idebug );
 
 void CNFGFlushRender()
 {

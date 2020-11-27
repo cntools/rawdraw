@@ -9,6 +9,11 @@ static uint32_t * buffer = 0;
 static short bufferx;
 static short buffery;
 
+#ifdef CNFGOGL
+void CNFGFlushRender()
+{
+}
+#endif
 
 void CNFGInternalResize( short x, short y )
 {
@@ -16,6 +21,10 @@ void CNFGInternalResize( short x, short y )
 	buffery = y;
 	if( buffer ) free( buffer );
 	buffer = malloc( bufferx * buffery * 4 );
+#ifdef CNFGOGL
+	void CNFGInternalResizeOGLBACKEND( short w, short h );
+	CNFGInternalResizeOGLBACKEND( x, y );
+#endif
 }
 
 #ifdef __wasm__

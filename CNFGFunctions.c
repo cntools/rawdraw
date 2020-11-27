@@ -343,6 +343,8 @@ void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2,
 }
 
 
+#ifndef CNFGRASTERIZER
+
 void CNFGTackPixel( short x1, short y1 )
 {
 	x1++; y1++;
@@ -423,6 +425,11 @@ void	CNFGSetLineWidth( short width )
 	wgl_last_width_over_2 = width/2.0;// + 0.5;
 }
 
+#endif
+
+
+#ifndef __wasm__
+
 #ifndef GL_VERTEX_SHADER
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_VERTEX_SHADER                  0x8B31
@@ -430,6 +437,8 @@ void	CNFGSetLineWidth( short width )
 #define GL_INFO_LOG_LENGTH                0x8B84
 #define GL_LINK_STATUS                    0x8B82
 #define LGLchar char
+#else
+#define LGLchar GLchar
 #endif
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
@@ -681,7 +690,11 @@ void CNFGSetupBatchInternal()
 	CNFGVertPlace = 0;
 }
 
+#ifndef CNFGRASTERIZER
 void CNFGInternalResize(short x, short y)
+#else
+void CNFGInternalResizeOGLBACKEND(short x, short y)
+#endif
 {
 	glViewport( 0, 0, x, y );
 	gRDLastResizeW = x;
@@ -689,6 +702,8 @@ void CNFGInternalResize(short x, short y)
 	CNFGglUseProgram( gRDShaderProg );
 	CNFGglUniform4f( gRDShaderProgUX, 1.f/x, -1.f/y, -0.5f, 0.5f);
 }
+
+#ifndef CNFGRASTERIZER
 
 void CNFGFlushRender()
 {
@@ -712,11 +727,16 @@ void CNFGClearFrame()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
+#endif
+
+#endif //__wasm__
+
 #else
 
 void CNFGFlushRender() { }
 
 #endif
+
 
 #endif
 #endif //_CNFG_C

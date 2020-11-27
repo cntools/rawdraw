@@ -7,7 +7,7 @@
 
 #define CNFG3D
 #define CNFG_IMPLEMENTATION
-#define CNFGOGL
+//#define CNFGOGL
 //#define CNFGRASTERIZER
 //#define CNFG_WINDOWS_DISABLE_BATCH
 
