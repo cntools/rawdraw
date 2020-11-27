@@ -13,7 +13,6 @@
 
 #include "CNFG.h"
 
-
 unsigned frames = 0;
 unsigned long iframeno = 0;
 
@@ -160,6 +159,7 @@ void HandleDestroy()
 	exit(10);
 }
 
+uint32_t randomtexturedata[65536];
 
 int main()
 {
@@ -254,6 +254,14 @@ int main()
 			pp[2].y = (short)(30*cos((float)(i+iframeno)*.01) + (i/20)*20);
 			CNFGTackPoly( pp, 3 );
 		}
+
+
+		int x, y;
+		for( y = 0; y < 256; y++ )
+		for( x = 0; x < 256; x++ )
+			randomtexturedata[x+y*256] = x | ((x*394543L+y*355+iframeno)<<8);
+		CNFGBlitImage( randomtexturedata, 100, 300, 256, 256 );
+
 
 
 		frames++;

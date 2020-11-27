@@ -28,8 +28,18 @@ void CNFGInternalResize( short x, short y )
 }
 
 #ifdef __wasm__
-#define SWAPS(x) x
-#elif 1
+static uint32_t SWAPS( uint32_t r )
+{
+	uint32_t ret = (r&0xFF)<<24;
+	r>>=8;
+	ret |= (r&0xff)<<16;
+	r>>=8;
+	ret |= (r&0xff)<<8;
+	r>>=8;
+	ret |= (r&0xff)<<0;
+	return ret;
+}
+#elif !defined(CNFGOGL)
 #define SWAPS(x) (x>>8)
 #else
 static uint32_t SWAPS( uint32_t r )
@@ -39,6 +49,8 @@ static uint32_t SWAPS( uint32_t r )
 	ret |= (r&0xff)<<8;
 	r>>=8;
 	ret |= (r&0xff);
+	r>>=8;
+	ret |= (r&0xff)<<24;
 	return ret;
 }
 #endif
@@ -250,6 +262,59 @@ void CNFGTackPixel( short x, short y )
 {
 	if( x < 0 || y < 0 || x >= bufferx || y >= buffery ) return;
 	buffer[x+bufferx*y] = CNFGLastColor;
+}
+
+
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+{
+	int ox = x;
+	int stride = w;
+	if( w <= 0 || h <= 0 || x >= bufferx || y >= buffery ) return;
+	if( x < 0 ) { w += x; x = 0; }
+	if( y < 0 ) { h += y; y = 0; }
+
+	//Switch w,h to x2, y2
+	h += y;
+	w += x;
+
+	if( w >= bufferx ) { w = bufferx; }
+	if( h >= buffery ) { h = buffery; }
+
+
+	for( ; y < h-1; y++ )
+	{
+		x = ox;
+		uint32_t * indat = data;
+		uint32_t * outdat = buffer + y * bufferx + x;
+		for( ; x < w-1; x++ )
+		{
+			uint32_t newm = *(indat++);
+			uint32_t oldm = *(outdat);
+			if( (newm & 0xff) == 0xff )
+			{
+				*(outdat++) = newm;
+			}
+			else
+			{
+				//Alpha blend.
+				int alfa = newm&0xff;
+				int onemalfa = 255-alfa;
+#ifdef __wasm__
+				uint32_t newv = 255<<0; //Alpha, then RGB
+				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
+				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
+				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
+#else
+				uint32_t newv = 255<<16; //Alpha, then RGB
+				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
+				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
+				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
+#endif
+				*(outdat++) = newv;
+			}
+		}
+		data += stride;
+	}
 }
 
 void CNFGSwapBuffers()

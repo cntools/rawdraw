@@ -21,10 +21,16 @@ int lastmousey = 100;
 
 void __attribute__((export_name("HandleKey"))) HandleKey( int keycode, int bDown )
 {
+	print( keycode );
+	print( bDown );
 }
 
 void __attribute__((export_name("HandleButton"))) HandleButton( int x, int y, int button, int bDown )
 {
+	print( x );
+	print( y );
+	print( button );
+	print( bDown );
 }
 
 void __attribute__((export_name("HandleMotion"))) HandleMotion( int x, int y, int mask )
@@ -162,6 +168,15 @@ while(1)
 		}
 		print( (OGGetAbsoluteTime() - now)*1000 );
 		print( k );
+#endif
+
+#if 1 //Enable alpha objec test
+		static uint32_t randomtexturedata[65536];
+		int x, y;
+		for( y = 0; y < 256; y++ )
+		for( x = 0; x < 256; x++ )
+			randomtexturedata[x+y*256] = x | ((x*394543L+y*355+iframeno)<<8);
+		CNFGBlitImage( randomtexturedata, 100, 300, 256, 256 );
 #endif
 
 		fpsframes++;

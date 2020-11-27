@@ -223,11 +223,11 @@ if( RAWDRAW_NEED_BLITTER )
 	//We load two shaders, the other is a texture shader, for blitting things.
 	wglBlit = wgl_makeShader( 
 		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
-		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
+		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc).wzyx;}" );
 
 	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
 
-	imports.env.CNFGBlitImage = (memptr, x, y, w, h ) => {
+	imports.env.CNFGBlitImageInternal = (memptr, x, y, w, h ) => {
 			if( w <= 0 || h <= 0 ) return;
 
 			wgl.useProgram(wglBlit);
@@ -253,8 +253,8 @@ if( RAWDRAW_NEED_BLITTER )
 				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
 			CNFGEmitBackendTrianglesJS( 
-				new Float32Array( [0,0,0,w,0,0,    w,h,0,      0,0,0,  w,h,0,      0,h,0 ] ),
-				new Uint8Array( [0,0,0,0,255,0,0,0,255,255,0,0,0,0,0,0,255,255,0,0,0,255,0,0] ),
+				new Float32Array( [0,0,0, w,0,0,     w,h,0,       0,0,0,   w,h,0,       0,h,0 ] ),
+				new Uint8Array( [0,0,0,0, 255,0,0,0, 255,255,0,0, 0,0,0,0, 255,255,0,0, 0,255,0,0] ),
 				6 );
 
 			wgl.useProgram(wglShader);
@@ -281,8 +281,14 @@ if( RAWDRAW_NEED_BLITTER )
 
 			if( instance.exports.HandleButton )
 			{
-				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); } );
-				canvas.addEventListener('mousedown', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 1 ); } );
+				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
+				canvas.addEventListener('mousedown', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 1 ); return false; } );
+			}
+
+			if( instance.exports.HandleKey )
+			{
+				document.addEventListener('keydown', e => { instance.exports.HandleKey( e.keyCode, 1 ); } );
+				document.addEventListener('keyup', e => { instance.exports.HandleKey( e.keyCode, 0 ); } );
 			}
 
 

@@ -3,7 +3,9 @@
 #include <stdint.h>
 
 extern void __attribute__((import_module("bynsyncify"))) CNFGSwapBuffersInternal();
+void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h );
 void print( double idebug );
+void prints( const char* sdebug );
 
 
 //Forward declarations that we get from either WASM or our javascript code.
@@ -15,7 +17,6 @@ void CNFGClearFrameInternal( uint32_t bgcolor );
 void	CNFGInternalResize( short x, short y )
 {
 }
-
 
 void CNFGFlushRender()
 {
@@ -40,6 +41,11 @@ void CNFGHandleInput()
 	//Input is handled on swap frame.
 }
 
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+{
+	CNFGBlitImageInternal( data, x, y, w, h );
+}
+
 #else
 	
 //Rasterizer - if you want to do this, you will need to enable blitting in the javascript.
@@ -58,7 +64,7 @@ void free(void* ptr) {  }
 extern void CNFGUpdateScreenWithBitmapInternal( uint32_t * data, int w, int h );
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
-	CNFGBlitImage( data, 0, 0, w, h );
+	CNFGBlitImageInternal( data, 0, 0, w, h );
 	CNFGSwapBuffersInternal();
 }
 

@@ -34,17 +34,20 @@ Usually tested combinations:
 	NOTE: Sometimes you can also use CNFGOGL + CNFGRASTERIZER
 
  * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER
-
+ * ANDROID (But this automatically sets CNFGRASTERIZER OFF and CNFGOGL ON)
 */
 
 
 #include <stdint.h>
 
-//System logic
+//Some per-platform logic.
+#if defined( ANDROID ) || defined( __android__ )
+#define CNFGOGL
+#endif
+
 #if ( defined( CNFGOGL ) || defined( __wasm__ ) ) && !defined(CNFG_HAS_XSHAPE)
 #define CNFG_BATCH 8192 //131,072 bytes.
 #endif
-
 
 typedef struct {
     short x, y; 
@@ -64,8 +67,6 @@ uint32_t CNFGColor( uint32_t RGBA );
 
 //This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
-
-void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 
 //This is only supported on a FEW architectures, but allows arbitrary
 //image blitting.  Note that the alpha channel behavior is different
@@ -118,11 +119,13 @@ void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 //sort of thing.
 #ifdef CNFG_BATCH
 
-//These need to be defined for the specific driver.  Note that CNFGEmitBackendTriangles is provided if on OpenGL.
-void	CNFGEmitBackendTriangles( float * vertices, uint32_t * colors, int num_vertices );
+//If you are not using the CNFGOGL driver, you will need to define these in your driver.
+void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, int num_vertices );
+void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+
+//These need to be defined for the specific driver.  
 void 	CNFGClearFrame();
 void 	CNFGSwapBuffers();
-void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 
 void 	CNFGFlushRender(); //Call this before swapping buffers.
 void	CNFGInternalResize( short x, short y ); //Driver calls this after resize happens.

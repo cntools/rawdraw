@@ -314,7 +314,7 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 
 //Just FYI we use floats for geometry instead of shorts becase it is harder
 //to triangularize a diagonal line int triangles with shorts and have it look good.
-void CNFGEmitBackendTriangles( float * fv, uint32_t * col, int nr_verts );
+void CNFGEmitBackendTriangles( const float * fv, const uint32_t * col, int nr_verts );
 float sqrtf( float f );
 
 
@@ -324,7 +324,7 @@ uint32_t CNFGVertDataC[CNFG_BATCH];
 int CNFGVertPlace;
 static float wgl_last_width_over_2 = .5;
 
-void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
+static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
 {
 	//Because quads are really useful, but it's best to keep them all triangles if possible.
 	//This lets us draw arbitrary quads.
@@ -429,6 +429,8 @@ void	CNFGSetLineWidth( short width )
 
 
 #ifndef __wasm__
+//In WASM, Javascript takes over this functionality.
+
 
 #ifndef GL_VERTEX_SHADER
 #define GL_FRAGMENT_SHADER                0x8B30
@@ -436,6 +438,7 @@ void	CNFGSetLineWidth( short width )
 #define GL_COMPILE_STATUS                 0x8B81
 #define GL_INFO_LOG_LENGTH                0x8B84
 #define GL_LINK_STATUS                    0x8B82
+#define GL_TEXTURE_2D                     0x0DE1
 #define LGLchar char
 #else
 #define LGLchar GLchar
@@ -466,7 +469,7 @@ CHEWTYPEDEF( void, glBindAttribLocation, , (program,index,name), GLuint program,
 CHEWTYPEDEF( void, glGetShaderiv, , (shader,pname,params), GLuint shader, GLenum pname, GLint *params )
 CHEWTYPEDEF( GLuint, glCreateShader, return, (e), GLenum e )
 CHEWTYPEDEF( void, glVertexAttribPointer, , (index,size,type,normalized,stride,pointer), GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer )
-CHEWTYPEDEF( void, glShaderSource, , (shader,count,string,length), GLuint shader, GLsizei count, const LGLchar **string, const GLint *length )
+CHEWTYPEDEF( void, glShaderSource, , (shader,count,string,length), GLuint shader, GLsizei count, const LGLchar *const*string, const GLint *length )
 CHEWTYPEDEF( void, glAttachShader, , (program,shader), GLuint program, GLuint shader )
 CHEWTYPEDEF( void, glCompileShader, ,(shader), GLuint shader )
 CHEWTYPEDEF( void, glGetShaderInfoLog , , (shader,maxLength, length, infoLog), GLuint shader, GLsizei maxLength, GLsizei *length, LGLchar *infoLog )
@@ -474,6 +477,7 @@ CHEWTYPEDEF( GLuint, glCreateProgram, return, () , void )
 CHEWTYPEDEF( void, glLinkProgram, , (program), GLuint program )
 CHEWTYPEDEF( void, glDeleteShader, , (shader), GLuint shader )
 CHEWTYPEDEF( void, glUniform4f, , (location,v0,v1,v2,v3), GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+CHEWTYPEDEF( void, glUniform1i, , (location,i0), GLint location, GLint i0 )
 
 
 #ifndef CNFGOGL_NEED_EXTENSION
@@ -496,6 +500,7 @@ CHEWTYPEDEF( void, glUniform4f, , (location,v0,v1,v2,v3), GLint location, GLfloa
 #define CNFGglUniform4f glUniform4f
 #define CNFGglBindAttribLocation glBindAttribLocation
 #define CNFGglVertexAttribPointer glVertexAttribPointer
+#define CNFGglUniform1i glUniform1i
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
@@ -551,6 +556,7 @@ static void CNFGLoadExtensionsInternal()
 	CNFGglDeleteShader = CNFGGetProcAddress( "glDeleteShader" );
 	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
 	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
+	CNFGglUniform1i = CNFGGetProcAddress( "glUniform1i" );
 }
 #else
 static void CNFGLoadExtensionsInternal() { }
@@ -664,6 +670,7 @@ fail:
 
 void CNFGSetupBatchInternal()
 {
+	printf( "CNFGSetupBatchInternal()\n" );
 	short w, h;
 
 	CNFGLoadExtensionsInternal();
@@ -672,7 +679,7 @@ void CNFGSetupBatchInternal()
 
 	gRDShaderProg = CNFGGLInternalLoadShader( 
 		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
-		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.abgr); }" );
+		"varying vec4 vc; void main() { gl_FragColor = vec4(vc.abgr); }" );
 
 	CNFGglUseProgram( gRDShaderProg );
 	gRDShaderProgUX = CNFGglGetUniformLocation ( gRDShaderProg , "xfrm" );
@@ -680,14 +687,29 @@ void CNFGSetupBatchInternal()
 
 	gRDBlitProg = CNFGGLInternalLoadShader( 
 		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
-		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc).abgr;}" );
+		"varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc)."
+#if !defined( CNFGRASTERIZER )
+"wzyx"
+#else
+"wxyz"
+#endif
+";}" );
 
 	CNFGglUseProgram( gRDBlitProg );
 	gRDBlitProgUX = CNFGglGetUniformLocation ( gRDBlitProg , "xfrm" );
 	gRDBlitProgUT = CNFGglGetUniformLocation ( gRDBlitProg , "tex" );
 	glGenTextures( 1, &gRDBlitProgTex );
 
+	CNFGglEnableVertexAttribArray(0);
+	CNFGglEnableVertexAttribArray(1);
+
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask( GL_FALSE );
+	glEnable( GL_BLEND );
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+
 	CNFGVertPlace = 0;
+	printf( "CNFGSetupBatchInternal() Complete\n" );
 }
 
 #ifndef CNFGRASTERIZER
@@ -703,18 +725,71 @@ void CNFGInternalResizeOGLBACKEND(short x, short y)
 	CNFGglUniform4f( gRDShaderProgUX, 1.f/x, -1.f/y, -0.5f, 0.5f);
 }
 
+void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, int num_vertices )
+{
+	CNFGglUseProgram( gRDShaderProg );
+	CNFGglUniform4f( gRDShaderProgUX, 1.f/gRDLastResizeW, -1.f/gRDLastResizeH, -0.5f, 0.5f);
+	CNFGglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+	CNFGglVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
+	glDrawArrays( GL_TRIANGLES, 0, num_vertices);
+}
+
+#ifdef CNFGRASTERIZER
+void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h )
+#else
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+#endif
+{
+	if( w <= 0 || h <= 0 ) return;
+
+	CNFGFlushRender();
+
+	CNFGglUseProgram( gRDBlitProg );
+	CNFGglUniform4f( gRDBlitProgUX,
+		1.f/gRDLastResizeW, -1.f/gRDLastResizeH,
+		-0.5f+x/(float)gRDLastResizeW, 0.5f-y/(float)gRDLastResizeH );
+	CNFGglUniform1i( gRDBlitProgUT, 0 );
+
+	glEnable( GL_TEXTURE_2D );
+	glActiveTexture( 0 );
+	glBindTexture( GL_TEXTURE_2D, gRDBlitProgTex );
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,  GL_RGBA,
+		GL_UNSIGNED_BYTE, data );
+
+	const float verts[] = {
+		0,0, w,0, w,h,
+		0,0, w,h, 0,h, };
+	static const uint8_t colors[] = {
+		0,0,   255,0,  255,255,
+		0,0,  255,255, 0,255 };
+
+	CNFGglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	CNFGglVertexAttribPointer(1, 2, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
+	glDrawArrays( GL_TRIANGLES, 0, 6);
+}
+
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
+{
+#ifdef CNFGRASTERIZER
+	CNFGBlitImageInternal( data, 0, 0, w, h );
+	void CNFGSwapBuffersInternal();
+	CNFGSwapBuffersInternal();
+#else
+	CNFGBlitImage( data, 0, 0, w, h );
+#endif
+}
+
 #ifndef CNFGRASTERIZER
 
 void CNFGFlushRender()
 {
-	CNFGglUseProgram( gRDShaderProg );
-	CNFGglUniform4f( gRDShaderProgUX, 1.f/gRDLastResizeW, -1.f/gRDLastResizeH, -0.5f, 0.5f);
-	CNFGglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, CNFGVertDataV);
-	CNFGglEnableVertexAttribArray(0);
-	CNFGglVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, CNFGVertDataC);
-	CNFGglEnableVertexAttribArray(1);
-	glDrawArrays( GL_TRIANGLES, 0, CNFGVertPlace);
-	//printf( "CNFGVertPlace = %d %f %f %f\n", CNFGVertPlace, CNFGVertDataV[0],CNFGVertDataV[1], CNFGVertDataV[2] );
+	if( !CNFGVertPlace ) return;
+	CNFGEmitBackendTriangles( CNFGVertDataV, CNFGVertDataC, CNFGVertPlace );
 	CNFGVertPlace = 0;
 }
 

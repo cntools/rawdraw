@@ -398,6 +398,69 @@ void CNFGHandleInput()
 }
 
 
+#ifdef CNFGOGL
+
+void   CNFGSetVSync( int vson )
+{
+	void (*glfn)( int );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalMESA" );	if( glfn ) glfn( vson );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalSGI" );	if( glfn ) glfn( vson );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
+}
+
+#ifdef CNFGRASTERIZER
+void CNFGSwapBuffersInternal()
+#else
+void CNFGSwapBuffers()
+#endif
+{
+	if( CNFGWindowInvisible ) return;
+
+#ifndef CNFGRASTERIZER
+	CNFGFlushRender();
+#endif
+
+#ifdef CNFG_HAS_XSHAPE
+	if( taint_shape )
+	{
+		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
+		taint_shape = 0;
+	}
+#endif //CNFG_HAS_XSHAPE
+	glXSwapBuffers( CNFGDisplay, CNFGWindow );
+
+#ifdef FULL_SCREEN_STEAL_FOCUS
+	if( FullScreen )
+		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
+#endif //FULL_SCREEN_STEAL_FOCUS
+}
+
+#else //CNFGOGL
+
+
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+{
+	static int depth;
+	static int lw, lh;
+
+	if( !xi )
+	{
+		int screen = DefaultScreen(CNFGDisplay);
+		depth = DefaultDepth(CNFGDisplay, screen)/8;
+	}
+
+	if( lw != w || lh != h )
+	{
+		if( xi ) free( xi );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		lw = w;
+		lh = h;
+	}
+
+	//Draw image to pixmap (not a screen flip)
+	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
+}
+
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	static int depth;
@@ -420,45 +483,11 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 		lh = h;
 	}
 
+	//Directly write image to screen (effectively a flip)
 	XPutImage(CNFGDisplay, CNFGWindow, CNFGWindowGC, xi, 0, 0, 0, 0, w, h );
 }
 
-
-
-#ifdef CNFGOGL
-
-void   CNFGSetVSync( int vson )
-{
-	void (*glfn)( int );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalMESA" );	if( glfn ) glfn( vson );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalSGI" );	if( glfn ) glfn( vson );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
-}
-
-#ifndef CNFGRASTERIZER
-void CNFGSwapBuffers()
-{
-	if( CNFGWindowInvisible ) return;
-
-	CNFGFlushRender();
-
-#ifdef CNFG_HAS_XSHAPE
-	if( taint_shape )
-	{
-		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
-		taint_shape = 0;
-	}
-#endif
-	glXSwapBuffers( CNFGDisplay, CNFGWindow );
-
-#ifdef FULL_SCREEN_STEAL_FOCUS
-	if( FullScreen )
-		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
-#endif
-}
-#endif //CNFGRASTERIZER
-
-#endif
+#endif //CNFGOGL
 
 #if !defined( CNFGOGL)
 #define AGLF(x) x
