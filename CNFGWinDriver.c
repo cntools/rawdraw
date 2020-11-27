@@ -13,6 +13,7 @@ static HBITMAP lsBitmap;
 static HWND lsHWND;
 static HDC lsWindowHDC;
 static HDC lsHDC;
+static HDC lsHDCBlit;
 
 //Queue up lines and points for a faster render.
 #ifndef CNFG_WINDOWS_DISABLE_BATCH
@@ -78,6 +79,7 @@ void CNFGGetDimensions( short * x, short * y )
 	*y = buffery;
 }
 
+#ifndef CNFGOGL
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	RECT r;
@@ -105,7 +107,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 		InternalHandleResize();
 	}
 }
-
+#endif
 
 void CNFGTearDown()
 {
@@ -221,6 +223,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 #endif
 
 	lsHDC = CreateCompatibleDC( lsWindowHDC );
+	lsHDCBlit = CreateCompatibleDC( lsWindowHDC );
 	lsBitmap = CreateCompatibleBitmap( lsWindowHDC, bufferx, buffery );
 	SelectObject( lsHDC, lsBitmap );
 
@@ -368,6 +371,21 @@ uint32_t CNFGColor( uint32_t RGB )
 	return RGB;
 }
 
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+{
+	static int pbw, pbh;
+	static HBITMAP pbb;
+	if( !pbb || pbw != w || pbh !=h )
+	{
+		if( pbb ) DeleteObject( pbb );
+		pbb = CreateBitmap( w, h, 1, 32, 0 );
+		pbh = h;
+		pbw = w;
+	}
+	SetBitmapBits(pbb,w*h*4,data);
+	SelectObject( lsHDCBlit, pbb );
+	BitBlt(lsHDC, x, y, w, h, lsHDCBlit, 0, 0, SRCCOPY);
+}
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {

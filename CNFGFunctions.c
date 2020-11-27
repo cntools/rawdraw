@@ -439,6 +439,7 @@ void	CNFGSetLineWidth( short width )
 #define GL_INFO_LOG_LENGTH                0x8B84
 #define GL_LINK_STATUS                    0x8B82
 #define GL_TEXTURE_2D                     0x0DE1
+#define GL_CLAMP_TO_EDGE                  0x812F
 #define LGLchar char
 #else
 #define LGLchar GLchar
@@ -478,7 +479,7 @@ CHEWTYPEDEF( void, glLinkProgram, , (program), GLuint program )
 CHEWTYPEDEF( void, glDeleteShader, , (shader), GLuint shader )
 CHEWTYPEDEF( void, glUniform4f, , (location,v0,v1,v2,v3), GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
 CHEWTYPEDEF( void, glUniform1i, , (location,i0), GLint location, GLint i0 )
-
+CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 
 #ifndef CNFGOGL_NEED_EXTENSION
 #define CNFGglGetUniformLocation glGetUniformLocation
@@ -501,6 +502,7 @@ CHEWTYPEDEF( void, glUniform1i, , (location,i0), GLint location, GLint i0 )
 #define CNFGglBindAttribLocation glBindAttribLocation
 #define CNFGglVertexAttribPointer glVertexAttribPointer
 #define CNFGglUniform1i glUniform1i
+#define CNFGglActiveTexture glActiveTexture
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
@@ -557,6 +559,7 @@ static void CNFGLoadExtensionsInternal()
 	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
 	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
 	CNFGglUniform1i = CNFGGetProcAddress( "glUniform1i" );
+	CNFGglActiveTexture = CNFGGetProcAddress("glActiveTexture");
 }
 #else
 static void CNFGLoadExtensionsInternal() { }
@@ -751,7 +754,7 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 	CNFGglUniform1i( gRDBlitProgUT, 0 );
 
 	glEnable( GL_TEXTURE_2D );
-	glActiveTexture( 0 );
+	CNFGglActiveTexture( 0 );
 	glBindTexture( GL_TEXTURE_2D, gRDBlitProgTex );
 
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
