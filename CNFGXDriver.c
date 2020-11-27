@@ -3,7 +3,7 @@
 //http://www.xmission.com/~georgeps/documentation/tutorials/Xlib_Beginner.html
 
 //#define HAS_XINERAMA
-//#define HAS_XSHAPE
+//#define CNFG_HAS_XSHAPE
 //#define FULL_SCREEN_STEAL_FOCUS
 
 #ifndef _CNFGXDRIVER_C
@@ -24,7 +24,7 @@
 	#include <X11/extensions/shape.h>
 	#include <X11/extensions/Xinerama.h>
 #endif
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	#include <X11/extensions/shape.h>
 	static    XGCValues xsval;
 	static    Pixmap xspixmap;
@@ -36,6 +36,9 @@
 
 #endif
 
+#ifdef CNFG_BATCH
+void CNFGSetupBatchInternal();
+#endif
 
 XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
@@ -73,7 +76,7 @@ void 	CNFGSetWindowIconData( int w, int h, uint32_t * data )
 }
 
 
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 void	CNFGPrepareForTransparency() { prepare_xshape = 1; }
 void	CNFGDrawToTransparencyMode( int transp )
 {
@@ -101,10 +104,6 @@ void	CNFGClearTransparencyLevel()
 	XFillRectangle(CNFGDisplay, xspixmap, xsgc, 0, 0, CNFGWinAtt.width, CNFGWinAtt.height);
 	XSetForeground(CNFGDisplay, xsgc, 1);
 }
-#endif
-
-#ifdef CNFGCONTEXTONLY
-void CNFGInternalResize( short x, short y ) { }
 #endif
 
 #ifdef CNFGOGL
@@ -165,7 +164,7 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	if( !CNFGWindowInvisible )
 		XMapWindow(CNFGDisplay, CNFGWindow);
 
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	if( prepare_xshape )
 	{
 	    xsval.foreground = 1;
@@ -233,7 +232,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	XSetWindowAttributes setwinattr;
 	setwinattr.override_redirect = 1;
 	setwinattr.save_under = 1;
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 
 	if (prepare_xshape && !XShapeQueryExtension(CNFGDisplay, &event_basep, &error_basep))
 	{
@@ -329,6 +328,11 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
 #endif
+
+#ifdef CNFG_BATCH
+	CNFGSetupBatchInternal();
+#endif
+
 	return 0;
 }
 
@@ -394,6 +398,70 @@ void CNFGHandleInput()
 }
 
 
+#ifdef CNFGOGL
+
+void   CNFGSetVSync( int vson )
+{
+	void (*glfn)( int );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalMESA" );	if( glfn ) glfn( vson );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalSGI" );	if( glfn ) glfn( vson );
+	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
+}
+
+#ifdef CNFGRASTERIZER
+void CNFGSwapBuffersInternal()
+#else
+void CNFGSwapBuffers()
+#endif
+{
+	if( CNFGWindowInvisible ) return;
+
+#ifndef CNFGRASTERIZER
+	CNFGFlushRender();
+#endif
+
+#ifdef CNFG_HAS_XSHAPE
+	if( taint_shape )
+	{
+		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
+		taint_shape = 0;
+	}
+#endif //CNFG_HAS_XSHAPE
+	glXSwapBuffers( CNFGDisplay, CNFGWindow );
+
+#ifdef FULL_SCREEN_STEAL_FOCUS
+	if( FullScreen )
+		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
+#endif //FULL_SCREEN_STEAL_FOCUS
+}
+
+#else //CNFGOGL
+
+#ifndef CNFGRASTERIZER
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+{
+	static int depth;
+	static int lw, lh;
+
+	if( !xi )
+	{
+		int screen = DefaultScreen(CNFGDisplay);
+		depth = DefaultDepth(CNFGDisplay, screen)/8;
+	}
+
+	if( lw != w || lh != h )
+	{
+		if( xi ) free( xi );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		lw = w;
+		lh = h;
+	}
+
+	//Draw image to pixmap (not a screen flip)
+	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
+}
+#endif
+
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	static int depth;
@@ -416,59 +484,31 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 		lh = h;
 	}
 
+	//Directly write image to screen (effectively a flip)
 	XPutImage(CNFGDisplay, CNFGWindow, CNFGWindowGC, xi, 0, 0, 0, 0, w, h );
 }
 
-
-#ifdef CNFGOGL
-
-void   CNFGSetVSync( int vson )
-{
-	void (*glfn)( int );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalMESA" );	if( glfn ) glfn( vson );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalSGI" );	if( glfn ) glfn( vson );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
-}
-
-void CNFGSwapBuffers()
-{
-	if( CNFGWindowInvisible ) return;
-
-	glFlush();
-	//glFinish();
-
-#ifdef HAS_XSHAPE
-	if( taint_shape )
-	{
-		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
-		taint_shape = 0;
-	}
-#endif
-	glXSwapBuffers( CNFGDisplay, CNFGWindow );
-
-#ifdef FULL_SCREEN_STEAL_FOCUS
-	if( FullScreen )
-		XSetInputFocus( CNFGDisplay, CNFGWindow, RevertToParent, CurrentTime );
-#endif
-}
-#endif
+#endif //CNFGOGL
 
 #if !defined( CNFGOGL)
 #define AGLF(x) x
 #else
 #define AGLF(x) static inline BACKEND_##x
+#endif
+
 #if defined( CNFGRASTERIZER ) 
 #include "CNFGRasterizer.c"
-#endif
+#undef AGLF
+#define AGLF(x) static inline BACKEND_##x
 #endif
 
 uint32_t AGLF(CNFGColor)( uint32_t RGB )
 {
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	CNFGLastColor = RGB;
+	unsigned char red = ( RGB >> 24 ) & 0xFF;
+	unsigned char grn = ( RGB >> 16 ) & 0xFF;
+	unsigned char blu = ( RGB >> 8 ) & 0xFF;
 	unsigned long color = (red<<16)|(grn<<8)|(blu);
+	CNFGLastColor = color;
 	XSetForeground(CNFGDisplay, CNFGGC, color);
 	return color;
 }
@@ -482,7 +522,7 @@ void AGLF(CNFGClearFrame)()
 
 void AGLF(CNFGSwapBuffers)()
 {
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	if( taint_shape )
 	{
 		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
@@ -534,129 +574,6 @@ void AGLF(CNFGSetLineWidth)( short width )
 {
 	XSetLineAttributes(CNFGDisplay, CNFGGC, width, LineSolid, CapRound, JoinRound);
 }
-
-
-
-
-#if defined( CNFGOGL ) && defined( HAS_XSHAPE )
-
-#include <GL/gl.h>
-
-uint32_t CNFGColor( uint32_t RGB )
-{
-	if( was_transp )
-	{
-		return BACKEND_CNFGColor( RGB );
-	}
-
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	glColor3ub( red, grn, blu );
-}
-
-void CNFGClearFrame()
-{
-	short w, h;
-	unsigned char red = CNFGBGColor & 0xFF;
-	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
-	unsigned char blu = ( CNFGBGColor >> 16 ) & 0xFF;
-	glClearColor( red/255.0, grn/255.0, blu/255.0, 1.0 );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	CNFGGetDimensions( &w, &h );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-	glViewport( 0, 0, w, h );
-	glOrtho( 0, w, h, 0, 1, -1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-}
-
-
-void CNFGTackSegment( short x1, short y1, short x2, short y2 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackSegment( x1,y1,x2,y2 );
-		return;
-	}
-
-	if( x1 == x2 && y1 == y2 )
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glEnd();		
-	}
-	else
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();		
-		glBegin( GL_LINES );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();
-	}
-}
-
-void CNFGTackPixel( short x1, short y1 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackPixel( x1,y1 );
-		return;
-	}
-
-	glBegin( GL_POINTS );
-	glVertex2f( x1, y1 );
-	glEnd();
-}
-
-void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackRectangle( x1,y1,x2,y2 );
-		return;
-	}
-
-
-	glBegin( GL_QUADS );
-	glVertex2f( x1, y1 );
-	glVertex2f( x2, y1 );
-	glVertex2f( x2, y2 );
-	glVertex2f( x1, y2 );
-	glEnd();
-}
-
-void CNFGTackPoly( RDPoint * points, int verts )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackPoly( points,verts );
-		return;
-	}
-
-	int i;
-	glBegin( GL_TRIANGLE_FAN );
-	glVertex2f( points[0].x, points[0].y );
-	for( i = 1; i < verts; i++ )
-	{
-		glVertex2f( points[i].x, points[i].y );
-	}
-	glEnd();
-}
-
-void CNFGInternalResize( short x, short y ) { }
-
-
-void CNFGSetLineWidth( short width )
-{
-	glLineWidth( width );
-}
-
-#endif
 
 #endif // _CNFGXDRIVER_C
 

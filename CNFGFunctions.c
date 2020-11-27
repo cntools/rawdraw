@@ -280,21 +280,6 @@ void CNFGDrawNiceText(const char* text, short scale)
 #endif
 #endif
 
-#if 0
-//Deprecated
-void CNFGDrawBox( short x1, short y1, short x2, short y2 )
-{
-	unsigned lc = CNFGLastColor;
-	CNFGColor( CNFGDialogColor );
-	CNFGTackRectangle( x1, y1, x2, y2 );
-	CNFGColor( lc );
-	CNFGTackSegment( x1, y1, x2, y1 );
-	CNFGTackSegment( x2, y1, x2, y2 );
-	CNFGTackSegment( x2, y2, x1, y2 );
-	CNFGTackSegment( x1, y2, x1, y1 );
-}
-#endif
-
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 {
 	int charsx = 0;
@@ -322,116 +307,512 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 	*h = charsy * textsize * 6;
 }
 
-#if 0
-//Deprecated
-void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
-{
-	int w;
-	int h;
+#if defined( CNFG_BATCH )
 
-	CNFGGetTextExtents( text, &w, &h, textsize );
-	
-	CNFGDrawBox( (short)x, (short)y, (short)(x + w + 2*textsize), (short)(y + h) );
-	CNFGPenX = x + textsize;
-	CNFGPenY = y + textsize;
-	CNFGDrawText( text, textsize );
+//This is the path by which we convert rawdraw functionality
+//into nice batched triangle streams.
+
+//Just FYI we use floats for geometry instead of shorts becase it is harder
+//to triangularize a diagonal line int triangles with shorts and have it look good.
+void CNFGEmitBackendTriangles( const float * fv, const uint32_t * col, int nr_verts );
+float sqrtf( float f );
+
+
+//Geometry batching system - so we can batch geometry and deliver it all at once.
+float CNFGVertDataV[CNFG_BATCH*3];
+uint32_t CNFGVertDataC[CNFG_BATCH];
+int CNFGVertPlace;
+static float wgl_last_width_over_2 = .5;
+
+static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
+{
+	//Because quads are really useful, but it's best to keep them all triangles if possible.
+	//This lets us draw arbitrary quads.
+	if( CNFGVertPlace >= CNFG_BATCH-6 ) CNFGFlushRender();
+	float * fv = &CNFGVertDataV[CNFGVertPlace*3];
+	fv[0] = cx0; fv[1] = cy0;
+	fv[3] = cx1; fv[4] = cy1;
+	fv[6] = cx2; fv[7] = cy2;
+	fv[9] = cx2; fv[10] = cy2;
+	fv[12] = cx1; fv[13] = cy1;
+	fv[15] = cx3; fv[16] = cy3;
+	uint32_t * col = &CNFGVertDataC[CNFGVertPlace];
+	uint32_t color = CNFGLastColor;
+	col[0] = color; col[1] = color; col[2] = color; col[3] = color; col[4] = color; col[5] = color;
+	CNFGVertPlace += 6;
 }
-#endif
 
-#if defined( CNFGOGL ) && !defined( HAS_XSHAPE )
 
-#ifdef _MSC_VER
-#include <windows.h>
-#pragma comment( lib, "OpenGL32.lib" )
-#endif
-#include <GL/gl.h>
+#ifndef CNFGRASTERIZER
 
-uint32_t CNFGColor( uint32_t RGB )
+void CNFGTackPixel( short x1, short y1 )
 {
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	glColor3ub( red, grn, blu );
-	return RGB;
-}
-
-void CNFGClearFrame()
-{
-	short w, h;
-	unsigned char red = CNFGBGColor & 0xFF;
-	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
-	unsigned char blu = ( CNFGBGColor >> 16 ) & 0xFF;
-	glClearColor( red/255.0, grn/255.0, blu/255.0, 1.0 );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	CNFGGetDimensions( &w, &h );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-	glViewport( 0, 0, w, h );
-	glOrtho( 0, w, h, 0, 1, -1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+	x1++; y1++;
+	const short l2 = wgl_last_width_over_2;
+	const short l2u = wgl_last_width_over_2+0.5;
+	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
 }
 
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
-	if( x1 == x2 && y1 == y2 )
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glEnd();
-	}
-	else
-	{
-		// GL_LINE misses the last pixel if the line is not continued
-		// due to the Diamond-exit rule so we use GL_LINE_LOOP which
-		// draws the line back and forth catching all the pixels.
-		glBegin( GL_LINE_LOOP );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();
-	}
-}
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
 
-void CNFGTackPixel( short x1, short y1 )
-{
-	glBegin( GL_POINTS );
-	glVertex2f( x1, y1 );
-	glEnd();
+	float dx = ix2-ix1;
+	float dy = iy2-iy1;
+	float imag = 1./sqrtf(dx*dx+dy*dy);
+	dx *= imag;
+	dy *= imag;
+	float orthox = dy*wgl_last_width_over_2;
+	float orthoy =-dx*wgl_last_width_over_2;
+
+	ix2 += dx/2 + 0.5;
+	iy2 += dy/2 + 0.5;
+	ix1 -= dx/2 - 0.5;
+	iy1 -= dy/2 - 0.5;
+
+	//This logic is incorrect. XXX FIXME.
+	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-	glBegin( GL_QUADS );
-	glVertex2f( x1, y1 );
-	glVertex2f( x2, y1 );
-	glVertex2f( x2, y2 );
-	glVertex2f( x1, y2 );
-	glEnd();
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
+	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
 {
 	int i;
-	glBegin( GL_TRIANGLE_FAN );
-	glVertex2f( points[0].x, points[0].y );
-	for( i = 1; i < verts; i++ )
+	int tris = verts-2;
+	if( CNFGVertPlace >= CNFG_BATCH-tris*3 ) CNFGFlushRender();
+
+	uint32_t color = CNFGLastColor;
+	short * ptrsrc =  (short*)points;
+
+	for( i = 0; i < tris; i++ )
 	{
-		glVertex2f( points[i].x, points[i].y );
+		float * fv = &CNFGVertDataV[CNFGVertPlace*3];
+		fv[0] = ptrsrc[0];
+		fv[1] = ptrsrc[1];
+		fv[3] = ptrsrc[2];
+		fv[4] = ptrsrc[3];
+		fv[6] = ptrsrc[i*2+4];
+		fv[7] = ptrsrc[i*2+5];
+
+		uint32_t * col = &CNFGVertDataC[CNFGVertPlace];
+		col[0] = color;
+		col[1] = color;
+		col[2] = color;
+
+		CNFGVertPlace += 3;
 	}
-	glEnd();
 }
 
-void CNFGInternalResize( short x, short y ) { }
-
-
-void CNFGSetLineWidth( short width )
+uint32_t CNFGColor( uint32_t RGB )
 {
-	glLineWidth( width );
+	return CNFGLastColor = RGB;
+}
+
+void	CNFGSetLineWidth( short width )
+{
+	wgl_last_width_over_2 = width/2.0;// + 0.5;
 }
 
 #endif
 
+
+#ifndef __wasm__
+//In WASM, Javascript takes over this functionality.
+
+
+#ifndef GL_VERTEX_SHADER
+#define GL_FRAGMENT_SHADER                0x8B30
+#define GL_VERTEX_SHADER                  0x8B31
+#define GL_COMPILE_STATUS                 0x8B81
+#define GL_INFO_LOG_LENGTH                0x8B84
+#define GL_LINK_STATUS                    0x8B82
+#define GL_TEXTURE_2D                     0x0DE1
+#define GL_CLAMP_TO_EDGE                  0x812F
+#define LGLchar char
+#else
+#define LGLchar GLchar
 #endif
 
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#define CNFGOGL_NEED_EXTENSION
+#endif
+
+#ifdef  CNFGOGL_NEED_EXTENSION
+//If we are going to be defining our own function pointer call
+#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+	ret (*CNFG##name)( __VA_ARGS__ );
+#else
+//If we are going to be defining the real call
+#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+	ret name (__VA_ARGS__);
+#endif
+
+int (*MyFunc)( int program, const LGLchar *name );
+
+CHEWTYPEDEF( GLint, glGetUniformLocation, return, (program,name), GLuint program, const LGLchar *name )
+CHEWTYPEDEF( void, glEnableVertexAttribArray, , (index), GLuint index )
+CHEWTYPEDEF( void, glUseProgram, , (program), GLuint program )
+CHEWTYPEDEF( void, glGetProgramInfoLog, , (program,maxLength, length, infoLog), GLuint program, GLsizei maxLength, GLsizei *length, LGLchar *infoLog )
+CHEWTYPEDEF( void, glGetProgramiv, , (program,pname,params), GLuint program, GLenum pname, GLint *params )
+CHEWTYPEDEF( void, glBindAttribLocation, , (program,index,name), GLuint program, GLuint index, const LGLchar *name )
+CHEWTYPEDEF( void, glGetShaderiv, , (shader,pname,params), GLuint shader, GLenum pname, GLint *params )
+CHEWTYPEDEF( GLuint, glCreateShader, return, (e), GLenum e )
+CHEWTYPEDEF( void, glVertexAttribPointer, , (index,size,type,normalized,stride,pointer), GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer )
+CHEWTYPEDEF( void, glShaderSource, , (shader,count,string,length), GLuint shader, GLsizei count, const LGLchar *const*string, const GLint *length )
+CHEWTYPEDEF( void, glAttachShader, , (program,shader), GLuint program, GLuint shader )
+CHEWTYPEDEF( void, glCompileShader, ,(shader), GLuint shader )
+CHEWTYPEDEF( void, glGetShaderInfoLog , , (shader,maxLength, length, infoLog), GLuint shader, GLsizei maxLength, GLsizei *length, LGLchar *infoLog )
+CHEWTYPEDEF( GLuint, glCreateProgram, return, () , void )
+CHEWTYPEDEF( void, glLinkProgram, , (program), GLuint program )
+CHEWTYPEDEF( void, glDeleteShader, , (shader), GLuint shader )
+CHEWTYPEDEF( void, glUniform4f, , (location,v0,v1,v2,v3), GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+CHEWTYPEDEF( void, glUniform1i, , (location,i0), GLint location, GLint i0 )
+CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
+
+#ifndef CNFGOGL_NEED_EXTENSION
+#define CNFGglGetUniformLocation glGetUniformLocation
+#define CNFGglEnableVertexAttribArray glEnableVertexAttribArray
+#define CNFGglUseProgram glUseProgram
+#define CNFGglEnableVertexAttribArray glEnableVertexAttribArray
+#define CNFGglUseProgram glUseProgram
+#define CNFGglGetProgramInfoLog glGetProgramInfoLog
+#define CNFGglGetProgramiv glGetProgramiv
+#define CNFGglShaderSource glShaderSource
+#define CNFGglCreateShader glCreateShader
+#define CNFGglAttachShader glAttachShader
+#define CNFGglGetShaderiv glGetShaderiv
+#define CNFGglCompileShader glCompileShader
+#define CNFGglGetShaderInfoLog glGetShaderInfoLog
+#define CNFGglCreateProgram glCreateProgram
+#define CNFGglLinkProgram glLinkProgram
+#define CNFGglDeleteShader glDeleteShader
+#define CNFGglUniform4f glUniform4f
+#define CNFGglBindAttribLocation glBindAttribLocation
+#define CNFGglVertexAttribPointer glVertexAttribPointer
+#define CNFGglUniform1i glUniform1i
+#define CNFGglActiveTexture glActiveTexture
+#endif
+
+#ifdef CNFGOGL_NEED_EXTENSION
+#if defined( WIN32 ) || defined( WINDOWS ) || defined( WIN64 )
+
+//From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
+void * CNFGGetProcAddress(const char *name)
+{
+	void *p = (void *)wglGetProcAddress(name);
+	if(p == 0 ||
+		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+		(p == (void*)-1) )
+	{
+		static HMODULE module;
+		if( !module ) module = LoadLibraryA("opengl32.dll");
+		p = (void *)GetProcAddress(module, name);
+	}
+	return p;
+}
+
+#else
+#include <dlfcn.h>
+
+
+void * CNFGGetProcAddress(const char *name)
+{
+	//Tricky use RTLD_NEXT first so we don't accidentally link against ourselves.
+	void * v1 = dlsym( (void*)((intptr_t)-1) /*RTLD_NEXT = -1*/ /*RTLD_DEFAULT = 0*/, name );
+	//printf( "%s = %p\n", name, v1 );
+	if( !v1 ) v1 = dlsym( 0, name );
+	return v1;
+}
+
+#endif
+
+static void CNFGLoadExtensionsInternal()
+{
+	CNFGglGetUniformLocation = CNFGGetProcAddress( "glGetUniformLocation" );
+	CNFGglEnableVertexAttribArray = CNFGGetProcAddress( "glEnableVertexAttribArray" );
+	CNFGglUseProgram = CNFGGetProcAddress( "glUseProgram" );
+	CNFGglGetProgramInfoLog = CNFGGetProcAddress( "glGetProgramInfoLog" );
+	CNFGglBindAttribLocation = CNFGGetProcAddress( "glBindAttribLocation" );
+	CNFGglGetProgramiv = CNFGGetProcAddress( "glGetProgramiv" );
+	CNFGglGetShaderiv = CNFGGetProcAddress( "glGetShaderiv" );
+	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
+	CNFGglCreateShader = CNFGGetProcAddress( "glCreateShader" );
+	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
+	CNFGglShaderSource = CNFGGetProcAddress( "glShaderSource" );
+	CNFGglAttachShader = CNFGGetProcAddress( "glAttachShader" );
+	CNFGglCompileShader = CNFGGetProcAddress( "glCompileShader" );
+	CNFGglGetShaderInfoLog = CNFGGetProcAddress( "glGetShaderInfoLog" );
+	CNFGglLinkProgram = CNFGGetProcAddress( "glLinkProgram" );
+	CNFGglDeleteShader = CNFGGetProcAddress( "glDeleteShader" );
+	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
+	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
+	CNFGglUniform1i = CNFGGetProcAddress( "glUniform1i" );
+	CNFGglActiveTexture = CNFGGetProcAddress("glActiveTexture");
+}
+#else
+static void CNFGLoadExtensionsInternal() { }
+#endif
+
+
+
+GLuint gRDShaderProg = -1;
+GLuint gRDBlitProg = -1;
+GLuint gRDShaderProgUX = -1;
+GLuint gRDBlitProgUX = -1;
+GLuint gRDBlitProgUT = -1;
+GLuint gRDBlitProgTex = -1;
+GLuint gRDLastResizeW;
+GLuint gRDLastResizeH;
+
+
+GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragment_shader )
+{
+	GLuint fragment_shader_object = 0;
+	GLuint vertex_shader_object = 0;
+	GLuint program = 0;
+	int ret;
+
+	vertex_shader_object = CNFGglCreateShader(GL_VERTEX_SHADER);
+	if (!vertex_shader_object) {
+		fprintf( stderr, "Error: glCreateShader(GL_VERTEX_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
+	}
+
+	CNFGglShaderSource(vertex_shader_object, 1, &vertex_shader, NULL);
+	CNFGglCompileShader(vertex_shader_object);
+
+	CNFGglGetShaderiv(vertex_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr,"Error: vertex shader compilation failed!\n");
+		CNFGglGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	fragment_shader_object = CNFGglCreateShader(GL_FRAGMENT_SHADER);
+	if (!fragment_shader_object) {
+		fprintf( stderr, "Error: glCreateShader(GL_FRAGMENT_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
+	}
+
+	CNFGglShaderSource(fragment_shader_object, 1, &fragment_shader, NULL);
+	CNFGglCompileShader(fragment_shader_object);
+
+	CNFGglGetShaderiv(fragment_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr, "Error: fragment shader compilation failed!\n");
+		CNFGglGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	program = CNFGglCreateProgram();
+	if (!program) {
+		fprintf( stderr, "Error: failed to create program!\n");
+		goto fail;
+	}
+
+	CNFGglAttachShader(program, vertex_shader_object);
+	CNFGglAttachShader(program, fragment_shader_object);
+
+	CNFGglBindAttribLocation(program, 0, "a0");
+	CNFGglBindAttribLocation(program, 1, "a1");
+
+	CNFGglLinkProgram(program);
+
+	CNFGglGetProgramiv(program, GL_LINK_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr, "Error: program linking failed!\n");
+		CNFGglGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetProgramInfoLog(program, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+	return program;
+fail:
+	if( !vertex_shader_object ) CNFGglDeleteShader( vertex_shader_object );
+	if( !fragment_shader_object ) CNFGglDeleteShader( fragment_shader_object );
+	if( !program ) CNFGglDeleteShader( program );
+	return -1;
+}
+
+
+void CNFGSetupBatchInternal()
+{
+	short w, h;
+
+	CNFGLoadExtensionsInternal();
+
+	CNFGGetDimensions( &w, &h );
+
+	gRDShaderProg = CNFGGLInternalLoadShader( 
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
+		"varying vec4 vc; void main() { gl_FragColor = vec4(vc.abgr); }" );
+
+	CNFGglUseProgram( gRDShaderProg );
+	gRDShaderProgUX = CNFGglGetUniformLocation ( gRDShaderProg , "xfrm" );
+
+
+	gRDBlitProg = CNFGGLInternalLoadShader( 
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
+		"varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc)."
+#if !defined( CNFGRASTERIZER )
+"wzyx"
+#else
+"wxyz"
+#endif
+";}" );
+
+	CNFGglUseProgram( gRDBlitProg );
+	gRDBlitProgUX = CNFGglGetUniformLocation ( gRDBlitProg , "xfrm" );
+	gRDBlitProgUT = CNFGglGetUniformLocation ( gRDBlitProg , "tex" );
+	glGenTextures( 1, &gRDBlitProgTex );
+
+	CNFGglEnableVertexAttribArray(0);
+	CNFGglEnableVertexAttribArray(1);
+
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask( GL_FALSE );
+	glEnable( GL_BLEND );
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+
+	CNFGVertPlace = 0;
+}
+
+#ifndef CNFGRASTERIZER
+void CNFGInternalResize(short x, short y)
+#else
+void CNFGInternalResizeOGLBACKEND(short x, short y)
+#endif
+{
+	glViewport( 0, 0, x, y );
+	gRDLastResizeW = x;
+	gRDLastResizeH = y;
+	CNFGglUseProgram( gRDShaderProg );
+	CNFGglUniform4f( gRDShaderProgUX, 1.f/x, -1.f/y, -0.5f, 0.5f);
+}
+
+void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, int num_vertices )
+{
+	CNFGglUseProgram( gRDShaderProg );
+	CNFGglUniform4f( gRDShaderProgUX, 1.f/gRDLastResizeW, -1.f/gRDLastResizeH, -0.5f, 0.5f);
+	CNFGglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+	CNFGglVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
+	glDrawArrays( GL_TRIANGLES, 0, num_vertices);
+}
+
+#ifdef CNFGRASTERIZER
+void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h )
+#else
+void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+#endif
+{
+	if( w <= 0 || h <= 0 ) return;
+
+	CNFGFlushRender();
+
+	CNFGglUseProgram( gRDBlitProg );
+	CNFGglUniform4f( gRDBlitProgUX,
+		1.f/gRDLastResizeW, -1.f/gRDLastResizeH,
+		-0.5f+x/(float)gRDLastResizeW, 0.5f-y/(float)gRDLastResizeH );
+	CNFGglUniform1i( gRDBlitProgUT, 0 );
+
+	glEnable( GL_TEXTURE_2D );
+	CNFGglActiveTexture( 0 );
+	glBindTexture( GL_TEXTURE_2D, gRDBlitProgTex );
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,  GL_RGBA,
+		GL_UNSIGNED_BYTE, data );
+
+	const float verts[] = {
+		0,0, w,0, w,h,
+		0,0, w,h, 0,h, };
+	static const uint8_t colors[] = {
+		0,0,   255,0,  255,255,
+		0,0,  255,255, 0,255 };
+
+	CNFGglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	CNFGglVertexAttribPointer(1, 2, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
+	glDrawArrays( GL_TRIANGLES, 0, 6);
+}
+
+void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
+{
+#ifdef CNFGRASTERIZER
+	CNFGBlitImageInternal( data, 0, 0, w, h );
+	void CNFGSwapBuffersInternal();
+	CNFGSwapBuffersInternal();
+#else
+	CNFGBlitImage( data, 0, 0, w, h );
+#endif
+}
+
+#ifndef CNFGRASTERIZER
+
+void CNFGFlushRender()
+{
+	if( !CNFGVertPlace ) return;
+	CNFGEmitBackendTriangles( CNFGVertDataV, CNFGVertDataC, CNFGVertPlace );
+	CNFGVertPlace = 0;
+}
+
+void CNFGClearFrame()
+{
+	glClearColor( ((CNFGBGColor&0xff000000)>>24)/255.0, 
+		((CNFGBGColor&0xff0000)>>16)/255.0,
+		(CNFGBGColor&0xff00)/65280.0,
+		(CNFGBGColor&0xff)/255.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+}
+
+#endif
+
+#endif //__wasm__
+
+#else
+
+void CNFGFlushRender() { }
+
+#endif
+
+
+#endif
 #endif //_CNFG_C

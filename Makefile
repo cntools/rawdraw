@@ -1,4 +1,4 @@
-all : rawdraw ogltest
+all : rawdraw simple
 
 #for X11 consider:             xorg-dev
 #for X11, you will need:       libx-dev
@@ -19,35 +19,23 @@ rawdraw.exe : rawdraw.c
 rawdraw_egl : rawdraw.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
 
+simple : simple.c
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -lm -ldl
+
 rawdraw : rawdraw.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -lm -ldl
 
 rawdraw_ogl : rawdraw.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL -lm -ldl
 
 osdtest : osdtest.c CNFG.c
-	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE
-
-vulkantest : rawdraw.c CNFG.c
-	gcc -o $@ $^ -lX11 -lpthread -lm -O3 -lvulkan
-
-rawdraw_mac : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DCNFGRASTERIZER
-
-rawdraw_mac_soft : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -lm -lpthread
-
-rawdraw_mac_cg : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework CoreGraphics -framework QuartzCore -lm -lpthread
-
-rawdraw_mac_ogl : rawdraw.c CNFG.c
-	gcc -o $@ $^ -x objective-c -framework Cocoa -framework OpenGL -lm -lpthread -DCNFGRASTERIZER
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE -lm -ldl
 
 ogltest : ogltest.c CNFG.c
-	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL
+	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL -lm
 
 ogltest.exe : ogltest.c CNFG.c
-	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL
+	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL -lm
 
 clean : 
 	rm -rf *.o *~ rawdraw.exe rawdraw rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl

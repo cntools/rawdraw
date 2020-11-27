@@ -65,7 +65,7 @@ function wgl_makeShader( vertText, fragText )
 {
 	//We load two shaders, one is a solid-color shader, for most rawdraw objects.
 	wglShader = wgl_makeShader( 
-		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); vc = a1; }",
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
 		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.xyzw); }" );
 
 	wglUXFRM = wgl.getUniformLocation(wglShader, "xfrm" );
@@ -115,17 +115,19 @@ function SystemStart( title, w, h )
 
 //Buffered geometry system.
 //This handles buffering a bunch of lines/segments, and using them all at once.
+globalv = null;
 
-function FastPipeGeometryJS( vertsF, colorsI, vertcount )
+function CNFGEmitBackendTrianglesJS( vertsF, colorsI, vertcount )
 {
 	const ab = wgl.ARRAY_BUFFER;
 	wgl.bindBuffer(ab, wglABV);
 	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
-	wgl.vertexAttribPointer(0, 2, wgl.FLOAT, false, 0, 0);
+	wgl.vertexAttribPointer(0, 3, wgl.FLOAT, false, 0, 0);
 	wgl.bindBuffer(ab, wglABC);
 	wgl.bufferData(ab, colorsI, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
 	wgl.drawArrays(wgl.TRIANGLES, 0, vertcount );
+	globalv = vertsF;
 }
 
 //This defines the list of imports, the things that C will be importing from Javascript.
@@ -136,11 +138,11 @@ let imports = {
 		memory: memory,
 
 		//Various draw-functions.
-		FastPipeGeometry : (vertsF, colorsI, vertcount )=>
+		CNFGEmitBackendTriangles : (vertsF, colorsI, vertcount )=>
 		{
 			//Take a float* and uint32_t* of vertices, and flat-render them.
-			FastPipeGeometryJS(
-				HEAPF32.slice(vertsF>>2,(vertsF>>2)+vertcount*2),
+			CNFGEmitBackendTrianglesJS(
+				HEAPF32.slice(vertsF>>2,(vertsF>>2)+vertcount*3),
 				HEAPU8.slice(colorsI,(colorsI)+vertcount*4),
 				vertcount );
 		},
@@ -220,12 +222,12 @@ if( RAWDRAW_NEED_BLITTER )
 	//We are not currently supporting the software renderer.
 	//We load two shaders, the other is a texture shader, for blitting things.
 	wglBlit = wgl_makeShader( 
-		"uniform vec4 xfrm; attribute vec2 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0*xfrm.xy+xfrm.zw, 0.0, 0.5 ); tc = a1.xy; }",
-		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
+		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc).wzyx;}" );
 
 	wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
 
-	imports.env.CNFGBlitImage = (memptr, x, y, w, h ) => {
+	imports.env.CNFGBlitImageInternal = (memptr, x, y, w, h ) => {
 			if( w <= 0 || h <= 0 ) return;
 
 			wgl.useProgram(wglBlit);
@@ -250,9 +252,9 @@ if( RAWDRAW_NEED_BLITTER )
 			wgl.texImage2D(t2d, 0, wgl.RGBA, w, h, 0, wgl.RGBA,
 				wgl.UNSIGNED_BYTE, new Uint8Array(memory.buffer,memptr,w*h*4) );
 
-			FastPipeGeometryJS( 
-				new Float32Array( [0,0,    w,0,      w,h,        0,0,    w,h,        0,h ] ),
-				new Uint8Array( [0,0,0,0,255,0,0,0,255,255,0,0,0,0,0,0,255,255,0,0,0,255,0,0] ),
+			CNFGEmitBackendTrianglesJS( 
+				new Float32Array( [0,0,0, w,0,0,     w,h,0,       0,0,0,   w,h,0,       0,h,0 ] ),
+				new Uint8Array( [0,0,0,0, 255,0,0,0, 255,255,0,0, 0,0,0,0, 255,255,0,0, 0,255,0,0] ),
 				6 );
 
 			wgl.useProgram(wglShader);
@@ -279,8 +281,14 @@ if( RAWDRAW_NEED_BLITTER )
 
 			if( instance.exports.HandleButton )
 			{
-				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); } );
-				canvas.addEventListener('mousedown', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 1 ); } );
+				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
+				canvas.addEventListener('mousedown', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 1 ); return false; } );
+			}
+
+			if( instance.exports.HandleKey )
+			{
+				document.addEventListener('keydown', e => { instance.exports.HandleKey( e.keyCode, 1 ); } );
+				document.addEventListener('keyup', e => { instance.exports.HandleKey( e.keyCode, 0 ); } );
 			}
 
 

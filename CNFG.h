@@ -13,7 +13,41 @@
 extern "C" {
 #endif
 
+/* Rawdraw flags:
+	CNFG3D -> Enable the weird 3D functionality that rawdraw has to allow you to
+		write apps which emit basic rawdraw primitives but look 3D!
+		CNFG_USE_DOUBLE_FUNCTIONS -> Use double-precision floating point for CNFG3D.
+	CNFGOGL -> Use an OpenGL Backend for all rawdraw functionality.
+		->Caveat->If using CNFG_HAS_XSHAPE, then, we do something realy wacky.
+	CNFGRASTERIZER -> Software-rasterize the rawdraw calls, and, use
+		CNFGUpdateScreenWithBitmap to send video to webpage.
+	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
+		get an OpenGL context.
+		
+Usually tested combinations:
+ * TCC On Windows and X11 (Linux) with:
+    - CNFGOGL on or CNFGOGL off.  If CNFGOGL is off you can use
+			CNFG_WINDOWS_DISABLE_BATCH to disable all batching.
+		-or-
+	- CNFGRASTERIZER
+
+	NOTE: Sometimes you can also use CNFGOGL + CNFGRASTERIZER
+
+ * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER (Recommended turn rasterizer off)
+ * ANDROID (But this automatically sets CNFGRASTERIZER OFF and CNFGOGL ON)
+*/
+
+
 #include <stdint.h>
+
+//Some per-platform logic.
+#if defined( ANDROID ) || defined( __android__ )
+#define CNFGOGL
+#endif
+
+#if ( defined( CNFGOGL ) || defined( __wasm__ ) ) && !defined(CNFG_HAS_XSHAPE)
+#define CNFG_BATCH 8192 //131,072 bytes.
+#endif
 
 typedef struct {
     short x, y; 
@@ -22,16 +56,14 @@ typedef struct {
 extern int CNFGPenX, CNFGPenY;
 extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
-//extern uint32_t CNFGDialogColor; //background for boxes DEPRECATED
 
 void CNFGDrawText( const char * text, short scale );
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
-//Deprecated
-//void CNFGDrawBox( short x1, short y1, short x2, short y2 );
-//void CNFGDrawTextbox( int x, int y, const char * text, int textsize ); //ignores pen.
 
-//To be provided by driver.
-uint32_t CNFGColor( uint32_t RGB );
+//To be provided by driver. Rawdraw uses colors in the format 0xRRGGBBAA
+//Note that some backends do not support alpha of any kind.
+//Some platforms also support alpha blending.  So, be sure to set alpha to 0xFF
+uint32_t CNFGColor( uint32_t RGBA );
 
 //This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
@@ -60,7 +92,6 @@ void HandleButton( int x, int y, int button, int bDown );
 void HandleMotion( int x, int y, int mask );
 void HandleDestroy();
 
-
 //Internal function for resizing rasterizer for rasterizer-mode.
 void CNFGInternalResize( short x, short y ); //don't call this.
 
@@ -83,7 +114,31 @@ void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 //If you're using a batching renderer, for instance on Android or an OpenGL
 //You will need to call this function inbetewen swtiching properties of drawing.  This is usually
 //only needed if you calling OpenGL / OGLES functions directly and outside of CNFG.
-void 	CNFGFlushRender();
+//
+//Note that these are the functions that are used on the backends which support this
+//sort of thing.
+#ifdef CNFG_BATCH
+
+//If you are not using the CNFGOGL driver, you will need to define these in your driver.
+void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, int num_vertices );
+void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+
+//These need to be defined for the specific driver.  
+void 	CNFGClearFrame();
+void 	CNFGSwapBuffers();
+
+void 	CNFGFlushRender(); //Call this before swapping buffers.
+void	CNFGInternalResize( short x, short y ); //Driver calls this after resize happens.
+void	CNFGSetupBatchInternal(); //Driver calls this after setup is complete.
+
+//Useful function for emitting a non-axis-aligned quad.
+void 	CNFGEmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 );
+
+extern int 	CNFGVertPlace;
+extern float CNFGVertDataV[CNFG_BATCH*3];
+extern uint32_t CNFGVertDataC[CNFG_BATCH];
+#endif
+
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 
