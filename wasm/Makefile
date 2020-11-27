@@ -13,7 +13,7 @@ CFLAGS:=-I..
 CLANG?=clang
 WASMOPT?=wasm-opt
 TERSER?=terser
-TERSERFLAGS?= -ecma 2017 -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=false
+TERSERFLAGS?= -ecma 2017 -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=true
 
 CFLAGS+=-DWASM -nostdlib --target=wasm32 \
 		-flto -Oz \

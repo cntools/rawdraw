@@ -3,7 +3,7 @@
 //http://www.xmission.com/~georgeps/documentation/tutorials/Xlib_Beginner.html
 
 //#define HAS_XINERAMA
-//#define HAS_XSHAPE
+//#define CNFG_HAS_XSHAPE
 //#define FULL_SCREEN_STEAL_FOCUS
 
 #ifndef _CNFGXDRIVER_C
@@ -24,7 +24,7 @@
 	#include <X11/extensions/shape.h>
 	#include <X11/extensions/Xinerama.h>
 #endif
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	#include <X11/extensions/shape.h>
 	static    XGCValues xsval;
 	static    Pixmap xspixmap;
@@ -36,6 +36,9 @@
 
 #endif
 
+#ifdef CNFG_BATCH
+void CNFGSetupBatchInternal();
+#endif
 
 XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
@@ -73,7 +76,7 @@ void 	CNFGSetWindowIconData( int w, int h, uint32_t * data )
 }
 
 
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 void	CNFGPrepareForTransparency() { prepare_xshape = 1; }
 void	CNFGDrawToTransparencyMode( int transp )
 {
@@ -165,7 +168,7 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	if( !CNFGWindowInvisible )
 		XMapWindow(CNFGDisplay, CNFGWindow);
 
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	if( prepare_xshape )
 	{
 	    xsval.foreground = 1;
@@ -233,7 +236,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	XSetWindowAttributes setwinattr;
 	setwinattr.override_redirect = 1;
 	setwinattr.save_under = 1;
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 
 	if (prepare_xshape && !XShapeQueryExtension(CNFGDisplay, &event_basep, &error_basep))
 	{
@@ -329,6 +332,11 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
 #endif
+
+#ifdef CNFG_BATCH
+	CNFGSetupBatchInternal();
+#endif
+
 	return 0;
 }
 
@@ -420,6 +428,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 }
 
 
+
 #ifdef CNFGOGL
 
 void   CNFGSetVSync( int vson )
@@ -434,10 +443,9 @@ void CNFGSwapBuffers()
 {
 	if( CNFGWindowInvisible ) return;
 
-	glFlush();
-	//glFinish();
+	CNFGFlushRender();
 
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	if( taint_shape )
 	{
 		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
@@ -482,7 +490,7 @@ void AGLF(CNFGClearFrame)()
 
 void AGLF(CNFGSwapBuffers)()
 {
-#ifdef HAS_XSHAPE
+#ifdef CNFG_HAS_XSHAPE
 	if( taint_shape )
 	{
 		XShapeCombineMask(CNFGDisplay, CNFGWindow, ShapeBounding, 0, 0, xspixmap, ShapeSet);
@@ -536,125 +544,288 @@ void AGLF(CNFGSetLineWidth)( short width )
 }
 
 
+#ifdef CNFG_BATCH
+
+#define CNFGOGL_NEED_EXTENSION
+
+#ifdef  CNFGOGL_NEED_EXTENSION
+//If we are going to be defining our own function pointer call
+#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+	ret (*CNFG##name)( __VA_ARGS__ );
+#else
+//If we are going to be defining the real call
+#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+	ret name (__VA_ARGS__);
+#endif
+
+CHEWTYPEDEF( GLint, glGetUniformLocation, return, (program,name), GLuint program, const GLchar *name )
+CHEWTYPEDEF( void, glEnableVertexAttribArray, , (index), GLuint index )
+CHEWTYPEDEF( void, glUseProgram, , (program), GLuint program )
+CHEWTYPEDEF( void, glGetProgramInfoLog, , (program,maxLength, length, infoLog), GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog )
+CHEWTYPEDEF( void, glGetProgramiv, , (program,pname,params), GLuint program, GLenum pname, GLint *params )
+CHEWTYPEDEF( void, glBindAttribLocation, , (program,index,name), GLuint program, GLuint index, const GLchar *name )
+CHEWTYPEDEF( void, glGetShaderiv, , (shader,pname,params), GLuint shader, GLenum pname, GLint *params )
+CHEWTYPEDEF( GLuint, glCreateShader, return, (e), GLenum e )
+CHEWTYPEDEF( void, glVertexAttribPointer, , (index,size,type,normalized,stride,pointer), GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer )
+CHEWTYPEDEF( void, glShaderSource, , (shader,count,string,length), GLuint shader, GLsizei count, const GLchar **string, const GLint *length )
+CHEWTYPEDEF( void, glAttachShader, , (program,shader), GLuint program, GLuint shader )
+CHEWTYPEDEF( void, glCompileShader, ,(shader), GLuint shader )
+CHEWTYPEDEF( void, glGetShaderInfoLog , , (shader,maxLength, length, infoLog), GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog )
+CHEWTYPEDEF( GLuint, glCreateProgram, return, () , void )
+CHEWTYPEDEF( void, glLinkProgram, , (program), GLuint program )
+CHEWTYPEDEF( void, glDeleteShader, , (shader), GLuint shader )
+CHEWTYPEDEF( void, glUniform4f, , (location,v0,v1,v2,v3), GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
 
 
-#if defined( CNFGOGL ) && defined( HAS_XSHAPE )
+#ifndef CNFGOGL_NEED_EXTENSION
+#define CNFGglGetUniformLocation glGetUniformLocation
+#define CNFGglEnableVertexAttribArray glEnableVertexAttribArray
+#define CNFGglUseProgram glUseProgram
+#define CNFGglEnableVertexAttribArray glEnableVertexAttribArray
+#define CNFGglUseProgram glUseProgram
+#define CNFGglGetProgramInfoLog glGetProgramInfoLog
+#define CNFGglGetProgramiv glGetProgramiv
+#define CNFGglShaderSource glShaderSource
+#define CNFGglCreateShader glCreateShader
+#define CNFGglAttachShader glAttachShader
+#define CNFGglGetShaderiv glGetShaderiv
+#define CNFGglCompileShader glCompileShader
+#define CNFGglGetShaderInfoLog glGetShaderInfoLog
+#define CNFGglCreateProgram glCreateProgram
+#define CNFGglLinkProgram glLinkProgram
+#define CNFGglDeleteShader glDeleteShader
+#define CNFGglUniform4f glUniform4f
+#define CNFGglBindAttribLocation glBindAttribLocation
+#define CNFGglVertexAttribPointer glVertexAttribPointer
+#endif
 
-#include <GL/gl.h>
+#ifdef CNFGOGL_NEED_EXTENSION
+#if defined( WIN32 ) || defined( WINDOWS ) || defined( WIN64 )
 
-uint32_t CNFGColor( uint32_t RGB )
+//From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
+void * CNFGGetProcAddress(const char *name)
 {
-	if( was_transp )
+	void *p = (void *)wglGetProcAddress(name);
+	if(p == 0 ||
+		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+		(p == (void*)-1) )
 	{
-		return BACKEND_CNFGColor( RGB );
+		static HMODULE module;
+		if( !module ) module = LoadLibraryA("opengl32.dll");
+		p = (void *)GetProcAddress(module, name);
+	}
+	return p;
+}
+
+#else
+#include <dlfcn.h>
+
+
+void * CNFGGetProcAddress(const char *name)
+{
+	//Tricky use RTLD_NEXT first so we don't accidentally link against ourselves.
+	void * v1 = dlsym( (void*)((intptr_t)-1) /*RTLD_NEXT = -1*/ /*RTLD_DEFAULT = 0*/, name );
+	//printf( "%s = %p\n", name, v1 );
+	if( !v1 ) v1 = dlsym( 0, name );
+	return v1;
+}
+
+#endif
+
+static void CNFGLoadExtensionsInternal()
+{
+	CNFGglGetUniformLocation = CNFGGetProcAddress( "glGetUniformLocation" );
+	CNFGglEnableVertexAttribArray = CNFGGetProcAddress( "glEnableVertexAttribArray" );
+	CNFGglUseProgram = CNFGGetProcAddress( "glUseProgram" );
+	CNFGglGetProgramInfoLog = CNFGGetProcAddress( "glGetProgramInfoLog" );
+	CNFGglBindAttribLocation = CNFGGetProcAddress( "glBindAttribLocation" );
+	CNFGglGetProgramiv = CNFGGetProcAddress( "glGetProgramiv" );
+	CNFGglGetShaderiv = CNFGGetProcAddress( "glGetShaderiv" );
+	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
+	CNFGglCreateShader = CNFGGetProcAddress( "glCreateShader" );
+	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
+	CNFGglShaderSource = CNFGGetProcAddress( "glShaderSource" );
+	CNFGglAttachShader = CNFGGetProcAddress( "glAttachShader" );
+	CNFGglCompileShader = CNFGGetProcAddress( "glCompileShader" );
+	CNFGglGetShaderInfoLog = CNFGGetProcAddress( "glGetShaderInfoLog" );
+	CNFGglLinkProgram = CNFGGetProcAddress( "glLinkProgram" );
+	CNFGglDeleteShader = CNFGGetProcAddress( "glDeleteShader" );
+	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
+	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
+}
+#else
+static void CNFGLoadExtensionsInternal() { }
+#endif
+
+
+
+GLuint gRDShaderProg = -1;
+GLuint gRDBlitProg = -1;
+GLuint gRDShaderProgUX = -1;
+GLuint gRDBlitProgUX = -1;
+GLuint gRDBlitProgUT = -1;
+GLuint gRDBlitProgTex = -1;
+GLuint gRDLastResizeW;
+GLuint gRDLastResizeH;
+
+
+GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragment_shader )
+{
+	GLuint fragment_shader_object = 0;
+	GLuint vertex_shader_object = 0;
+	GLuint program = 0;
+	int ret;
+
+	vertex_shader_object = CNFGglCreateShader(GL_VERTEX_SHADER);
+	if (!vertex_shader_object) {
+		fprintf( stderr, "Error: glCreateShader(GL_VERTEX_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
 	}
 
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	glColor3ub( red, grn, blu );
+	CNFGglShaderSource(vertex_shader_object, 1, &vertex_shader, NULL);
+	CNFGglCompileShader(vertex_shader_object);
+
+	CNFGglGetShaderiv(vertex_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr,"Error: vertex shader compilation failed!\n");
+		CNFGglGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	fragment_shader_object = CNFGglCreateShader(GL_FRAGMENT_SHADER);
+	if (!fragment_shader_object) {
+		fprintf( stderr, "Error: glCreateShader(GL_FRAGMENT_SHADER) "
+			"failed: 0x%08X\n", glGetError());
+		goto fail;
+	}
+
+	CNFGglShaderSource(fragment_shader_object, 1, &fragment_shader, NULL);
+	CNFGglCompileShader(fragment_shader_object);
+
+	CNFGglGetShaderiv(fragment_shader_object, GL_COMPILE_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr, "Error: fragment shader compilation failed!\n");
+		CNFGglGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+
+	program = CNFGglCreateProgram();
+	if (!program) {
+		fprintf( stderr, "Error: failed to create program!\n");
+		goto fail;
+	}
+
+	CNFGglAttachShader(program, vertex_shader_object);
+	CNFGglAttachShader(program, fragment_shader_object);
+
+	CNFGglBindAttribLocation(program, 0, "a0");
+	CNFGglBindAttribLocation(program, 1, "a1");
+
+	CNFGglLinkProgram(program);
+
+	CNFGglGetProgramiv(program, GL_LINK_STATUS, &ret);
+	if (!ret) {
+		char *log;
+
+		fprintf( stderr, "Error: program linking failed!\n");
+		CNFGglGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
+
+		if (ret > 1) {
+			log = malloc(ret);
+			CNFGglGetProgramInfoLog(program, ret, NULL, log);
+			fprintf( stderr, "%s", log);
+		}
+		goto fail;
+	}
+	return program;
+fail:
+	if( !vertex_shader_object ) CNFGglDeleteShader( vertex_shader_object );
+	if( !fragment_shader_object ) CNFGglDeleteShader( fragment_shader_object );
+	if( !program ) CNFGglDeleteShader( program );
+	return -1;
+}
+
+
+void CNFGSetupBatchInternal()
+{
+	short w, h;
+	printf( "SETUP INTERNAL\n" );
+	CNFGLoadExtensionsInternal();
+
+	CNFGGetDimensions( &w, &h );
+
+	gRDShaderProg = CNFGGLInternalLoadShader( 
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
+		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.xyzw); }" );
+
+	CNFGglUseProgram( gRDShaderProg );
+	gRDShaderProgUX = CNFGglGetUniformLocation ( gRDShaderProg , "xfrm" );
+
+
+	gRDBlitProg = CNFGGLInternalLoadShader( 
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
+		"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc);}" );
+
+	CNFGglUseProgram( gRDBlitProg );
+	gRDBlitProgUX = CNFGglGetUniformLocation ( gRDBlitProg , "xfrm" );
+	gRDBlitProgUT = CNFGglGetUniformLocation ( gRDBlitProg , "tex" );
+	glGenTextures( 1, &gRDBlitProgTex );
+
+	CNFGVertPlace = 0;
+}
+
+void CNFGInternalResize(short x, short y)
+{
+	glViewport( 0, 0, x, y );
+	gRDLastResizeW = x;
+	gRDLastResizeH = y;
+	CNFGglUseProgram( gRDShaderProg );
+	CNFGglUniform4f( gRDShaderProgUX, 1.f/x, -1.f/y, -0.5f, 0.5f);
+	printf( "Internal Resize\n" );
+}
+
+void CNFGFlushRender()
+{
+	CNFGglUseProgram( gRDShaderProg );
+	CNFGglUniform4f( gRDShaderProgUX, 1.f/gRDLastResizeW, -1.f/gRDLastResizeH, -0.5f, 0.5f);
+	CNFGglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, CNFGVertDataV);
+	CNFGglEnableVertexAttribArray(0);
+	CNFGglVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, CNFGVertDataC);
+	CNFGglEnableVertexAttribArray(1);
+	glDrawArrays( GL_TRIANGLES, 0, CNFGVertPlace);
+	//printf( "CNFGVertPlace = %d %f %f %f\n", CNFGVertPlace, CNFGVertDataV[0],CNFGVertDataV[1], CNFGVertDataV[2] );
+	CNFGVertPlace = 0;
 }
 
 void CNFGClearFrame()
 {
-	short w, h;
-	unsigned char red = CNFGBGColor & 0xFF;
-	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
-	unsigned char blu = ( CNFGBGColor >> 16 ) & 0xFF;
-	glClearColor( red/255.0, grn/255.0, blu/255.0, 1.0 );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	CNFGGetDimensions( &w, &h );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-	glViewport( 0, 0, w, h );
-	glOrtho( 0, w, h, 0, 1, -1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+	glClearColor( (CNFGBGColor&0xff)/255.0, 
+		(CNFGBGColor&0xff00)/65280.0, 
+		(CNFGBGColor&0xff0000)/16711680.0,
+		((CNFGBGColor&0xff000000)>>24)/255.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
+#else
 
-void CNFGTackSegment( short x1, short y1, short x2, short y2 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackSegment( x1,y1,x2,y2 );
-		return;
-	}
-
-	if( x1 == x2 && y1 == y2 )
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glEnd();		
-	}
-	else
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();		
-		glBegin( GL_LINES );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();
-	}
-}
-
-void CNFGTackPixel( short x1, short y1 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackPixel( x1,y1 );
-		return;
-	}
-
-	glBegin( GL_POINTS );
-	glVertex2f( x1, y1 );
-	glEnd();
-}
-
-void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackRectangle( x1,y1,x2,y2 );
-		return;
-	}
-
-
-	glBegin( GL_QUADS );
-	glVertex2f( x1, y1 );
-	glVertex2f( x2, y1 );
-	glVertex2f( x2, y2 );
-	glVertex2f( x1, y2 );
-	glEnd();
-}
-
-void CNFGTackPoly( RDPoint * points, int verts )
-{
-	if( was_transp )
-	{
-		BACKEND_CNFGTackPoly( points,verts );
-		return;
-	}
-
-	int i;
-	glBegin( GL_TRIANGLE_FAN );
-	glVertex2f( points[0].x, points[0].y );
-	for( i = 1; i < verts; i++ )
-	{
-		glVertex2f( points[i].x, points[i].y );
-	}
-	glEnd();
-}
-
-void CNFGInternalResize( short x, short y ) { }
-
-
-void CNFGSetLineWidth( short width )
-{
-	glLineWidth( width );
-}
+void CNFGFlushRender() { }
 
 #endif
 

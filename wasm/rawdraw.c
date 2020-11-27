@@ -104,12 +104,12 @@ while(1)
 
 		// Square behind text
 		CNFGColor( 0xff444444 );
-		CNFGSetLineWidth(1);
+		CNFGSetLineWidth(3);
 		CNFGTackSegment( 0, 50, 100, 50 );
 		CNFGTackSegment( 0, 50, 0, 150 );
 		CNFGTackRectangle( 2, 2+50, 345, 345+50 );
 
-		CNFGSetLineWidth(1);
+		CNFGSetLineWidth(3);
 
 		// Text stuff in upper left.
 		pos = 0;

@@ -280,21 +280,6 @@ void CNFGDrawNiceText(const char* text, short scale)
 #endif
 #endif
 
-#if 0
-//Deprecated
-void CNFGDrawBox( short x1, short y1, short x2, short y2 )
-{
-	unsigned lc = CNFGLastColor;
-	CNFGColor( CNFGDialogColor );
-	CNFGTackRectangle( x1, y1, x2, y2 );
-	CNFGColor( lc );
-	CNFGTackSegment( x1, y1, x2, y1 );
-	CNFGTackSegment( x2, y1, x2, y2 );
-	CNFGTackSegment( x2, y2, x1, y2 );
-	CNFGTackSegment( x1, y2, x1, y1 );
-}
-#endif
-
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 {
 	int charsx = 0;
@@ -322,112 +307,120 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 	*h = charsy * textsize * 6;
 }
 
-#if 0
-//Deprecated
-void CNFGDrawTextbox( int x, int y, const char * text, int textsize )
-{
-	int w;
-	int h;
+#if defined( CNFG_BATCH )
 
-	CNFGGetTextExtents( text, &w, &h, textsize );
-	
-	CNFGDrawBox( (short)x, (short)y, (short)(x + w + 2*textsize), (short)(y + h) );
-	CNFGPenX = x + textsize;
-	CNFGPenY = y + textsize;
-	CNFGDrawText( text, textsize );
+//This is the path by which we convert rawdraw functionality
+//into nice batched triangle streams.
+
+//Just FYI we use floats for geometry instead of shorts becase it is harder
+//to triangularize a diagonal line int triangles with shorts and have it look good.
+void CNFGEmitBackendTriangles( float * fv, uint32_t * col, int nr_verts );
+float sqrtf( float f );
+
+
+//Geometry batching system - so we can batch geometry and deliver it all at once.
+float CNFGVertDataV[CNFG_BATCH*3];
+uint32_t CNFGVertDataC[CNFG_BATCH];
+int CNFGVertPlace;
+static float wgl_last_width_over_2 = .5;
+
+void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
+{
+	//Because quads are really useful, but it's best to keep them all triangles if possible.
+	//This lets us draw arbitrary quads.
+	if( CNFGVertPlace >= CNFG_BATCH-6 ) CNFGFlushRender();
+	float * fv = &CNFGVertDataV[CNFGVertPlace*3];
+	fv[0] = cx0; fv[1] = cy0;
+	fv[3] = cx1; fv[4] = cy1;
+	fv[6] = cx2; fv[7] = cy2;
+	fv[9] = cx2; fv[10] = cy2;
+	fv[12] = cx1; fv[13] = cy1;
+	fv[15] = cx3; fv[16] = cy3;
+	uint32_t * col = &CNFGVertDataC[CNFGVertPlace];
+	uint32_t color = CNFGLastColor;
+	col[0] = color; col[1] = color; col[2] = color; col[3] = color; col[4] = color; col[5] = color;
+	CNFGVertPlace += 6;
 }
-#endif
 
-#if defined( CNFGOGL ) && !defined( HAS_XSHAPE )
 
-#ifdef _MSC_VER
-#include <windows.h>
-#pragma comment( lib, "OpenGL32.lib" )
-#endif
-#include <GL/gl.h>
-
-uint32_t CNFGColor( uint32_t RGB )
+void CNFGTackPixel( short x1, short y1 )
 {
-	unsigned char red = RGB & 0xFF;
-	unsigned char grn = ( RGB >> 8 ) & 0xFF;
-	unsigned char blu = ( RGB >> 16 ) & 0xFF;
-	glColor3ub( red, grn, blu );
-	return RGB;
-}
-
-void CNFGClearFrame()
-{
-	short w, h;
-	unsigned char red = CNFGBGColor & 0xFF;
-	unsigned char grn = ( CNFGBGColor >> 8 ) & 0xFF;
-	unsigned char blu = ( CNFGBGColor >> 16 ) & 0xFF;
-	glClearColor( red/255.0, grn/255.0, blu/255.0, 1.0 );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	CNFGGetDimensions( &w, &h );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-	glViewport( 0, 0, w, h );
-	glOrtho( 0, w, h, 0, 1, -1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+	x1++; y1++;
+	const short l2 = wgl_last_width_over_2;
+	const short l2u = wgl_last_width_over_2+0.5;
+	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
 }
 
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
-	if( x1 == x2 && y1 == y2 )
-	{
-		glBegin( GL_POINTS );
-		glVertex2f( x1+.5, y1+.5 );
-		glEnd();
-	}
-	else
-	{
-		// GL_LINE misses the last pixel if the line is not continued
-		// due to the Diamond-exit rule so we use GL_LINE_LOOP which
-		// draws the line back and forth catching all the pixels.
-		glBegin( GL_LINE_LOOP );
-		glVertex2f( x1+.5, y1+.5 );
-		glVertex2f( x2+.5, y2+.5 );
-		glEnd();
-	}
-}
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
 
-void CNFGTackPixel( short x1, short y1 )
-{
-	glBegin( GL_POINTS );
-	glVertex2f( x1, y1 );
-	glEnd();
+	float dx = ix2-ix1;
+	float dy = iy2-iy1;
+	float imag = 1./sqrtf(dx*dx+dy*dy);
+	dx *= imag;
+	dy *= imag;
+	float orthox = dy*wgl_last_width_over_2;
+	float orthoy =-dx*wgl_last_width_over_2;
+
+	ix2 += dx/2 + 0.5;
+	iy2 += dy/2 + 0.5;
+	ix1 -= dx/2 - 0.5;
+	iy1 -= dy/2 - 0.5;
+
+	//This logic is incorrect. XXX FIXME.
+	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-	glBegin( GL_QUADS );
-	glVertex2f( x1, y1 );
-	glVertex2f( x2, y1 );
-	glVertex2f( x2, y2 );
-	glVertex2f( x1, y2 );
-	glEnd();
+	float ix1 = x1;
+	float iy1 = y1;
+	float ix2 = x2;
+	float iy2 = y2;
+	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
 {
 	int i;
-	glBegin( GL_TRIANGLE_FAN );
-	glVertex2f( points[0].x, points[0].y );
-	for( i = 1; i < verts; i++ )
+	int tris = verts-2;
+	if( CNFGVertPlace >= CNFG_BATCH-tris*3 ) CNFGFlushRender();
+
+	uint32_t color = CNFGLastColor;
+	short * ptrsrc =  (short*)points;
+
+	for( i = 0; i < tris; i++ )
 	{
-		glVertex2f( points[i].x, points[i].y );
+		float * fv = &CNFGVertDataV[CNFGVertPlace*3];
+		fv[0] = ptrsrc[0];
+		fv[1] = ptrsrc[1];
+		fv[3] = ptrsrc[2];
+		fv[4] = ptrsrc[3];
+		fv[6] = ptrsrc[i*2+4];
+		fv[7] = ptrsrc[i*2+5];
+
+		uint32_t * col = &CNFGVertDataC[CNFGVertPlace];
+		col[0] = color;
+		col[1] = color;
+		col[2] = color;
+
+		CNFGVertPlace += 3;
 	}
-	glEnd();
 }
 
-void CNFGInternalResize( short x, short y ) { }
-
-
-void CNFGSetLineWidth( short width )
+uint32_t CNFGColor( uint32_t RGB )
 {
-	glLineWidth( width );
+	return CNFGLastColor = RGB;
+}
+
+void	CNFGSetLineWidth( short width )
+{
+	wgl_last_width_over_2 = width/2.0;// + 0.5;
 }
 
 #endif
