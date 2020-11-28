@@ -62,7 +62,7 @@ if (Get-Command "terser" -ErrorAction SilentlyContinue)
     Write-Host ("Before minifaction: {0:N0} B" -f ($Output).length)
     $Output = terser -ecma 2017 `
         -d RAWDRAW_USE_LOOP_FUNCTION=false `
-        -d RAWDRAW_NEED_BLITTER=false `
+        -d RAWDRAW_NEED_BLITTER=true `
         $IntermediateJS
 
     Write-Host ("After minifacation: {0:N0} B" -f ($Output).length)
