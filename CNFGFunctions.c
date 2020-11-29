@@ -431,6 +431,8 @@ void	CNFGSetLineWidth( short width )
 #ifndef __wasm__
 //In WASM, Javascript takes over this functionality.
 
+//Shader compilation errors go to stderr.
+#include <stdio.h>
 
 #ifndef GL_VERTEX_SHADER
 #define GL_FRAGMENT_SHADER                0x8B30
