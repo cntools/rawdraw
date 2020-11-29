@@ -315,8 +315,13 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 //Just FYI we use floats for geometry instead of shorts becase it is harder
 //to triangularize a diagonal line int triangles with shorts and have it look good.
 void CNFGEmitBackendTriangles( const float * fv, const uint32_t * col, int nr_verts );
-float sqrtf( float f );
 
+//If on WASM, sqrtf is implied. On other platforms, need sqrtf from math.h
+#ifdef __wasm__
+float sqrtf( float f );
+#else
+#include <math.h>
+#endif
 
 //Geometry batching system - so we can batch geometry and deliver it all at once.
 float CNFGVertDataV[CNFG_BATCH*3];
