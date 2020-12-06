@@ -4,6 +4,7 @@
 
 
 #include "../RDKey.h"
+#define CNFG_IMPLEMENTATION
 #include "../CNFG.h"
 #include "../os_generic.h"
 

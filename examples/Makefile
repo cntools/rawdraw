@@ -13,15 +13,15 @@ all : fontsize fontsize_ogl
 
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
-fontsize : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
+fontsize : fontsize.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -DCNFGRASTERIZER -Wall
 
-fontsize_ogl : fontsize.c ../CNFGFunctions.c ../CNFGXDriver.c ../CNFG3D.c
+fontsize_ogl : fontsize.c
 	gcc -o $@ $^ -lX11 -lm -lpthread -lXinerama -lXext -lGL -g -lX11 -lXinerama -lGL -DCNFGOGL -Wall
 
-fontsize.exe : fontsize.c ../CNFGFunctions.c ../CNFGWinDriver.c ../CNFG3D.c
+fontsize.exe : fontsize.c
 	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32 $(CFLAGS)
 
-clean : 
+clean :
 	rm -rf *.o *~ rawdraw.exe rawdraw ontop rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl fontsize fontsize_ogl fontsize.exe
 
