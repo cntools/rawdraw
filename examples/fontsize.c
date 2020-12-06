@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-
-#include "../RDKey.h"
 #define CNFG_IMPLEMENTATION
 #include "../CNFG.h"
 #include "../os_generic.h"
@@ -66,7 +64,7 @@ int main()
 				CNFGDrawText( tw, i );
 			}
 		}
-		
+
 		CNFGPenX = 20;
 		CNFGPenY = 300;
 		for( i = 1; i < 7; i++) {
