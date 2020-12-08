@@ -596,13 +596,11 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 
 	CNFGglGetShaderiv(vertex_shader_object, GL_COMPILE_STATUS, &ret);
 	if (!ret) {
-		char *log;
-
 		fprintf( stderr,"Error: vertex shader compilation failed!\n");
 		CNFGglGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			log = malloc(ret);
+			char * log = alloca(ret);
 			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 		}
@@ -621,13 +619,11 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 
 	CNFGglGetShaderiv(fragment_shader_object, GL_COMPILE_STATUS, &ret);
 	if (!ret) {
-		char *log;
-
 		fprintf( stderr, "Error: fragment shader compilation failed!\n");
 		CNFGglGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			log = malloc(ret);
+			char * log = malloc(ret);
 			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 		}
@@ -650,13 +646,11 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 
 	CNFGglGetProgramiv(program, GL_LINK_STATUS, &ret);
 	if (!ret) {
-		char *log;
-
 		fprintf( stderr, "Error: program linking failed!\n");
 		CNFGglGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			log = malloc(ret);
+			char *log = alloca(ret);
 			CNFGglGetProgramInfoLog(program, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 		}
