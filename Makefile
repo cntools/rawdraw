@@ -14,7 +14,10 @@ all : rawdraw simple
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
 rawdraw.exe : rawdraw.c
-	$(MINGW32)gcc -m32 -o $@ $^  -lgdi32
+	$(MINGW32)gcc -g -m32 -o $@ $^  -lgdi32
+
+rawdrawogl.exe : rawdraw.c
+	$(MINGW32)gcc -g -m32 -o $@ $^  -lgdi32 -DCNFGOGL -lopengl32
 
 rawdraw_egl : rawdraw.c
 	gcc -o $@ $^ -lMali -lpthread -lm -O3
@@ -38,5 +41,5 @@ ogltest.exe : ogltest.c CNFG.c
 	$(MINGW32)gcc -o $@ $^ -lgdi32 -lkernel32 -lopengl32 -DCNFGOGL -lm
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdraw rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl
+	rm -rf *.o *~ rawdraw.exe rawdrawogl.exe rawdraw rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl
 
