@@ -457,9 +457,15 @@ void	CNFGSetLineWidth( short width )
 #endif
 
 #ifdef  CNFGOGL_NEED_EXTENSION
-//If we are going to be defining our own function pointer call
-#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
-	ret (*CNFG##name)( __VA_ARGS__ );
+// If we are going to be defining our own function pointer call
+	#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+	// Make sure to use __stdcall on Windows
+		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+			ret (__stdcall *CNFG##name)( __VA_ARGS__ );
+	#else
+		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+			ret (*CNFG##name)( __VA_ARGS__ );
+	#endif
 #else
 //If we are going to be defining the real call
 #define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
@@ -723,6 +729,7 @@ void CNFGInternalResizeOGLBACKEND(short x, short y)
 	glViewport( 0, 0, x, y );
 	gRDLastResizeW = x;
 	gRDLastResizeH = y;
+	if (gRDShaderProg == 0xFFFFFFFF) { return; } // Prevent trying to set uniform if the shader isn't ready yet.
 	CNFGglUseProgram( gRDShaderProg );
 	CNFGglUniform4f( gRDShaderProgUX, 1.f/x, -1.f/y, -0.5f, 0.5f);
 }
