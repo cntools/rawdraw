@@ -686,23 +686,38 @@ void CNFGSetupBatchInternal()
 
 	CNFGGetDimensions( &w, &h );
 
-	gRDShaderProg = CNFGGLInternalLoadShader( 
-		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
-		"varying vec4 vc; void main() { gl_FragColor = vec4(vc.abgr); }" );
+	gRDShaderProg = CNFGGLInternalLoadShader(
+		"uniform vec4 xfrm;"
+		"attribute vec3 a0;"
+		"attribute vec4 a1;"
+		"varying mediump vec4 vc;"
+		"void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
+		
+		"varying mediump vec4 vc;"
+		"void main() { gl_FragColor = vec4(vc.abgr); }" 
+	);
 
 	CNFGglUseProgram( gRDShaderProg );
 	gRDShaderProgUX = CNFGglGetUniformLocation ( gRDShaderProg , "xfrm" );
 
 
-	gRDBlitProg = CNFGGLInternalLoadShader( 
-		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
-		"varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc)."
+	gRDBlitProg = CNFGGLInternalLoadShader(
+		"uniform vec4 xfrm;"
+		"attribute vec3 a0;"
+		"attribute vec4 a1;"
+		"varying mediump vec2 tc;"
+		"void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
+		
+		"varying mediump vec2 tc;"
+		"uniform sampler2D tex;"
+		"void main() { gl_FragColor = texture2D(tex,tc)."
+
 #if !defined( CNFGRASTERIZER )
 "wzyx"
 #else
 "wxyz"
 #endif
-";}" );
+";}" 	);
 
 	CNFGglUseProgram( gRDBlitProg );
 	gRDBlitProgUX = CNFGglGetUniformLocation ( gRDBlitProg , "xfrm" );
