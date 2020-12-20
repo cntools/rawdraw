@@ -677,6 +677,13 @@ fail:
 	return -1;
 }
 
+#ifdef CNFGEWGL
+#define PRECISIONA "lowp"
+#define PRECISIONB "mediump"
+#else
+#define PRECISIONA
+#define PRECISIONB
+#endif
 
 void CNFGSetupBatchInternal()
 {
@@ -690,10 +697,10 @@ void CNFGSetupBatchInternal()
 		"uniform vec4 xfrm;"
 		"attribute vec3 a0;"
 		"attribute vec4 a1;"
-		"varying mediump vec4 vc;"
+		"varying " PRECISIONA " vec4 vc;"
 		"void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
-		
-		"varying mediump vec4 vc;"
+
+		"varying " PRECISIONA " vec4 vc;"
 		"void main() { gl_FragColor = vec4(vc.abgr); }" 
 	);
 
@@ -705,10 +712,10 @@ void CNFGSetupBatchInternal()
 		"uniform vec4 xfrm;"
 		"attribute vec3 a0;"
 		"attribute vec4 a1;"
-		"varying mediump vec2 tc;"
+		"varying " PRECISIONB " vec2 tc;"
 		"void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
 		
-		"varying mediump vec2 tc;"
+		"varying " PRECISIONB " vec2 tc;"
 		"uniform sampler2D tex;"
 		"void main() { gl_FragColor = texture2D(tex,tc)."
 

@@ -42,11 +42,18 @@ Usually tested combinations:
 
 //Some per-platform logic.
 #if defined( ANDROID ) || defined( __android__ )
-#define CNFGOGL
+	#define CNFGOGL
 #endif
 
 #if ( defined( CNFGOGL ) || defined( __wasm__ ) ) && !defined(CNFG_HAS_XSHAPE)
-#define CNFG_BATCH 8192 //131,072 bytes.
+
+	#define CNFG_BATCH 8192 //131,072 bytes.
+
+	#if defined( ANDROID ) || defined( __android__ ) || defined( __wasm__ ) || defined( EGL_LEAN_AND_MEAN )
+		#define CNFGEWGL //EGL or WebGL
+	#else
+		#define CNFGDESKTOPGL
+	#endif
 #endif
 
 typedef struct {
