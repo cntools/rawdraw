@@ -42,6 +42,8 @@ void CNFGSetupBatchInternal();
 
 XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
+char *wm_res_name = "rawdraw";
+char *wm_res_class = "rawdraw";
 Display *CNFGDisplay;
 Window CNFGWindow;
 int CNFGWindowInvisible;
@@ -137,12 +139,25 @@ void	CNFGChangeWindowTitle( const char * WindowName )
 	XSetStandardProperties( CNFGDisplay, CNFGWindow, WindowName, 0, 0, 0, 0, 0 );
 }
 
-
 static void InternalLinkScreenAndGo( const char * WindowName )
 {
 	XFlush(CNFGDisplay);
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
-	
+
+	XGetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
+	if (!CNFGClassHint) {
+		CNFGClassHint = XAllocClassHint();
+		if (CNFGClassHint) {
+			CNFGClassHint->res_name = wm_res_name;
+			CNFGClassHint->res_class = wm_res_class;
+			XSetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
+		} else {
+			fprintf( stderr, "Failed to allocate XClassHint!\n" );
+		}
+	} else {
+		fprintf( stderr, "Pre-existing XClassHint\n" );
+	}
+
 	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
 
 
@@ -277,6 +292,13 @@ void CNFGTearDown()
 	CNFGDisplay = NULL;
 	CNFGWindowGC = CNFGGC = NULL;
 	CNFGClassHint = NULL;
+}
+
+int CNFGSetupWMClass( const char * WindowName, int w, int h , char * wm_res_name_ , char * wm_res_class_ )
+{
+	wm_res_name = wm_res_name_;
+	wm_res_class = wm_res_class_;
+	return CNFGSetup( WindowName, w, h);
 }
 
 int CNFGSetup( const char * WindowName, int w, int h )
