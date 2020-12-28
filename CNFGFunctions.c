@@ -406,8 +406,8 @@ void CNFGTackPoly( RDPoint * points, int verts )
 		float * fv = &CNFGVertDataV[CNFGVertPlace*3];
 		fv[0] = ptrsrc[0];
 		fv[1] = ptrsrc[1];
-		fv[3] = ptrsrc[2];
-		fv[4] = ptrsrc[3];
+		fv[3] = ptrsrc[i*2+2];
+		fv[4] = ptrsrc[i*2+3];
 		fv[6] = ptrsrc[i*2+4];
 		fv[7] = ptrsrc[i*2+5];
 
