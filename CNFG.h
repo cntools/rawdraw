@@ -134,7 +134,7 @@ void	CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 void 	CNFGClearFrame();
 void 	CNFGSwapBuffers();
 
-void 	CNFGFlushRender(); //Call this before swapping buffers.
+void 	CNFGFlushRender(); //Emit any geometry (lines, squares, polys) which are slated to be rendered.
 void	CNFGInternalResize( short x, short y ); //Driver calls this after resize happens.
 void	CNFGSetupBatchInternal(); //Driver calls this after setup is complete.
 
