@@ -45,10 +45,37 @@ You probably want to include CNFG as a submodule.
 
 `git submodule add https://github.com/cntools/rawdraw`
 
+paste the command above on your terminal to get a clone of the repository on your system.
+
+note: Incase you get a error saying 
+```
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+```
+use the command `git init` first.
+	
 To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 ```
 #define CNFG_IMPLEMENTATION
 ```
+
+
+## prerequisites and some instructions for running on linux
+
+firstly, make sure you have the following libraries installed:
+```
+xorg-dev
+libx-dev
+libxinerama-dev libxext-dev
+mesa-common-dev libglu1-mesa-dev
+```
+to do so and also to install them incase they are not already, run the following commands:
+```
+sudo apt-get update
+sudo apt-get install xorg-dev libx11-dev libxinerama-dev libxext-dev mesa-common-dev libglu1-mesa-dev
+```
+then to run the sample program in rawdraw, go to the clone of the repository on your system, open a terminal window there, and run the command `make`. this will create an executable file called "simple" from the c file called "simple.c". You should be able to run the executable "simple" with the command `./simple`
+
 
 ## Example program
 A more comprehensive example can be found in `rawdraw.c`, but a basic example
