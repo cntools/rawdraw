@@ -70,15 +70,10 @@ libxinerama-dev libxext-dev
 mesa-common-dev libglu1-mesa-dev
 ```
 to do so and also to install them incase they are not already, run the following commands:
-`
+```
 sudo apt-get update
-sudo apt-get install -y xorg-dev
-sudo apt-get install -y libx11-dev
-sudo apt-get install -y libxinerama-dev
-sudo apt-get install -y libxext-dev
-sudo apt-get install mesa-common-dev
-sudo apt-get install -y libglu1-mesa-dev
-`
+sudo apt-get install xorg-dev libx11-dev libxinerama-dev libxext-dev mesa-common-dev libglu1-mesa-dev
+```
 then to run the sample program in rawdraw, go to the clone of the repository on your system, open a terminal window there, and run the command `make`. this will create an executable file called "simple" from the c file called "simple.c". You should be able to run the executable "simple" with the command `./simple`
 
 
