@@ -117,6 +117,7 @@ void	CNFGClearTransparencyLevel();
 void	CNFGSetLineWidth( short width );
 void	CNFGChangeWindowTitle( const char * windowtitle );
 void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
+int 	CNFGSetupWMClass( const char * WindowName, int w, int h , char * wm_res_name_ , char * wm_res_class_ );
 
 //If you're using a batching renderer, for instance on Android or an OpenGL
 //You will need to call this function inbetewen swtiching properties of drawing.  This is usually
