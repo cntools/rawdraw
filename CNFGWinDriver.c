@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <malloc.h> //for alloca
+#include <ctype.h>
 
 static HBITMAP lsBitmap;
 static HWND lsHWND;
