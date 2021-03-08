@@ -37,13 +37,13 @@ void InternalHandleResize()
 {
 	if( lsBitmap ) DeleteObject( lsBitmap );
 
-	CNFGInternalResize( bufferx, buffery );
-	lsBitmap = CreateBitmap( bufferx, buffery, 1, 32, buffer );
+	CNFGInternalResize( CNFGBufferx, CNFGBuffery );
+	lsBitmap = CreateBitmap( CNFGBufferx, CNFGBuffery, 1, 32, CNFGBuffer );
 	SelectObject( lsHDC, lsBitmap );
-	CNFGInternalResize( bufferx, buffery);
+	CNFGInternalResize( CNFGBufferx, CNFGBuffery);
 }
 #else
-static short bufferx, buffery;
+static short CNFGBufferx, CNFGBuffery;
 static void InternalHandleResize();
 #endif
 
@@ -67,17 +67,17 @@ void CNFGGetDimensions( short * x, short * y )
 	static short lastx, lasty;
 	RECT window;
 	GetClientRect( lsHWND, &window );
-	bufferx = (short)( window.right - window.left);
-	buffery = (short)( window.bottom - window.top);
-	if( bufferx != lastx || buffery != lasty )
+	CNFGBufferx = (short)( window.right - window.left);
+	CNFGBuffery = (short)( window.bottom - window.top);
+	if( CNFGBufferx != lastx || CNFGBuffery != lasty )
 	{
-		lastx = bufferx;
-		lasty = buffery;
+		lastx = CNFGBufferx;
+		lasty = CNFGBuffery;
 		CNFGInternalResize( lastx, lasty );
 		InternalHandleResize();
 	}
-	*x = bufferx;
-	*y = buffery;
+	*x = CNFGBufferx;
+	*y = CNFGBuffery;
 }
 
 #ifndef CNFGOGL
@@ -101,10 +101,10 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 	GetClientRect( lsHWND, &r );
 	thisw = (short)(r.right - r.left);
 	thish = (short)(r.bottom - r.top);
-	if( thisw != bufferx || thish != buffery )
+	if( thisw != CNFGBufferx || thish != CNFGBuffery )
 	{
-		bufferx = thisw;
-		buffery = thish;
+		CNFGBufferx = thisw;
+		CNFGBuffery = thish;
 		InternalHandleResize();
 	}
 }
@@ -149,8 +149,8 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	int w, h, wd, hd;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 
-	bufferx = (short)width;
-	buffery = (short)height;
+	CNFGBufferx = (short)width;
+	CNFGBuffery = (short)height;
 
 	wnd.style = CS_HREDRAW | CS_VREDRAW; //we will explain this later
 	wnd.lpfnWndProc = MyWndProc;
@@ -173,8 +173,8 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 		WS_OVERLAPPEDWINDOW, //basic window style
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,       //set starting point to default value
-		bufferx,
-		buffery,        //set all the dimensions to default value
+		CNFGBufferx,
+		CNFGBuffery,        //set all the dimensions to default value
 		NULL,                //no parent window
 		NULL,                //no menu
 		hInstance,
@@ -225,7 +225,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 
 	lsHDC = CreateCompatibleDC( lsWindowHDC );
 	lsHDCBlit = CreateCompatibleDC( lsWindowHDC );
-	lsBitmap = CreateCompatibleBitmap( lsWindowHDC, bufferx, buffery );
+	lsBitmap = CreateCompatibleBitmap( lsWindowHDC, CNFGBufferx, CNFGBuffery );
 	SelectObject( lsHDC, lsBitmap );
 
 	//lsClearBrush = CreateSolidBrush( CNFGBGColor );
@@ -241,7 +241,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	h = ( window.bottom - window.top);
 	wd = w - client.right;
 	hd = h - client.bottom;
-	MoveWindow( lsHWND, window.left, window.top, bufferx + wd, buffery + hd, 1 );
+	MoveWindow( lsHWND, window.left, window.top, CNFGBufferx + wd, CNFGBuffery + hd, 1 );
 
 	InternalHandleResize();
 
@@ -293,7 +293,7 @@ static HBRUSH lsClearBrush;
 static void InternalHandleResize()
 {
 	DeleteObject( lsBackBitmap );
-	lsBackBitmap = CreateCompatibleBitmap( lsHDC, bufferx, buffery );
+	lsBackBitmap = CreateCompatibleBitmap( lsHDC, CNFGBufferx, CNFGBuffery );
 	SelectObject( lsHDC, lsBackBitmap );
 }
 
@@ -443,7 +443,7 @@ void CNFGClearFrame()
 #ifdef BATCH_ELEMENTS
 	FlushTacking();
 #endif
-	RECT r = { 0, 0, bufferx, buffery };
+	RECT r = { 0, 0, CNFGBufferx, CNFGBuffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
 	SelectObject( lsHDC, lsClearBrush );
@@ -510,7 +510,7 @@ void CNFGSwapBuffers()
 	int thisw, thish;
 
 	RECT r;
-	BitBlt( lsWindowHDC, 0, 0, bufferx, buffery, lsHDC, 0, 0, SRCCOPY );
+	BitBlt( lsWindowHDC, 0, 0, CNFGBufferx, CNFGBuffery, lsHDC, 0, 0, SRCCOPY );
 	UpdateWindow( lsHWND );
 	//Check to see if the window is closed.
 	if( !IsWindow( lsHWND ) )
@@ -522,10 +522,10 @@ void CNFGSwapBuffers()
 	thisw = r.right - r.left;
 	thish = r.bottom - r.top;
 
-	if( thisw != bufferx || thish != buffery )
+	if( thisw != CNFGBufferx || thish != CNFGBuffery )
 	{
-		bufferx = (short)thisw;
-		buffery = (short)thish;
+		CNFGBufferx = (short)thisw;
+		CNFGBuffery = (short)thish;
 		InternalHandleResize();
 	}
 }
