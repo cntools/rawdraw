@@ -5,9 +5,9 @@
 //#include <stdlib.h>
 #include <stdint.h>
 
-static uint32_t * buffer = 0;
-static short bufferx;
-static short buffery;
+uint32_t * CNFGBuffer = 0;
+short CNFGBufferx;
+short CNFGBuffery;
 
 #ifdef CNFGOGL
 void CNFGFlushRender()
@@ -17,10 +17,10 @@ void CNFGFlushRender()
 
 void CNFGInternalResize( short x, short y )
 {
-	bufferx = x;
-	buffery = y;
-	if( buffer ) free( buffer );
-	buffer = malloc( bufferx * buffery * 4 );
+	CNFGBufferx = x;
+	CNFGBuffery = y;
+	if( CNFGBuffer ) free( CNFGBuffer );
+	CNFGBuffer = malloc( CNFGBufferx * CNFGBuffery * 4 );
 #ifdef CNFGOGL
 	void CNFGInternalResizeOGLBACKEND( short w, short h );
 	CNFGInternalResizeOGLBACKEND( x, y );
@@ -68,7 +68,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	short dx = x2 - x1;
 	short dy = y2 - y1;
 
-	if( !buffer ) return;
+	if( !CNFGBuffer ) return;
 
 	if( dx < 0 ) dx = -dx;
 	if( dy < 0 ) dy = -dy;
@@ -85,9 +85,9 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 		for( tx = minx; tx <= maxx; tx++ )
 		{
 			ty = thisy;
-			if( tx < 0 || ty < 0 || ty >= buffery ) continue;
-			if( tx >= bufferx ) break;
-			buffer[ty * bufferx + tx] = CNFGLastColor;
+			if( tx < 0 || ty < 0 || ty >= CNFGBuffery ) continue;
+			if( tx >= CNFGBufferx ) break;
+			CNFGBuffer[ty * CNFGBufferx + tx] = CNFGLastColor;
 			thisy += slope;
 		}
 	}
@@ -103,9 +103,9 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 		for( ty = miny; ty <= maxy; ty++ )
 		{
 			tx = thisx;
-			if( ty < 0 || tx < 0 || tx >= bufferx ) continue;
-			if( ty >= buffery ) break;
-			buffer[ty * bufferx + tx] = CNFGLastColor;
+			if( ty < 0 || tx < 0 || tx >= CNFGBufferx ) continue;
+			if( ty >= CNFGBuffery ) break;
+			CNFGBuffer[ty * CNFGBufferx + tx] = CNFGLastColor;
 			thisx += slope;
 		}
 	}
@@ -121,15 +121,15 @@ void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 
 	if( minx < 0 ) minx = 0;
 	if( miny < 0 ) miny = 0;
-	if( maxx >= bufferx ) maxx = bufferx-1;
-	if( maxy >= buffery ) maxy = buffery-1;
+	if( maxx >= CNFGBufferx ) maxx = CNFGBufferx-1;
+	if( maxy >= CNFGBuffery ) maxy = CNFGBuffery-1;
 
 	for( y = miny; y <= maxy; y++ )
 	{
-		uint32_t * bufferstart = &buffer[y * bufferx + minx];
+		uint32_t * CNFGBufferstart = &CNFGBuffer[y * CNFGBufferx + minx];
 		for( x = minx; x <= maxx; x++ )
 		{
-			(*bufferstart++) = CNFGLastColor;
+			(*CNFGBufferstart++) = CNFGLastColor;
 		}
 	}
 }
@@ -153,7 +153,7 @@ void CNFGTackPoly( RDPoint * points, int verts )
 	}
 
 	if( miny < 0 ) miny = 0;
-	if( maxy >= buffery ) maxy = buffery-1;
+	if( maxy >= CNFGBuffery ) maxy = CNFGBuffery-1;
 
 	for( y = miny; y <= maxy; y++ )
 	{
@@ -221,12 +221,12 @@ void CNFGTackPoly( RDPoint * points, int verts )
 
 //printf( "%d %d %d\n", y, startfillx, endfillx );
 
-		if( endfillx >= bufferx ) endfillx = bufferx - 1;
-		if( endfillx >= bufferx ) endfillx = buffery - 1;
+		if( endfillx >= CNFGBufferx ) endfillx = CNFGBufferx - 1;
+		if( endfillx >= CNFGBufferx ) endfillx = CNFGBuffery - 1;
 		if( startfillx < 0 ) startfillx = 0;
 		if( startfillx < 0 ) startfillx = 0;
 
-		unsigned int * bufferstart = &buffer[y * bufferx + startfillx];
+		unsigned int * bufferstart = &CNFGBuffer[y * CNFGBufferx + startfillx];
 		for( x = startfillx; x <= endfillx; x++ )
 		{
 			(*bufferstart++) = CNFGLastColor;
@@ -242,26 +242,25 @@ void CNFGClearFrame()
 	uint32_t col = 0;
 	short x, y;
 	CNFGGetDimensions( &x, &y );
-	if( x != bufferx || y != buffery || !buffer )
+	if( x != CNFGBufferx || y != CNFGBuffery || !CNFGBuffer )
 	{
-		bufferx = x;
-		buffery = y;
-		buffer = malloc( x * y * 8 );
+		CNFGBufferx = x;
+		CNFGBuffery = y;
+		CNFGBuffer = malloc( x * y * 8 );
 	}
 
 	m = x * y;
 	col = CNFGColor( CNFGBGColor );
 	for( i = 0; i < m; i++ )
 	{
-//printf( "Got: %d %p %d\n", m, buffer, i );
-		buffer[i] = col;
+		CNFGBuffer[i] = col;
 	}
 }
 
 void CNFGTackPixel( short x, short y )
 {
-	if( x < 0 || y < 0 || x >= bufferx || y >= buffery ) return;
-	buffer[x+bufferx*y] = CNFGLastColor;
+	if( x < 0 || y < 0 || x >= CNFGBufferx || y >= CNFGBuffery ) return;
+	CNFGBuffer[x+CNFGBufferx*y] = CNFGLastColor;
 }
 
 
@@ -269,7 +268,7 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
 	int ox = x;
 	int stride = w;
-	if( w <= 0 || h <= 0 || x >= bufferx || y >= buffery ) return;
+	if( w <= 0 || h <= 0 || x >= CNFGBufferx || y >= CNFGBuffery ) return;
 	if( x < 0 ) { w += x; x = 0; }
 	if( y < 0 ) { h += y; y = 0; }
 
@@ -277,15 +276,15 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 	h += y;
 	w += x;
 
-	if( w >= bufferx ) { w = bufferx; }
-	if( h >= buffery ) { h = buffery; }
+	if( w >= CNFGBufferx ) { w = CNFGBufferx; }
+	if( h >= CNFGBuffery ) { h = CNFGBuffery; }
 
 
 	for( ; y < h-1; y++ )
 	{
 		x = ox;
 		uint32_t * indat = data;
-		uint32_t * outdat = buffer + y * bufferx + x;
+		uint32_t * outdat = CNFGBuffer + y * CNFGBufferx + x;
 		for( ; x < w-1; x++ )
 		{
 			uint32_t newm = *(indat++);
@@ -334,7 +333,7 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 
 void CNFGSwapBuffers()
 {
-	CNFGUpdateScreenWithBitmap( (uint32_t*)buffer, bufferx, buffery );
+	CNFGUpdateScreenWithBitmap( (uint32_t*)CNFGBuffer, CNFGBufferx, CNFGBuffery );
 }
 
 
