@@ -10,11 +10,11 @@
 #include <malloc.h> //for alloca
 #include <ctype.h>
 
-static HBITMAP lsBitmap;
-static HWND lsHWND;
-static HDC lsWindowHDC;
-static HDC lsHDC;
-static HDC lsHDCBlit;
+HBITMAP CNFGlsBitmap;
+HWND CNFGlsHWND;
+HDC CNFGlsWindowHDC;
+HDC CNFGlsHDC;
+HDC CNFGlsHDCBlit;
 
 //Queue up lines and points for a faster render.
 #ifndef CNFG_WINDOWS_DISABLE_BATCH
@@ -27,7 +27,7 @@ static HDC lsHDCBlit;
 
 void CNFGChangeWindowTitle( const char * windowtitle )
 {
-	SetWindowTextA( lsHWND, windowtitle );
+	SetWindowTextA( CNFGlsHWND, windowtitle );
 }
 
 #ifdef CNFGRASTERIZER
@@ -35,11 +35,11 @@ void CNFGChangeWindowTitle( const char * windowtitle )
 
 void InternalHandleResize()
 {
-	if( lsBitmap ) DeleteObject( lsBitmap );
+	if( CNFGlsBitmap ) DeleteObject( CNFGlsBitmap );
 
 	CNFGInternalResize( CNFGBufferx, CNFGBuffery );
-	lsBitmap = CreateBitmap( CNFGBufferx, CNFGBuffery, 1, 32, CNFGBuffer );
-	SelectObject( lsHDC, lsBitmap );
+	CNFGlsBitmap = CreateBitmap( CNFGBufferx, CNFGBuffery, 1, 32, CNFGBuffer );
+	SelectObject( CNFGlsHDC, CNFGlsBitmap );
 	CNFGInternalResize( CNFGBufferx, CNFGBuffery);
 }
 #else
@@ -58,7 +58,7 @@ void CNFGSwapBuffers()
 	CNFGFlushRender();
 #endif
 
-	SwapBuffers(lsWindowHDC);
+	SwapBuffers(CNFGlsWindowHDC);
 }
 #endif
 
@@ -66,7 +66,7 @@ void CNFGGetDimensions( short * x, short * y )
 {
 	static short lastx, lasty;
 	RECT window;
-	GetClientRect( lsHWND, &window );
+	GetClientRect( CNFGlsHWND, &window );
 	CNFGBufferx = (short)( window.right - window.left);
 	CNFGBuffery = (short)( window.bottom - window.top);
 	if( CNFGBufferx != lastx || CNFGBuffery != lasty )
@@ -85,20 +85,20 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	RECT r;
 
-	SelectObject( lsHDC, lsBitmap );
-	SetBitmapBits(lsBitmap,w*h*4,data);
-	BitBlt(lsWindowHDC, 0, 0, w, h, lsHDC, 0, 0, SRCCOPY);
-	UpdateWindow( lsHWND );
+	SelectObject( CNFGlsHDC, CNFGlsBitmap );
+	SetBitmapBits(CNFGlsBitmap,w*h*4,data);
+	BitBlt(CNFGlsWindowHDC, 0, 0, w, h, CNFGlsHDC, 0, 0, SRCCOPY);
+	UpdateWindow( CNFGlsHWND );
 
 	short thisw, thish;
 
 	//Check to see if the window is closed.
-	if( !IsWindow( lsHWND ) )
+	if( !IsWindow( CNFGlsHWND ) )
 	{
 		exit( 0 );
 	}
 
-	GetClientRect( lsHWND, &r );
+	GetClientRect( CNFGlsHWND, &r );
 	thisw = (short)(r.right - r.left);
 	thish = (short)(r.bottom - r.top);
 	if( thisw != CNFGBufferx || thish != CNFGBuffery )
@@ -127,8 +127,8 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SYSCOMMAND:  //Not sure why, if deactivated, the dc gets unassociated?
 		if( wParam == SC_RESTORE || wParam == SC_MAXIMIZE || wParam == SC_SCREENSAVE )
 		{
-			SelectObject( lsHDC, lsBitmap );
-			SelectObject( lsWindowHDC, lsBitmap );
+			SelectObject( CNFGlsHDC, CNFGlsBitmap );
+			SelectObject( CNFGlsWindowHDC, CNFGlsBitmap );
 		}
 		break;
 #endif
@@ -168,7 +168,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 		MessageBox(NULL, "This Program Requires Windows NT", "Error", MB_OK);
 	}
 
-	lsHWND = CreateWindow(szClassName,
+	CNFGlsHWND = CreateWindow(szClassName,
 		name_of_window,      //name_of_window,
 		WS_OVERLAPPEDWINDOW, //basic window style
 		CW_USEDEFAULT,
@@ -180,7 +180,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 		hInstance,
 		NULL);               //no parameters to pass
 
-	lsWindowHDC = GetDC( lsHWND );
+	CNFGlsWindowHDC = GetDC( CNFGlsHWND );
 
 #ifdef CNFGOGL
 	//From NeHe
@@ -205,43 +205,43 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 		0,
 		0, 0, 0
 	};
-	GLuint      PixelFormat = ChoosePixelFormat( lsWindowHDC, &pfd );
-	if( !SetPixelFormat( lsWindowHDC, PixelFormat, &pfd ) )
+	GLuint      PixelFormat = ChoosePixelFormat( CNFGlsWindowHDC, &pfd );
+	if( !SetPixelFormat( CNFGlsWindowHDC, PixelFormat, &pfd ) )
 	{
 		MessageBox( 0, "Could not create PFD for OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
-	if (!(hRC=wglCreateContext(lsWindowHDC)))                   // Are We Able To Get A Rendering Context?
+	if (!(hRC=wglCreateContext(CNFGlsWindowHDC)))                   // Are We Able To Get A Rendering Context?
 	{
 		MessageBox( 0, "Could not create OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
-	if(!wglMakeCurrent(lsWindowHDC,hRC))                        // Try To Activate The Rendering Context
+	if(!wglMakeCurrent(CNFGlsWindowHDC,hRC))                        // Try To Activate The Rendering Context
 	{
 		MessageBox( 0, "Could not current OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
 #endif
 
-	lsHDC = CreateCompatibleDC( lsWindowHDC );
-	lsHDCBlit = CreateCompatibleDC( lsWindowHDC );
-	lsBitmap = CreateCompatibleBitmap( lsWindowHDC, CNFGBufferx, CNFGBuffery );
-	SelectObject( lsHDC, lsBitmap );
+	CNFGlsHDC = CreateCompatibleDC( CNFGlsWindowHDC );
+	CNFGlsHDCBlit = CreateCompatibleDC( CNFGlsWindowHDC );
+	CNFGlsBitmap = CreateCompatibleBitmap( CNFGlsWindowHDC, CNFGBufferx, CNFGBuffery );
+	SelectObject( CNFGlsHDC, CNFGlsBitmap );
 
 	//lsClearBrush = CreateSolidBrush( CNFGBGColor );
 	//lsHBR = CreateSolidBrush( 0xFFFFFF );
 	//lsHPEN = CreatePen( PS_SOLID, 0, 0xFFFFFF );
 
-	ShowWindow(lsHWND, 1);              //display the window on the screen
+	ShowWindow(CNFGlsHWND, 1);              //display the window on the screen
 
 	//Once set up... we have to change the window's borders so we get the client size right.
-	GetClientRect( lsHWND, &client );
-	GetWindowRect( lsHWND, &window );
+	GetClientRect( CNFGlsHWND, &client );
+	GetWindowRect( CNFGlsHWND, &window );
 	w = ( window.right - window.left);
 	h = ( window.bottom - window.top);
 	wd = w - client.right;
 	hd = h - client.bottom;
-	MoveWindow( lsHWND, window.left, window.top, CNFGBufferx + wd, CNFGBuffery + hd, 1 );
+	MoveWindow( CNFGlsHWND, window.left, window.top, CNFGBufferx + wd, CNFGBuffery + hd, 1 );
 
 	InternalHandleResize();
 
@@ -255,7 +255,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 void CNFGHandleInput()
 {
 	MSG msg;
-	while( PeekMessage( &msg, lsHWND, 0, 0xFFFF, 1 ) )
+	while( PeekMessage( &msg, CNFGlsHWND, 0, 0xFFFF, 1 ) )
 	{
 		TranslateMessage(&msg);
 
@@ -293,8 +293,8 @@ static HBRUSH lsClearBrush;
 static void InternalHandleResize()
 {
 	DeleteObject( lsBackBitmap );
-	lsBackBitmap = CreateCompatibleBitmap( lsHDC, CNFGBufferx, CNFGBuffery );
-	SelectObject( lsHDC, lsBackBitmap );
+	lsBackBitmap = CreateCompatibleBitmap( CNFGlsHDC, CNFGBufferx, CNFGBuffery );
+	SelectObject( CNFGlsHDC, lsBackBitmap );
 }
 
 #ifdef BATCH_ELEMENTS
@@ -323,13 +323,13 @@ void FlushTacking()
 
 	if( linelisthead )
 	{
-		PolyPolyline( lsHDC, linelist, twoarray, linelisthead );
+		PolyPolyline( CNFGlsHDC, linelist, twoarray, linelisthead );
 		linelisthead = 0;
 	}
 
 	if( polylistindex )
 	{
-		PolyPolygon( lsHDC, polylist, polylistcutoffs, polylistindex );
+		PolyPolygon( CNFGlsHDC, polylist, polylistcutoffs, polylistindex );
 		polylistindex = 0;
 		polylisthead = 0;
 	}
@@ -343,7 +343,7 @@ void FlushTacking()
 	{
 		for( i = 0; i < pointlisthead; i++ )
 		{
-			SetPixel( lsHDC, pointlist[i].x, pointlist[i].y, CNFGLastColor );
+			SetPixel( CNFGlsHDC, pointlist[i].x, pointlist[i].y, CNFGLastColor );
 		}
 		pointlisthead = 0;
 	}
@@ -363,11 +363,11 @@ uint32_t CNFGColor( uint32_t RGB )
 
 	DeleteObject( lsHBR );
 	lsHBR = CreateSolidBrush( RGB );
-	SelectObject( lsHDC, lsHBR );
+	SelectObject( CNFGlsHDC, lsHBR );
 
 	DeleteObject( lsHPEN );
 	lsHPEN = CreatePen( PS_SOLID, 0, RGB );
-	SelectObject( lsHDC, lsHPEN );
+	SelectObject( CNFGlsHDC, lsHPEN );
 
 	return RGB;
 }
@@ -384,8 +384,8 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 		pbw = w;
 	}
 	SetBitmapBits(pbb,w*h*4,data);
-	SelectObject( lsHDCBlit, pbb );
-	BitBlt(lsHDC, x, y, w, h, lsHDCBlit, 0, 0, SRCCOPY);
+	SelectObject( CNFGlsHDCBlit, pbb );
+	BitBlt(CNFGlsHDC, x, y, w, h, CNFGlsHDCBlit, 0, 0, SRCCOPY);
 }
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
@@ -419,9 +419,9 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	}
 #else
 	POINT pt[2] = { {x1, y1}, {x2, y2} };
-	Polyline( lsHDC, pt, 2 );
-	SetPixel( lsHDC, x1, y1, CNFGLastColor );
-	SetPixel( lsHDC, x2, y2, CNFGLastColor );
+	Polyline( CNFGlsHDC, pt, 2 );
+	SetPixel( CNFGlsHDC, x1, y1, CNFGLastColor );
+	SetPixel( CNFGlsHDC, x2, y2, CNFGLastColor );
 #endif
 }
 
@@ -435,7 +435,7 @@ void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 	else          { r.left = x2; r.right = x1; }
 	if( y1 < y2 ) { r.top = y1; r.bottom = y2; }
 	else          { r.top = y2; r.bottom = y1; }
-	FillRect( lsHDC, &r, lsHBR );
+	FillRect( CNFGlsHDC, &r, lsHBR );
 }
 
 void CNFGClearFrame()
@@ -446,8 +446,8 @@ void CNFGClearFrame()
 	RECT r = { 0, 0, CNFGBufferx, CNFGBuffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
-	SelectObject( lsHDC, lsClearBrush );
-	FillRect( lsHDC, &r, lsClearBrush);
+	SelectObject( CNFGlsHDC, lsClearBrush );
+	FillRect( CNFGlsHDC, &r, lsClearBrush);
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
@@ -483,7 +483,7 @@ void CNFGTackPoly( RDPoint * points, int verts )
 			t[i].x = points[i].x;
 			t[i].y = points[i].y;
 		}
-		Polygon( lsHDC, t, verts );
+		Polygon( CNFGlsHDC, t, verts );
 	}
 }
 
@@ -497,7 +497,7 @@ void CNFGTackPixel( short x1, short y1 )
 
 	if( pointlisthead >=4096 ) FlushTacking();
 #else
-	SetPixel( lsHDC, x1, y1, CNFGLastColor );
+	SetPixel( CNFGlsHDC, x1, y1, CNFGLastColor );
 #endif
 
 }
@@ -510,15 +510,15 @@ void CNFGSwapBuffers()
 	int thisw, thish;
 
 	RECT r;
-	BitBlt( lsWindowHDC, 0, 0, CNFGBufferx, CNFGBuffery, lsHDC, 0, 0, SRCCOPY );
-	UpdateWindow( lsHWND );
+	BitBlt( CNFGlsWindowHDC, 0, 0, CNFGBufferx, CNFGBuffery, CNFGlsHDC, 0, 0, SRCCOPY );
+	UpdateWindow( CNFGlsHWND );
 	//Check to see if the window is closed.
-	if( !IsWindow( lsHWND ) )
+	if( !IsWindow( CNFGlsHWND ) )
 	{
 		exit( 0 );
 	}
 
-	GetClientRect( lsHWND, &r );
+	GetClientRect( CNFGlsHWND, &r );
 	thisw = r.right - r.left;
 	thish = r.bottom - r.top;
 
