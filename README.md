@@ -38,10 +38,13 @@ platform.
  * CNFG3D Support has been ported with fixed-precision numericals to ESP8266.
  * Mac/OSX Support currently unknown.  Legacy files moved here: https://github.com/cntools/rawdrawtools/tree/main/attic
 
-
 ## Usage in project
 
-You probably want to include CNFG as a submodule.
+You may want to include CNFG as a submodule or as a single-file header.  You can just download rawdraw_sf.h to the path your project is in and `#include` it.
+
+To use it as a single file (CNFG_sf.h), you can just `wget https://raw.githubusercontent.com/cntools/rawdraw/master/CNFG_sf.h`
+
+To use it as a submodule you can:
 
 `git submodule add https://github.com/cntools/rawdraw`
 
@@ -87,7 +90,7 @@ is as follows:
 //Make it so we don't need to include any other C files in our build.
 #define CNFG_IMPLEMENTATION
 
-#include "CNFG.h"
+#include "CNFG_sf.h"
 
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
