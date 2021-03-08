@@ -63,7 +63,8 @@ uint32_t CNFGColor( uint32_t RGB )
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
 	short tx, ty;
-	float slope, lp;
+	//float slope, lp;
+	float slope;
 
 	short dx = x2 - x1;
 	short dy = y2 - y1;
