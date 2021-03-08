@@ -1,9 +1,8 @@
-/* Copyright 2010-2020 <>< Charles Lohr and other various authors as attributed.
-	Licensed under the MIT/x11 or NewBSD License you choose.
-
-	CN Foundational Graphics Main Header File.  This is the main header you
-	should include.  See README.md for more details.
-*/
+// Copyright 2010-2021 <>< CNLohr, et. al. (Several other authors, many but not all mentioned)
+//	Licensed under the MIT/x11 or NewBSD License you choose.
+//
+//	CN Foundational Graphics Main Header File.  This is the main header you
+//	should include.  See README.md for more details.
 
 
 #ifndef _CNFG_H
@@ -271,6 +270,10 @@ extern const unsigned short RawdrawFontCharMap[256];
 };
 #endif
 
+
+#if defined( ANDROID ) || defined( __android__ )
+#include "CNFGAndroid.h"
+#endif
 
 #ifdef CNFG_IMPLEMENTATION
 #include "CNFG.c"
