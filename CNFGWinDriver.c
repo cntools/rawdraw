@@ -147,7 +147,19 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	RECT client, window;
 	WNDCLASS wnd;
 	int w, h, wd, hd;
+	int show_window = 1;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
+
+	if( width < 0 ) 
+	{
+		show_window = 0;
+		width = -width;
+	}
+	if( height < 0 ) 
+	{
+		show_window = 0;
+		height = -height;
+	}
 
 	CNFGBufferx = (short)width;
 	CNFGBuffery = (short)height;
@@ -232,7 +244,8 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	//lsHBR = CreateSolidBrush( 0xFFFFFF );
 	//lsHPEN = CreatePen( PS_SOLID, 0, 0xFFFFFF );
 
-	ShowWindow(CNFGlsHWND, 1);              //display the window on the screen
+	if( show_window )
+		ShowWindow(CNFGlsHWND, 1);              //display the window on the screen
 
 	//Once set up... we have to change the window's borders so we get the client size right.
 	GetClientRect( CNFGlsHWND, &client );

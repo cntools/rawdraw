@@ -87,7 +87,16 @@ void CNFGClearFrame();
 void CNFGSwapBuffers();
 
 void CNFGGetDimensions( short * x, short * y );
-int CNFGSetup( const char * WindowName, int w, int h ); //return 0 if ok.
+
+
+//This will setup a window.  Note that w and h have special meaning. On Windows
+//and X11, for instance if you set w and h to be negative, then rawdraw will not
+//show the window to the user.  This is useful if you just need it for some
+//off-screen-rendering purpose.
+//
+//Return value of 0 indicates success.  Nonzero indicates error.
+int CNFGSetup( const char * WindowName, int w, int h ); 
+
 void CNFGSetupFullscreen( const char * WindowName, int screen_number );
 void CNFGHandleInput();
 

@@ -333,11 +333,13 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	XSetWindowAttributes attr;
 	attr.background_pixel = 0;
 	attr.colormap = XCreateColormap( CNFGDisplay, wnd, CNFGVisual, AllocNone);
-	if( w && h )
+	if( w  > 0 && h > 0 )
 		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
 	else
 	{
-		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, 1, 1, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+		if( w < 0 ) w = -w;
+		if( h < 0 ) h = -h;
+		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
 		CNFGWindowInvisible = 1;
 	}
 
