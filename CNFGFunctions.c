@@ -765,6 +765,62 @@ void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, 
 	glDrawArrays( GL_TRIANGLES, 0, num_vertices);
 }
 
+
+#ifdef CNFGOGL
+// this is here, so people don't have to include opengl
+void CNFGDeleteTex( unsigned int tex )
+{
+	glDeleteTextures(1, &tex);
+}
+
+unsigned int CNFGTexImage( uint32_t *data, int w, int h )
+{
+	GLuint tex;
+
+	glGenTextures(1, &tex);
+	glEnable( GL_TEXTURE_2D );
+	CNFGglActiveTexture( 0 );
+	glBindTexture( GL_TEXTURE_2D, tex );
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,  GL_RGBA,
+		GL_UNSIGNED_BYTE, data );
+
+	return (unsigned int)tex;
+}
+
+void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h )
+{
+	if( w == 0 || h == 0 ) return;
+
+	CNFGFlushRender();
+
+	CNFGglUseProgram( gRDBlitProg );
+	CNFGglUniform4f( gRDBlitProgUX,
+		1.f/gRDLastResizeW, -1.f/gRDLastResizeH,
+		-0.5f+x/(float)gRDLastResizeW, 0.5f-y/(float)gRDLastResizeH );
+	CNFGglUniform1i( gRDBlitProgUT, 0 );
+
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	const float verts[] = {
+		0,0, w,0, w,h,
+		0,0, w,h, 0,h, };
+	static const uint8_t colors[] = {
+		0,0,   255,0,  255,255,
+		0,0,  255,255, 0,255 };
+
+	CNFGglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	CNFGglVertexAttribPointer(1, 2, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
+
+	glDrawArrays( GL_TRIANGLES, 0, 6);
+}
+#endif
+
 #ifdef CNFGRASTERIZER
 void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h )
 #else

@@ -13,6 +13,16 @@ void HandleDestroy() { }
 int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
+
+	// Creating random image data and texture
+	static uint32_t data[64*64];
+	int x, y;
+
+	for( y = 0; y < 64; y++ ) for( x = 0; x < 64; x++ )
+		data[x+y*64] = 0xff | (rand()<<8);
+	
+	unsigned int tex = CNFGTexImage(data, 64, 64);
+
 	while(1)
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
@@ -46,18 +56,21 @@ int main()
 		RDPoint points[3] = { { 30, 36}, {20, 50}, { 40, 50 } };
 		CNFGTackPoly( points, 3 );
 
-		//Draw a bunch of random pixels as a blitted image.
-		{
-			static uint32_t data[64*64];
-			int x, y;
+		// Blit already premade texture ( much faster )
+		CNFGBlitTex(tex, 120, 120, 64, 64);
 
+		// Blit random pixel data
+		{
 			for( y = 0; y < 64; y++ ) for( x = 0; x < 64; x++ )
 				data[x+y*64] = 0xff | (rand()<<8);
 
-			CNFGBlitImage( data, 150, 30, 64, 64 );
+			CNFGBlitImage( data, 120, 190, 64, 64 );
 		}
 
 		//Display the image and wait for time to display next frame.
 		CNFGSwapBuffers();		
 	}
+
+	// Free texture from memory
+	CNFGDeleteTex(tex);
 }

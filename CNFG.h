@@ -74,10 +74,18 @@ uint32_t CNFGColor( uint32_t RGBA );
 //This both updates the screen, and flips, all as a single operation.
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
 
+
 //This is only supported on a FEW architectures, but allows arbitrary
 //image blitting.  Note that the alpha channel behavior is different
 //on different systems.
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
+
+// Only supported with CNFGOGL
+#ifdef CNFGOGL
+void CNFGDeleteTex( unsigned int tex );
+unsigned int CNFGTexImage( uint32_t *data, int w, int h );
+void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h );
+#endif
 
 void CNFGTackPixel( short x1, short y1 );
 void CNFGTackSegment( short x1, short y1, short x2, short y2 );
