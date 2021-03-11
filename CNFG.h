@@ -77,6 +77,8 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h );
 //This is only supported on a FEW architectures, but allows arbitrary
 //image blitting.  Note that the alpha channel behavior is different
 //on different systems.
+unsigned int CNFGTexImage(uint32_t *data, int w, int h);
+void CNFGBlitTex(unsigned int tex, int x, int y, int w, int h);
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 
 void CNFGTackPixel( short x1, short y1 );
