@@ -765,13 +765,11 @@ void	CNFGEmitBackendTriangles( const float * vertices, const uint32_t * colors, 
 	glDrawArrays( GL_TRIANGLES, 0, num_vertices);
 }
 
-#ifdef CNFGRASTERIZER
-void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h )
-#else
-
+#ifdef CNFGOGL
 unsigned int CNFGTexImage(uint32_t *data, int w, int h) {
 	GLuint tex;
 
+	glGenTextures(1, &tex);
 	glEnable( GL_TEXTURE_2D );
 	CNFGglActiveTexture( 0 );
 	glBindTexture( GL_TEXTURE_2D, tex );
@@ -811,7 +809,11 @@ void CNFGBlitTex(unsigned int tex, int x, int y, int w, int h) {
 	CNFGglVertexAttribPointer(1, 2, GL_UNSIGNED_BYTE, GL_TRUE, 0, colors);
 	glDrawArrays( GL_TRIANGLES, 0, 6);
 }
+#endif
 
+#ifdef CNFGRASTERIZER
+void CNFGBlitImageInternal( uint32_t * data, int x, int y, int w, int h )
+#else
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 #endif
 {
