@@ -268,7 +268,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 void CNFGHandleInput()
 {
 	MSG msg;
-	while( PeekMessage( &msg, CNFGlsHWND, 0, 0xFFFF, 1 ) )
+	while( PeekMessage( &msg, NULL, 0, 0xFFFF, 1 ) )
 	{
 		TranslateMessage(&msg);
 
