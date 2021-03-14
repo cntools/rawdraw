@@ -459,8 +459,9 @@ void CNFGClearFrame()
 	RECT r = { 0, 0, CNFGBufferx, CNFGBuffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
-	SelectObject( CNFGlsHDC, lsClearBrush );
+	HBRUSH prevBrush = SelectObject( CNFGlsHDC, lsClearBrush );
 	FillRect( CNFGlsHDC, &r, lsClearBrush);
+	SelectObject( CNFGlsHDC, prevBrush );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
