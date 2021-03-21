@@ -268,7 +268,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 void CNFGHandleInput()
 {
 	MSG msg;
-	while( PeekMessage( &msg, CNFGlsHWND, 0, 0xFFFF, 1 ) )
+	while( PeekMessage( &msg, NULL, 0, 0xFFFF, 1 ) )
 	{
 		TranslateMessage(&msg);
 
@@ -459,8 +459,9 @@ void CNFGClearFrame()
 	RECT r = { 0, 0, CNFGBufferx, CNFGBuffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
-	SelectObject( CNFGlsHDC, lsClearBrush );
+	HBRUSH prevBrush = SelectObject( CNFGlsHDC, lsClearBrush );
 	FillRect( CNFGlsHDC, &r, lsClearBrush);
+	SelectObject( CNFGlsHDC, prevBrush );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )
