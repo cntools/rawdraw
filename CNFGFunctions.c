@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2020 <>< Charles Lohr
+Copyright (c) 2010-2021 <>< Charles Lohr, and several others!
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -148,6 +148,20 @@ const unsigned char RawdrawFontCharData[1405] = {
 
 //Set this if you are only using CNFG to create an OpenGL context.
 #ifndef CNFGCONTEXTONLY
+
+uint32_t CNFGDialogColor;
+
+void CNFGDrawBox( short x1, short y1, short x2, short y2 )
+{
+	uint32_t lc = CNFGLastColor;
+	CNFGColor( CNFGDialogColor );
+	CNFGTackRectangle( x1, y1, x2, y2 );
+	CNFGColor( lc );
+	CNFGTackSegment( x1, y1, x2, y1 );
+	CNFGTackSegment( x2, y1, x2, y2 );
+	CNFGTackSegment( x2, y2, x1, y2 );
+	CNFGTackSegment( x1, y2, x1, y1 );
+}
 
 void CNFGDrawText( const char * text, short scale )
 {

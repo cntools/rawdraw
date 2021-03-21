@@ -215,6 +215,10 @@ int main()
 		CNFGTackSegment( pto[2].x, pto[2].y, pto[0].x, pto[0].y );
 */
 
+		CNFGColor( 0xffffffff );
+		CNFGDialogColor = 0x202020ff;
+		CNFGDrawBox( 300, 0, 320, 20 );
+
 		// Square behind text
 		CNFGColor( 0x444444FF );
 		CNFGTackRectangle( 0, 0, 260, 260 );

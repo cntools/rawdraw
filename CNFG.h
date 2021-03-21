@@ -62,9 +62,17 @@ typedef struct {
 extern int CNFGPenX, CNFGPenY;
 extern uint32_t CNFGBGColor;
 extern uint32_t CNFGLastColor;
+extern uint32_t CNFGDialogColor; //Only used for DrawBox
 
+//Draws text at CNFGPenX, CNFGPenY, with scale of `scale`.
 void CNFGDrawText( const char * text, short scale );
+
+//Determine how large a given test would be to draw.
 void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize  );
+
+//Draws a box, outline as whatever the last CNFGColor was set to but also draws
+//a rectangle as a background as whatever CNFGDialogColor is set to.
+void CNFGDrawBox( short x1, short y1, short x2, short y2 );
 
 //To be provided by driver. Rawdraw uses colors in the format 0xRRGGBBAA
 //Note that some backends do not support alpha of any kind.

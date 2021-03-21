@@ -528,11 +528,11 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 
 uint32_t AGLF(CNFGColor)( uint32_t RGB )
 {
+	CNFGLastColor = RGB;
 	unsigned char red = ( RGB >> 24 ) & 0xFF;
 	unsigned char grn = ( RGB >> 16 ) & 0xFF;
 	unsigned char blu = ( RGB >> 8 ) & 0xFF;
 	unsigned long color = (red<<16)|(grn<<8)|(blu);
-	CNFGLastColor = color;
 	XSetForeground(CNFGDisplay, CNFGGC, color);
 	return color;
 }
