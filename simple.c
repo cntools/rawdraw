@@ -10,9 +10,13 @@ void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
 void HandleMotion( int x, int y, int mask ) { }
 void HandleDestroy() { }
+
+void Log(const char *fmt, ...);
+
 int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
+	Log("Main started");
 	while(1)
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
