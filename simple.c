@@ -61,3 +61,27 @@ int main()
 		CNFGSwapBuffers();		
 	}
 }
+
+//writes the text to a file to path (example): /storage/emulated/0/Android/data/org.yourcompany.name/
+void Log(const char *fmt, ...)
+{
+	const char* getpath = AndroidGetExternalFilesDir();
+	char buffer[0xFF];
+	sprintf(buffer, "%s/log.txt", getpath);
+	FILE *f = fopen(buffer, "w");
+	if (f == NULL)
+	{
+		exit(1);
+	}
+	
+	memset(buffer, 0, sizeof(buffer));
+
+	va_list arg;
+	va_start(arg, fmt);
+	vsnprintf(buffer, sizeof(buffer), fmt, arg);
+	va_end(arg);	
+
+	fprintf(f, "%s\n", buffer);
+
+	fclose(f);
+}
