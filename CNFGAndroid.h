@@ -6,6 +6,7 @@
 
 extern struct android_app * gapp;
 void AndroidMakeFullscreen();
+const char* AndroidGetExternalFilesDir();
 int AndroidHasPermissions(const char* perm_name);
 void AndroidRequestAppPermissions(const char * perm);
 void AndroidDisplayKeyboard(int pShow);
