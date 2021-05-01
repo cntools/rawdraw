@@ -35,7 +35,10 @@ extern "C" {
 #else
 #include <GL/gl.h>
 #endif
+
+#ifdef NO_OPENGL_HEADERS
 #include "chewtypes.h"
+#endif
 
 #ifndef chew_FUN_EXPORT
 #define chew_FUN_EXPORT extern
