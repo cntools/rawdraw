@@ -10,9 +10,13 @@ void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
 void HandleMotion( int x, int y, int mask ) { }
 void HandleDestroy() { }
+
+void Log(const char *fmt, ...);
+
 int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
+	Log("Main started");
 	while(1)
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
@@ -60,4 +64,28 @@ int main()
 		//Display the image and wait for time to display next frame.
 		CNFGSwapBuffers();		
 	}
+}
+
+//writes the text to a file to path (example): /storage/emulated/0/Android/data/org.yourcompany.name/
+void Log(const char *fmt, ...)
+{
+	const char* getpath = AndroidGetExternalFilesDir();
+	char buffer[0xFF];
+	sprintf(buffer, "%s/log.txt", getpath);
+	FILE *f = fopen(buffer, "w");
+	if (f == NULL)
+	{
+		exit(1);
+	}
+	
+	memset(buffer, 0, sizeof(buffer));
+
+	va_list arg;
+	va_start(arg, fmt);
+	vsnprintf(buffer, sizeof(buffer), fmt, arg);
+	va_end(arg);	
+
+	fprintf(f, "%s\n", buffer);
+
+	fclose(f);
 }
