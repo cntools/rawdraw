@@ -547,6 +547,17 @@ void * CNFGGetProcAddress(const char *name)
 		if( !module ) module = LoadLibraryA("opengl32.dll");
 		p = (void *)GetProcAddress(module, name);
 	}
+	// We were unable to load the required openGL function exit program with an error message
+	if (!p) {
+		printf(
+			"Error: Unable to load \"%s\"\n"
+			"This is most likely caused by Windows falling back to openGL 1.0 drivers.\n"
+			"These are not supported. Make sure that your graphics drivers are up to date.\n"
+			"Otherwise disable openGL support by removing the CNFOGL flag during compilation\n",
+			name
+		);
+		exit(-1);
+	}
 	return p;
 }
 
