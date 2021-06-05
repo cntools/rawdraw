@@ -11,7 +11,13 @@ all : rawdraw simple rawdraw_sf.h
 #  are incompatible.
 
 
-MINGW32:=/usr/bin/i686-w64-mingw32-
+MINGW32:=/usr/bin/i686-w64-mingw32
+
+rawdraw-clang.exe: rawdraw.c
+	clang rawdraw.c -o rawdraw-clang.exe -g -O1 -Irawdraw -lopengl32 -lgdi32 -luser32 
+
+rawdrawogl-clang.exe: rawdraw.c
+	clang rawdraw.c -o rawdrawogl-clang.exe -g -O1 -Irawdraw -DCNFGOGL -lopengl32 -lgdi32 -luser32 
 
 rawdraw.exe : rawdraw.c
 	$(MINGW32)gcc -g -m32 -o $@ $^  -lgdi32
