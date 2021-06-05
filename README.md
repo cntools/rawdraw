@@ -28,7 +28,7 @@ platform.
 ## Platform statuses
 
  * Windows, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (GDI32) does not support alpha-blitting, or variable line width.
- * Linux, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (X11) doe not support alpha-blitting, or variable line thickness
+ * Linux, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (X11) does not support alpha-blitting, or variable line thickness
 .
  * Android, 100% Support for CNFGOGL (It is forced on) CNFGRASTERIZER not allowed.
  * WASM, 100% Support for CNFGOGL
@@ -152,6 +152,12 @@ int main()
 ## Building
 
 Windows compile:
+Build with clang
+```
+clang simple.c -o simple -Irawdraw -lopengl32 -lgdi32 -luser32 
+```
+
+Build with TCC
 ```
 C:\tcc\tcc simple.c -Irawdraw -lopengl32 -lgdi32 -luser32 C:\windows\system32\msvcrt.dll
 ```
@@ -209,4 +215,7 @@ There is a sister repository, https://github.com/cntools/rawdrawtools which hous
 
 ## Warnings
 
-OSX Support has been moved to attic.
+* OSX Support has been moved to attic.
+* No support for openGL 1.0. If your hardware doesn't support openGL 2.0 or newer, disable 
+openGL support. (If you are on desktop, it probably does, you just need to install updated
+drivers.)
