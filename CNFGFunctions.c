@@ -547,16 +547,9 @@ void * CNFGGetProcAddress(const char *name)
 		if( !module ) module = LoadLibraryA("opengl32.dll");
 		p = (void *)GetProcAddress(module, name);
 	}
-	// We were unable to load the required openGL function exit program with an error message
+	// We were unable to load the required openGL function 
 	if (!p) {
-		printf(
-			"Error: Unable to load \"%s\"\n"
-			"This is most likely caused by Windows falling back to openGL 1.0 drivers.\n"
-			"These are not supported. Make sure that your graphics drivers are up to date.\n"
-			"Otherwise disable openGL support by removing the CNFOGL flag during compilation\n",
-			name
-		);
-		exit(-1);
+		fprintf(stderr,"[rawdraw][warn]: Unable to load openGL extension \"%s\"\n", name);
 	}
 	return p;
 }
@@ -576,6 +569,7 @@ void * CNFGGetProcAddress(const char *name)
 
 #endif
 
+// Try and load openGL extension functions required for rawdraw
 static void CNFGLoadExtensionsInternal()
 {
 	CNFGglGetUniformLocation = CNFGGetProcAddress( "glGetUniformLocation" );
@@ -587,17 +581,42 @@ static void CNFGLoadExtensionsInternal()
 	CNFGglGetShaderiv = CNFGGetProcAddress( "glGetShaderiv" );
 	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
 	CNFGglCreateShader = CNFGGetProcAddress( "glCreateShader" );
-	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
 	CNFGglShaderSource = CNFGGetProcAddress( "glShaderSource" );
 	CNFGglAttachShader = CNFGGetProcAddress( "glAttachShader" );
 	CNFGglCompileShader = CNFGGetProcAddress( "glCompileShader" );
 	CNFGglGetShaderInfoLog = CNFGGetProcAddress( "glGetShaderInfoLog" );
-	CNFGglLinkProgram = CNFGGetProcAddress( "glLinkProgram" );
 	CNFGglDeleteShader = CNFGGetProcAddress( "glDeleteShader" );
-	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
+	CNFGglLinkProgram = CNFGGetProcAddress( "glLinkProgram" );
 	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
+	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
 	CNFGglUniform1i = CNFGGetProcAddress( "glUniform1i" );
 	CNFGglActiveTexture = CNFGGetProcAddress("glActiveTexture");
+
+	// Check if any of these functions didn't get loaded
+	uint8_t not_all_functions_loaded = 
+		!CNFGglGetUniformLocation  || !CNFGglEnableVertexAttribArray || !CNFGglUseProgram       ||
+		!CNFGglGetProgramInfoLog   || !CNFGglBindAttribLocation      || !CNFGglGetProgramiv     ||
+		!CNFGglVertexAttribPointer || !CNFGglCreateShader            || !CNFGglShaderSource     ||
+		!CNFGglAttachShader        || !CNFGglCompileShader           || !CNFGglGetShaderInfoLog ||
+		!CNFGglDeleteShader        || !CNFGglLinkProgram             || !CNFGglCreateProgram    ||
+		!CNFGglUniform4f           || !CNFGglUniform1i               || !CNFGglActiveTexture; 
+	if (not_all_functions_loaded) {
+		fprintf(
+			stderr,
+			"[rawdraw][err]: Unable to load all openGL extensions required for rawdraw\n"
+			"\tPlease update your graphics drivers or unexpected crashes may occur.\n"
+		);
+	}
+
+	// Give a very stern warning if unable to create or compile shaders
+	if (!CNFGglCreateShader || !CNFGglCompileShader) {
+		fprintf(
+			stderr,
+			"[rawdraw][err]: Unable to create or compile shaders, this will cause a fatal error if "
+			"openGL is used.\n"
+			"\tUpdate your video graphics drivers or switch to software graphics.\n"
+		);
+	}
 }
 #else
 static void CNFGLoadExtensionsInternal() { }
