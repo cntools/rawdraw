@@ -35,7 +35,7 @@ index.html : template.ht opt.js
 	./subst template.ht -s -f JAVASCRIPT_DATA opt.js -o $@
 
 subst : subst.c
-	gcc -o $@ $^
+	cc -o $@ $^
 
 main.wasm: rawdraw.c
 	$(CLANG) $(CFLAGS) $^ -o $@
