@@ -60,7 +60,16 @@ char *readfile(const char *filename, int flags)
 
 void print_help()
 {
-	// TODO: implement help
+	printf(
+		"Usage: subst [TEMPLATE-FILE] [VARIABLES]\n"
+		"\n"
+		"Options:\n"
+		"  -s: Swallow following newline in files\n"
+		"  -o: Define output file\n"
+		"  -f: Define variable to replace '-f VARNAME FILEPATH'\n"
+		"  -d: Define variable to replace '-f VARNAME VARCONTENT'\n"
+		"  -h: Print this message\n"
+	);
 }
 
 
@@ -103,6 +112,12 @@ int main(int argc, char *argv[])
 		printf("No input file was specified\n");
 		exit(1);
 	}
+	
+	if (argv[1][0] == '-' && argv[1][1] == 'h') {
+		print_help();
+		return 0;
+	}
+		
 	
 	infile = readfile(argv[1], 0);
 
