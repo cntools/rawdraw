@@ -346,8 +346,8 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	InternalLinkScreenAndGo( WindowName );
 
 //Not sure of the purpose of this code - if it's still commented out after 2019-12-31 and no one knows why, please delete it.
-//	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
-//	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
+	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
+	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
 
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
@@ -360,12 +360,12 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
-	if( !CNFGWindow ) return;
+	if( !CNFGWindow ) return 0;
 	static int ButtonsDown;
 	XEvent report;
-
+	
 	int bKeyDirection = 1;
 	while( XPending( CNFGDisplay ) )
 	{
@@ -411,14 +411,15 @@ void CNFGHandleInput()
 			HandleMotion( report.xmotion.x, report.xmotion.y, ButtonsDown>>1 );
 			break;
 		case ClientMessage:
-			// Only subscribed to WM_DELETE_WINDOW, so just exit
-			exit( 0 );
+			// Only subscribed to WM_DELETE_WINDOW, so return 0 to stop game loop
+			return 0;
 			break;
 		default:
 			break;
 			//printf( "Event: %d\n", report.type );
 		}
 	}
+	return 1;
 }
 
 
