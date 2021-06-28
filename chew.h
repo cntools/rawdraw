@@ -5,8 +5,8 @@
 
 #if defined( WINDOWS ) || defined( _WINDOWS ) || defined( WIN32 ) || defined( WIN64 )
 #ifdef __TINYC__
-typedef intptr_t GLsizeiptr;
-typedef intptr_t GLintptr;
+#define GLsizeiptr intptr_t
+#define GLintptr   intptr_t
 #endif
 //#include <windows.h>
 #include <stdint.h>
@@ -54,6 +54,12 @@ typedef ret (STDCALL *usename##_t)( __VA_ARGS__ );	\
 chew_FUN_EXPORT usename##_t	usename##fnptr; \
 chew_FUN_EXPORT ret usename( __VA_ARGS__ );
 
+#if defined( __TINYC__ ) && ( defined( WINDOWS ) || defined( _WINDOWS ) || defined( WIN32 ) || defined( WIN64 ) )
+#undef GLchar
+#define GLchar char
+#undef GLDEBUGPROC
+#define GLDEBUGPROC void*
+#endif
 
 void chewInit();
 void * chewGetProcAddress( const char *name );

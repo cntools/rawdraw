@@ -468,6 +468,7 @@ void	CNFGSetLineWidth( short width )
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #define CNFGOGL_NEED_EXTENSION
+#include <GL/gl.h>
 #endif
 
 #ifdef  CNFGOGL_NEED_EXTENSION
