@@ -16,6 +16,8 @@ HDC CNFGlsWindowHDC;
 HDC CNFGlsHDC;
 HDC CNFGlsHDCBlit;
 
+int ShouldClose = 0;
+
 //Queue up lines and points for a faster render.
 #ifndef CNFG_WINDOWS_DISABLE_BATCH
 #define BATCH_ELEMENTS
@@ -113,9 +115,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 void CNFGTearDown()
 {
 	PostQuitMessage(0);
-#ifdef CNFGOGL
-	exit(0);
-#endif
+	ShouldClose = 1;
 }
 
 //This was from the article
@@ -265,8 +265,13 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
+#ifdef CNFGOGL
+	if (ShouldClose)
+		exit(0);
+#endif
+
 	MSG msg;
 	while( PeekMessage( &msg, NULL, 0, 0xFFFF, 1 ) )
 	{
@@ -292,6 +297,8 @@ void CNFGHandleInput()
 			break;
 		}
 	}
+
+	return !ShouldClose;
 }
 
 #ifndef CNFGOGL
