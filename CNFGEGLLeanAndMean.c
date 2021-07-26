@@ -119,9 +119,10 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
 	//Stubbed (No input)
+	return 1;
 	return;
 }
 
