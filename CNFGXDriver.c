@@ -360,9 +360,9 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
-	if( !CNFGWindow ) return;
+	if( !CNFGWindow ) return 0;
 	static int ButtonsDown;
 	XEvent report;
 
@@ -419,6 +419,7 @@ void CNFGHandleInput()
 			//printf( "Event: %d\n", report.type );
 		}
 	}
+	return 1;
 }
 
 
