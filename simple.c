@@ -14,13 +14,12 @@ int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
 
-	while(1)
+	while(CNFGHandleInput())
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
 
 		short w, h;
 		CNFGClearFrame();
-		CNFGHandleInput();
 		CNFGGetDimensions( &w, &h );
 
 		//Change color to white.
@@ -35,16 +34,13 @@ int main()
 		CNFGTackSegment( 50, 50, 100, 50 );
 
 		//Dark Red Color Select
-		CNFGColor( 0x800000FF ); 
+		CNFGColor( 0x800000ff ); 
 
 		//Draw 50x50 box starting at 100,50
 		CNFGTackRectangle( 100, 50, 150, 100 ); 
 
-		//Bright Purple Select
-		CNFGColor( 0x800000FF ); 
-
 		//Draw a triangle
-		RDPoint points[3] = { { 30, 36}, {20, 50}, { 40, 50 } };
+		RDPoint points[3] = { { 30, 36 }, { 20, 50 }, { 40, 50 } };
 		CNFGTackPoly( points, 3 );
 
 		// Blit random pixel data
@@ -61,4 +57,6 @@ int main()
 		//Display the image and wait for time to display next frame.
 		CNFGSwapBuffers();		
 	}
+
+	printf("exiting\n");
 }
