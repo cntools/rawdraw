@@ -412,7 +412,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
 
 #ifdef ANDROID
@@ -443,6 +443,7 @@ void CNFGHandleInput()
 	}
 	XSetWMProtocols(XDisplay, XWindow, &XWMDeleteMessage, 0);
 #endif
+	return 1;
 }
 
 
