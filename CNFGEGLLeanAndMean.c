@@ -124,10 +124,7 @@ void CNFGHandleInput()
 	//Stubbed (No input)
 	return;
 }
-void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
-{
-	//Stubbed (No input)
-}
+
 void CNFGSetVSync( int vson )
 {
 	//No-op
