@@ -35,10 +35,11 @@ void CNFGSwapBuffers()
 	CNFGSwapBuffersInternal( );
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
 	//Do nothing.
 	//Input is handled on swap frame.
+	return 1;
 }
 
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
