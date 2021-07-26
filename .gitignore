@@ -8,5 +8,6 @@ ogltest
 rawdraw
 rawdraw_ogl
 simple
+simple_file_creator
 examples/fontsize
 examples/fontsize_ogl

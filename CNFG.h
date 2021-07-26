@@ -114,7 +114,7 @@ void CNFGGetDimensions( short * x, short * y );
 int CNFGSetup( const char * WindowName, int w, int h ); 
 
 void CNFGSetupFullscreen( const char * WindowName, int screen_number );
-void CNFGHandleInput();
+int CNFGHandleInput();
 
 
 //You must provide:
