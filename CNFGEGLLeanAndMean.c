@@ -123,7 +123,6 @@ int CNFGHandleInput()
 {
 	//Stubbed (No input)
 	return 1;
-	return;
 }
 
 void CNFGSetVSync( int vson )
