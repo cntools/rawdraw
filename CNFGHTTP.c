@@ -3,6 +3,11 @@
 
 #ifdef CNFGHTTP
 
+//Pull from a buffer
+#ifndef CNFGHTTP_LIVE_FS
+#define USE_RAM_MFS
+#endif
+
 //single_file_http.c base from https://github.com/cntools/httptest.
 //scroll to bottom for implementation.
 
@@ -175,6 +180,7 @@ struct HTTPConnection
 	uint8_t  keep_alive:1;
 	uint8_t  need_resend:1;
 	uint8_t  send_pending:1; //If we can send data, we should?
+	uint8_t  is_gzip:1;
 
 	int socket;
 	uint8_t corked_data[4096];
@@ -464,6 +470,8 @@ void  HTTPHandleInternalCallback( )
 		else if( curhttp->bytesleft == 0xfffffffe ) PushString( "text/plain" );
 		else                               PushString( "text/html" );
 
+		if( curhttp->is_gzip ) PushString( "\r\nContent-Encoding: gzip" ); 
+
 		PushString( "\r\n\r\n" );
 		EndTCPWrite( curhttp->socket );
 		curhttp->isfirst = 0;
@@ -492,6 +500,8 @@ void InternalStartHTTP( )
 	int32_t clusterno;
 	int8_t i;
 	char * path = &curhttp->pathbuffer[0];
+
+	curhttp->is_gzip = 0;
 
 	if( curhttp->pathbuffer[0] == '/' )
 		path++;
@@ -527,6 +537,10 @@ void InternalStartHTTP( )
 	}
 	else
 	{
+		if( i == 99 )
+		{
+			curhttp->is_gzip = 1;
+		}
 		curhttp->isfirst = 1;
 		curhttp->isdone = 0;
 		curhttp->is404 = 0;
@@ -578,7 +592,9 @@ int httpserver_connectcb( int socket )
 	}
 	if( i == HTTP_CONNECTIONS )
 	{
+#ifndef USE_RAM_MFS
 		HTTPConnections[i].data.filedescriptor.file = 0;
+#endif
 		HTTPConnections[i].rcb = 0;
 		HTTPConnections[i].ccb = 0;
 		HTTPConnections[i].rcbDat = 0;
@@ -1336,29 +1352,23 @@ uint8_t hex2byte( const char * c )
 
 #ifdef USE_RAM_MFS
 
+#include "tools/rawdraw_http_page.h"
+
 //Returns 0 on succses.
 //Returns size of file if non-empty
 //If positive, populates mfi.
 //Returns -1 if can't find file or reached end of file list.
 int8_t MFSOpenFile( const char * fname, struct MFSFileInfo * mfi )
 {
-	struct MFSFileEntry e;
-	uint8_t * ptr = mfs_data;
-	while(1)
+	printf( "%s\n", fname );
+	if( strcmp( fname, "/" ) == 0 || strcmp( fname, "index.html" ) == 0 )
 	{
-		//spi_flash_read( ptr, (uint32*)&e, sizeof( e ) );		
-		memcpy( &e, ptr, sizeof( e ) );
-		ptr += sizeof(e);
-		if( e.name[0] == 0xff || strlen( e.name ) == 0 ) break;
-
-		if( strcmp( e.name, fname ) == 0 )
-		{
-			mfi->offset = e.start;
-			mfi->filelen = e.len;
-			return 0;
-		}
+		mfi->offset = 0;
+		mfi->filelen = sizeof(webpage_buffer);
+		return 99;
 	}
-	return -1;
+	else
+		return -1;
 }
 
 int32_t MFSReadSector( uint8_t* data, struct MFSFileInfo * mfi )
@@ -1371,7 +1381,7 @@ int32_t MFSReadSector( uint8_t* data, struct MFSFileInfo * mfi )
 
 	int toread = mfi->filelen;
 	if( toread > MFS_SECTOR ) toread = MFS_SECTOR;
-	memcpy( data, &mfs_data[mfi->offset], toread );
+	memcpy( data, &webpage_buffer[mfi->offset], toread );
 	mfi->offset += toread;
 	mfi->filelen -= toread;
 	return mfi->filelen;
@@ -1394,11 +1404,11 @@ int8_t MFSOpenFile( const char * fname, struct MFSFileInfo * mfi )
 
 	if( strlen( fname ) == 0 || fname[strlen(fname)-1] == '/' )
 	{
-		snprintf( targfile, sizeof( targfile ) - 1, "rawdraw_http_files/%s/index.html", fname );
+		snprintf( targfile, sizeof( targfile ) - 1, "tools/rawdraw_http_files/%s/index.html", fname );
 	}
 	else
 	{
-		snprintf( targfile, sizeof( targfile ) - 1, "rawdraw_http_files/%s", fname );
+		snprintf( targfile, sizeof( targfile ) - 1, "tools/rawdraw_http_files/%s", fname );
 	}
 
 	//printf( ":%s:\n", targfile );

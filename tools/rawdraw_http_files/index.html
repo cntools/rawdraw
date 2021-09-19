@@ -211,7 +211,7 @@ function HandleButton( x, y, btn, down )
 	    globalwebsocket.send( new Uint8Array( [ 66, 85, 84, 78, x, x>>8, y, y>>8, 0, 0, down, btn ] ) );	//"BUTN"
 }
 
-function HandleButton( key, down )
+function HandleKey( key, down )
 {
 	if( globalwebsocket_connected )
 	    globalwebsocket.send( new Uint8Array( [ 75, 69, 89, 66, 0, 0, key, down ] ) );	//"KEYB"
