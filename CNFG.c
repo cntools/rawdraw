@@ -2,14 +2,16 @@
 //want to include this in your build, but instead, #include "CNFG.h"
 //after #define CNFG_IMPLEMENTATION in one of your C files.
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined( CNFGHTTP )
+#include "CNFGHTTP.c"
+#elif defined( __wasm__ )
+#include "CNFGWASMDriver.c"
+#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
 #elif defined( __android__ ) || defined( ANDROID )
 #include "CNFGEGLDriver.c"
-#elif defined( __wasm__ )
-#include "CNFGWASMDriver.c"
 #else
 #include "CNFGXDriver.c"
 #endif

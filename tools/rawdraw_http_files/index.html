@@ -1,0 +1,546 @@
+ <!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>cnhttp</title>
+		<style>
+			body { background-color: #000080; }
+			document : {overflow: hidden; width=100%; height=100%;}
+		</style>
+	</head>
+	<body style="height:100%;margin:0; padding:0">
+		<div STYLE="positon:absolute;z-index:3">
+			<canvas width=500 height=500 id=canvas></canvas>
+		</div>
+		<div STYLE="position:absolute;bottom:0;width:640;z-index:10;color:white;a:red;height:50px"><input type=submit value="fs" onclick="ToggleFS();"><div id=status></div></div>
+		<script>
+let rendering = false;
+let fullscreen = false;
+let fullscreenoverride = null;
+function ToggleFS() { fullscreenoverride = !fullscreenoverride; }
+
+//Configure WebGL Stuff (allow to be part of global context)
+let canvas = document.getElementById('canvas');
+let wgl = canvas.getContext('webgl');
+if( !wgl )
+{
+	//Janky - on Firefox 83, with NVIDIA GPU, you need to ask twice.
+	wgl = canvas.getContext('webgl');
+}
+let wglShader = null; //Standard flat color shader
+let wglABV = null;    //Array buffer for vertices
+let wglABC = null;    //Array buffer for colors.
+let wglUXFRM = null;  //Uniform location for transform on solid colors
+
+//Utility stuff for WebGL sahder creation.
+function wgl_makeShader( vertText, fragText )
+{
+	let vert = wgl.createShader(wgl.VERTEX_SHADER);
+	wgl.shaderSource(vert, vertText );
+	wgl.compileShader(vert);
+	if (!wgl.getShaderParameter(vert, wgl.COMPILE_STATUS)) {
+			alert(wgl.getShaderInfoLog(vert));
+	}
+
+	let frag = wgl.createShader(wgl.FRAGMENT_SHADER);
+	wgl.shaderSource(frag, fragText );
+	wgl.compileShader(frag);
+	if (!wgl.getShaderParameter(frag, wgl.COMPILE_STATUS)) {
+			alert(wgl.getShaderInfoLog(frag));
+	}
+	let ret = wgl.createProgram();
+	wgl.attachShader(ret, frag);
+	wgl.attachShader(ret, vert);
+	wgl.linkProgram(ret);
+	wgl.bindAttribLocation( ret, 0, "a0" );
+	wgl.bindAttribLocation( ret, 1, "a1" );
+	return ret;
+}
+
+
+{
+	//We load two shaders, one is a solid-color shader, for most rawdraw objects.
+	wglShader = wgl_makeShader( 
+		"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec4 vc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); vc = a1; }",
+		"precision mediump float; varying vec4 vc; void main() { gl_FragColor = vec4(vc.xyzw); }" );
+
+	wglUXFRM = wgl.getUniformLocation(wglShader, "xfrm" );
+
+	//Compile the shaders.
+	wgl.useProgram(wglShader);
+
+	//Get some vertex/color buffers, to put geometry in.
+	wglABV = wgl.createBuffer();
+	wglABC = wgl.createBuffer();
+
+	//We're using two buffers, so just enable them, now.
+	wgl.enableVertexAttribArray(0);
+	wgl.enableVertexAttribArray(1);
+
+	//Enable alpha blending
+	wgl.enable(wgl.BLEND);
+	wgl.blendFunc(wgl.SRC_ALPHA, wgl.ONE_MINUS_SRC_ALPHA);
+	console.log( wgl );
+}//Do webgl work that must happen every frame.
+
+
+//Buffered geometry system.
+//This handles buffering a bunch of lines/segments, and using them all at once.
+globalv = null;
+
+function CNFGEmitBackendTrianglesJS( vertsF, colorsI, vertcount )
+{
+	if( vertcount <= 0 ) return; 
+	const ab = wgl.ARRAY_BUFFER;
+	wgl.bindBuffer(ab, wglABV);
+	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
+	wgl.vertexAttribPointer(0, 3, wgl.FLOAT, false, 0, 0);
+	wgl.bindBuffer(ab, wglABC);
+	wgl.bufferData(ab, new Uint8Array( colorsI.buffer ), wgl.DYNAMIC_DRAW);
+	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
+	wgl.drawArrays(wgl.TRIANGLES, 0, vertcount );
+	globalv = vertsF;
+}
+
+//Blitting functionality.
+
+let wglBlit = null;   //Blitting shader for texture
+let wglTex = null;    //Texture handle for blitting.
+let wglUXFRMBlit = null; //Uniform location for transform on blitter
+
+//We are not currently supporting the software renderer.
+//We load two shaders, the other is a texture shader, for blitting things.
+wglBlit = wgl_makeShader( 
+	"uniform vec4 xfrm; attribute vec3 a0; attribute vec4 a1; varying vec2 tc; void main() { gl_Position = vec4( a0.xy*xfrm.xy+xfrm.zw, a0.z, 0.5 ); tc = a1.xy; }",
+	"precision mediump float; varying vec2 tc; uniform sampler2D tex; void main() { gl_FragColor = texture2D(tex,tc).wzyx;}" );
+
+wglUXFRMBlit = wgl.getUniformLocation(wglBlit, "xfrm" );
+
+function CNFGBlitImageInternal(uint8memdata, x, y, w, h )
+{
+	if( w <= 0 || h <= 0 ) return;
+
+	wgl.useProgram(wglBlit);
+
+	//Most of the time we don't use textures, so don't initiate at start.
+	if( wglTex == null )	wglTex = wgl.createTexture(); 
+
+	wgl.activeTexture(wgl.TEXTURE0);
+	const t2d = wgl.TEXTURE_2D;
+	wgl.bindTexture(t2d, wglTex);
+
+	//Note that unlike the normal color operation, we don't have an extra offset.
+	wgl.uniform4f( wglUXFRMBlit,
+		1./wgl.viewportWidth, -1./wgl.viewportHeight,
+		-.5+x/wgl.viewportWidth, .5-y/wgl.viewportHeight );
+
+	//These parameters are required.  Not sure why the defaults don't work.
+	wgl.texParameteri(t2d, wgl.TEXTURE_WRAP_T, wgl.CLAMP_TO_EDGE);
+	wgl.texParameteri(t2d, wgl.TEXTURE_WRAP_S, wgl.CLAMP_TO_EDGE);
+	wgl.texParameteri(t2d, wgl.TEXTURE_MIN_FILTER, wgl.NEAREST);
+
+	wgl.texImage2D(t2d, 0, wgl.RGBA, w, h, 0, wgl.RGBA,
+		wgl.UNSIGNED_BYTE, uint8memdata );
+
+	CNFGEmitBackendTrianglesJS( 
+		new Float32Array( [0,0,0, w,0,0,     w,h,0,       0,0,0,   w,h,0,       0,h,0 ] ),
+		new Uint8Array( [0,0,0,0, 255,0,0,0, 255,255,0,0, 0,0,0,0, 255,255,0,0, 0,255,0,0] ),
+		6 );
+
+	wgl.useProgram(wglShader);
+};
+
+//Set when swap buffers is called by host app.
+let frame_transfer_done = false;
+
+// rest of functionality
+
+function CNFGClearFrameInternal( color )
+{
+	color |= 0;
+	wgl.clearColor( ((color>>24)&0xff)/255., ((color>>16)&0xff)/255., ((color>>8)&0xff)/255., ((color>>0)&0xff)/255. ); 
+	wgl.clear( wgl.COLOR_BUFFER_BIT | wgl.COLOR_DEPTH_BIT );
+}
+
+function CNFGGetDimensions(pw, ph)
+{
+	HEAP16[pw>>1] = canvas.width;
+	HEAP16[ph>>1] = canvas.height;
+}
+
+function OGGetAbsoluteTime() { return new Date().getTime()/1000.; }
+
+globalwebsocket = null;
+globalwebsocket_time = -10000;
+globalwebsocket_connected = false;
+
+//Preallocate a large accumulated buffer.
+accumulated_buffer = new Uint32Array( 4000000 );
+accumulated_buffer_place = 0;
+
+request_h = 384;
+request_w = 512;
+
+//Other global state
+cnfg_color = 0xffffffff;
+
+function SendSwap()
+{
+	if( !globalwebsocket_connected ) return;
+
+	let w = wgl.viewportWidth;
+	let h = wgl.viewportHeight;
+	if( w === undefined )
+	{
+		w = wgl.drawingBufferWidth;
+		h = wgl.drawingBufferHeight;
+	}
+	frame_transfer_done = false;
+    globalwebsocket.send( new Uint8Array( [ 83, 87, 65, 80, w, w>>8, h, h>>8 ] ) ); //"SWAP"
+}
+
+function HandleMotion( x, y, but )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 77, 79, 84, 78, x, x>>8, y, y>>8, 0, 0, 0, but ] ) );	//"MOTN"
+}
+
+function HandleButton( x, y, btn, down )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 66, 85, 84, 78, x, x>>8, y, y>>8, 0, 0, down, btn ] ) );	//"BUTN"
+}
+
+function HandleKey( key, down )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 75, 69, 89, 66, 0, 0, key, down ] ) );	//"KEYB"
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Rawdraw functions
+wgl_last_width_over_2 = .5;
+CNFG_BATCH = 262144;
+
+
+CNFGVertDataV = new Float32Array(CNFG_BATCH*3);
+CNFGVertDataC = new Uint32Array(CNFG_BATCH);
+CNFGVertPlace = 0;
+
+function CNFGFlushRender()
+{
+	CNFGEmitBackendTrianglesJS( CNFGVertDataV, CNFGVertDataC, CNFGVertPlace );
+	CNFGVertPlace = 0;
+}
+
+function EmitQuad( cx0, cy0, cx1, cy1, cx2, cy2, cx3, cy3 ) 
+{
+	//Because quads are really useful, but it's best to keep them all triangles if possible.
+	//This lets us draw arbitrary quads.
+	if( CNFGVertPlace >= CNFG_BATCH-6 ) CNFGFlushRender();
+
+	CNFGVertDataV[CNFGVertPlace*3+0] = cx0;  CNFGVertDataV[CNFGVertPlace*3+1] = cy0;
+	CNFGVertDataV[CNFGVertPlace*3+3] = cx1;  CNFGVertDataV[CNFGVertPlace*3+4] = cy1;
+	CNFGVertDataV[CNFGVertPlace*3+6] = cx2;  CNFGVertDataV[CNFGVertPlace*3+7] = cy2;
+	CNFGVertDataV[CNFGVertPlace*3+9] = cx2;  CNFGVertDataV[CNFGVertPlace*3+10] = cy2;
+	CNFGVertDataV[CNFGVertPlace*3+12] = cx1; CNFGVertDataV[CNFGVertPlace*3+13] = cy1;
+	CNFGVertDataV[CNFGVertPlace*3+15] = cx3; CNFGVertDataV[CNFGVertPlace*3+16] = cy3;
+	CNFGVertDataC[CNFGVertPlace+0] = cnfg_color;
+	CNFGVertDataC[CNFGVertPlace+1] = cnfg_color;
+	CNFGVertDataC[CNFGVertPlace+2] = cnfg_color;
+	CNFGVertDataC[CNFGVertPlace+3] = cnfg_color;
+	CNFGVertDataC[CNFGVertPlace+4] = cnfg_color;
+	CNFGVertDataC[CNFGVertPlace+5] = cnfg_color;
+	CNFGVertPlace += 6;
+}
+
+function CNFGTackPixel( x1, y1 )
+{
+	x1++; y1++;
+	let l2 = wgl_last_width_over_2;
+	let l2u = wgl_last_width_over_2+0.5;
+	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
+}
+
+
+function CNFGTackSegment( x1, y1, x2, y2 )
+{
+//	console.log( x1 + " " + y1 + " " + x2 + " " + y2 ); 
+	let ix1 = x1;
+	let iy1 = y1;
+	let ix2 = x2;
+	let iy2 = y2;
+
+	let dx = ix2-ix1;
+	let dy = iy2-iy1;
+	let imag = 1./Math.sqrt(dx*dx+dy*dy);
+	dx *= imag;
+	dy *= imag;
+	let orthox = dy*wgl_last_width_over_2;
+	let orthoy =-dx*wgl_last_width_over_2;
+
+	ix2 += dx/2 + 0.5;
+	iy2 += dy/2 + 0.5;
+	ix1 -= dx/2 - 0.5;
+	iy1 -= dy/2 - 0.5;
+
+	//This logic is incorrect. XXX FIXME.
+	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
+}
+
+function CNFGTackRectangle( x1, y1, x2, y2 )
+{
+	let ix1 = x1;
+	let iy1 = y1;
+	let ix2 = x2;
+	let iy2 = y2;
+	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
+}
+
+function CNFGTackPoly( points, verts )
+{
+	verts |= 0;
+	let i = 0|0;
+	let tris = verts-2;
+	if( CNFGVertPlace >= CNFG_BATCH-tris*3 ) CNFGFlushRender();
+
+	for( i = 0; i < tris; i++ )
+	{
+		CNFGVertDataV[CNFGVertPlace*3+0] = points[0];
+		CNFGVertDataV[CNFGVertPlace*3+1] = points[1];
+		CNFGVertDataV[CNFGVertPlace*3+3] = points[i*2+2];
+		CNFGVertDataV[CNFGVertPlace*3+4] = points[i*2+3];
+		CNFGVertDataV[CNFGVertPlace*3+6] = points[i*2+4];
+		CNFGVertDataV[CNFGVertPlace*3+7] = points[i*2+5];
+
+		CNFGVertDataC[CNFGVertPlace+0] = cnfg_color;
+		CNFGVertDataC[CNFGVertPlace+1] = cnfg_color;
+		CNFGVertDataC[CNFGVertPlace+2] = cnfg_color;
+
+		CNFGVertPlace += 3;
+	}
+}
+
+function CNFGSetLineWidth( width )
+{
+	wgl_last_width_over_2 = width/2.0;// + 0.5;
+}
+
+
+
+
+function TickWebsocket()
+{
+	if( OGGetAbsoluteTime() - globalwebsocket_time > 3 )
+	{
+		document.getElementById( "status" ).innerHTML = "Connecting";
+		// Need to connect.
+		globalwebsocket_time = OGGetAbsoluteTime();
+		globalwebsocket_connected = false;
+		globalwebsocket = new WebSocket(  "ws://" + location.host + "/d/ws/cmdbuf" );
+		globalwebsocket.binaryType = 'arraybuffer';
+		globalwebsocket.onopen = function()
+		{
+			document.getElementById( "status" ).innerHTML = "Connected";
+			globalwebsocket_connected = true;
+			SendSwap();
+		}
+		globalwebsocket.onmessage = function (event) {
+			let ab = event.data;
+			globalwebsocket_time = OGGetAbsoluteTime();
+			if( ab.byteLength == 0 )
+			{
+				//Process buffer.
+				let i = 0|0;
+				let lastdata = 0;
+				while( i < accumulated_buffer_place )
+				{
+				let data = accumulated_buffer[i++];
+				if( ( data >>> 24 ) & 0xf && ( ( data >>> 28) != 2 ) )
+				{
+					console.log( "Fault at " + i + " Reading " + data + " last " + lastdata + " // " + accumulated_buffer[i-1] + " " + accumulated_buffer[i-2] + " " + accumulated_buffer[i - 3] + " " + accumulated_buffer[i-4] );
+					break;
+				}
+				lastdata = data;
+				switch( data >>> 28 )
+				{
+					case 6:
+					case 0: 	// Continuation - we should never get here.
+						break;
+					case 1:     // Color
+					{
+						let col = accumulated_buffer[i++];
+						cnfg_color = ( ( col >>> 24 ) & 0xff ) | ( ( ( col >>> 16 ) & 0xff ) << 8 ) | ( ( ( col >>> 8 ) & 0xff ) << 16 ) | ( ( ( col >>> 0 ) & 0xff ) << 24 );
+						break;
+					}
+					case 2:
+						CNFGTackPixel( data & 0x3fff, ( data >>> 14 ) & 0x3fff );
+						break;
+					case 3:
+					{
+						let nextfew = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+8 ) ); i+=2;
+						CNFGTackSegment( nextfew[0], nextfew[1], nextfew[2], nextfew[3] );
+						break;
+					}
+					case 4:
+					{
+						let nextfew = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+8 ) ); i+=2;
+						CNFGTackRectangle( nextfew[0], nextfew[1], nextfew[2], nextfew[3] );
+						break;
+					}
+					case 5:
+					{
+						let numpts = data & 0xfffff;
+						let ab = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+numpts*4 ) );
+						i += numpts;
+						CNFGTackPoly( ab, numpts );
+						break;
+					}
+					case 7:
+					{
+						//break;
+						//blit!
+						CNFGFlushRender();
+						let xy = accumulated_buffer[i++];
+						let x = xy & 0xffff;
+						let y = (xy >>> 16 ) & 0xffff;
+						let w = data & 0x3fff;
+						let h = (data>>>14) & 0x3fff;
+						let ab = new Uint8Array( accumulated_buffer.buffer.slice( i*4, i*4+ w*h*4 ) );
+						i += w*h;
+						CNFGBlitImageInternal( ab, x, y, w, h )
+						break;
+					}
+					case 8:
+					{
+						CNFGFlushRender();
+						let numblocks = data & 0xff;
+						let fsreq = ( data >>> 8 ) & 0x1;
+						let titlelen = (data >>> 16 ) & 0xff;
+						cnfg_bgcolor = accumulated_buffer[i++];
+						let reqs = accumulated_buffer[i++];
+						request_w = reqs & 0xffff;
+						request_h = ( reqs >> 16 ) & 0xffff;
+						CNFGClearFrameInternal( cnfg_bgcolor );
+						let j = 0|0;
+						let title = new Uint8Array( accumulated_buffer.buffer.slice( i*4, i*4+titlelen ) );
+						i += numblocks - 3;
+						document.title = new TextDecoder().decode( title );
+						fullscreen = fsreq;
+						break;
+					}
+					case 9:
+						//Swap buffers (not realy used - we detect end of frame with a 0-length message.)
+						CNFGFlushRender();
+						break;
+					case 10: //set line width
+						CNFGSetLineWidth( data & 0xfff );
+						break;
+				}
+				}
+
+				frame_transfer_done = true;
+				accumulated_buffer_place = 0;
+
+			}
+			else
+			{
+				accumulated_buffer.set( new Uint32Array( ab ), accumulated_buffer_place );
+				accumulated_buffer_place += ab.byteLength/4;
+			}
+		}
+		globalwebsocket.onclose = function(event)
+		{
+			console.log( "Forced close." );
+			globalwebsocket_connected = false;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function FrameStart()
+{
+	//console.log( globalwebsocket_connected + " " + frame_transfer_done );
+	if( !globalwebsocket_connected )
+		return;
+
+	if( fullscreenoverride === null )
+	{
+		// Don't affect fullscreen
+	}
+	else
+	{
+		fullscreen = fullscreenoverride;
+	}
+
+	//Fixup canvas sizes
+	if( fullscreen )
+	{
+		wgl.viewportWidth = canvas.width = window.innerWidth;
+		wgl.viewportHeight = canvas.height = window.innerHeight;
+		canvas.style = "position:absolute; top:0; left:0;"
+	}
+	else
+	{
+		wgl.viewportWidth = canvas.width = request_w;
+		wgl.viewportHeight = canvas.height = request_h;		
+	}
+	
+	if( frame_transfer_done )
+	{
+		//Make sure viewport and input to shader is correct.
+		//We do this so we can pass literal coordinates into the shader.
+		wgl.viewport( 0, 0, wgl.viewportWidth, wgl.viewportHeight );
+
+		//Update geometry transform (Scale/shift)
+		wgl.uniform4f( wglUXFRM, 
+			1./wgl.viewportWidth, -1./wgl.viewportHeight,
+			-0.5, 0.5);
+
+		SendSwap();
+
+	}
+}
+
+function AnimationFrame()
+{
+	TickWebsocket();
+	FrameStart();
+	requestAnimationFrame( AnimationFrame );
+}
+
+requestAnimationFrame( AnimationFrame );
+canvas.addEventListener('mousemove', e => { HandleMotion( e.offsetX, e.offsetY, e.buttons ); } );
+canvas.addEventListener('touchmove', e => { HandleMotion( e.touches[0].clientX, e.touches[0].clientY, 1 ); } );
+canvas.addEventListener('mouseup', e => {   HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
+canvas.addEventListener('mousedown', e => { HandleButton( e.offsetX, e.offsetY, e.button, 1 ); return false; } );
+document.addEventListener('keydown', e => { HandleKey( e.keyCode, 1 ); } );
+document.addEventListener('keyup', e => {   HandleKey( e.keyCode, 0 ); } );
+
+
+
+/*
+function SystemStart( title, w, h )
+{
+	document.title = toUTF8( title );
+	wgl.viewportWidth = canvas.width = w;
+	wgl.viewportHeight = canvas.height = h;
+}
+*/
+		</script>
+	</body>
+</html>
