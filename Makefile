@@ -44,7 +44,7 @@ ogltest : ogltest.c CNFG.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL -lm
 
 rawdraw_http : rawdraw.c tools/rawdraw_http_page.h
-	$(CC) -o $@ $< -DCNFGHTTP -lm -ldl
+	$(CC) -o $@ $< -DCNFGHTTP -lm -ldl -Os -s
 
 tools/binary_to_buffer : tools/binary_to_buffer.c
 	$(CC) -o $@ $^
