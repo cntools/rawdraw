@@ -172,6 +172,7 @@ int main()
 
 	CNFGBGColor = 0x000080FF; //Darkblue
 	CNFGSetup( "Test Bench", 640, 480 );
+
 	// CNFGSetupFullscreen( "Test Bench", 0 );
 
 	//CNFGSetLineWidth( 2 );

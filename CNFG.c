@@ -4,6 +4,8 @@
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #include "CNFGWinDriver.c"
+#elif defined( CNFGHTTP )
+#include "CNFGHTTP.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
 #elif defined( __android__ ) || defined( ANDROID )
