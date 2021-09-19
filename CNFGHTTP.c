@@ -1699,6 +1699,9 @@ int maxdatacmds;
 short last_dimensions_w;
 short last_dimensions_h;
 
+short cnfg_req_w;
+short cnfg_req_h;
+
 
 void HTTPCustomCallback( )
 {
@@ -1840,6 +1843,8 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	curdatacmds = 0;
 	maxdatacmds = 0;
 	rd_request_fullscreen = 0;
+	cnfg_req_w = w;
+	cnfg_req_h = h;
 	return 0;
 }
 
@@ -1875,27 +1880,28 @@ uint32_t CNFGColor( uint32_t RGBA )
 
 void CNFGTackPixel( short x1, short y1 )
 {
-	if( x1 < 0 ) x1 = 0;  if( y1 < 0 ) y1 = 0;
+	if( x1 < 0 | x1 > 0x3fff ) return;
+	if( y1 < 0 | y1 > 0x3fff ) return;
 	uint32_t cmds[1] = { 0x20000000 | (x1 & 0x3fff ) | ( ( y1 & 0x3fff ) << 14 ) };
 	QueueCmds( cmds, 1 );
 }
 
 void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 {
-	if( x1 < 0 ) x1 = 0;  if( y1 < 0 ) y1 = 0; if( x2 < 0 ) x2 = 0; if( y2 < 0 ) y2 = 0;
-	uint32_t cmds[2] = { 
-		0x30000000 | (x1 & 0x3fff ) | ( ( y1 & 0x3fff ) << 14 ),
-		0x00000000 | (x2 & 0x3fff ) | ( ( y2 & 0x3fff ) << 14 ) };
-	QueueCmds( cmds, 2 );
+	uint32_t cmds[3] = { 
+		0x30000000,
+		( (uint16_t)x1 ) | ( (uint16_t)y1 << 16 ),
+		( (uint16_t)x2 ) | ( (uint16_t)y2 << 16 ) };
+	QueueCmds( cmds, 3 );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 {
-	if( x1 < 0 ) x1 = 0;  if( y1 < 0 ) y1 = 0; if( x2 < 0 ) x2 = 0; if( y2 < 0 ) y2 = 0;
-	uint32_t cmds[2] = { 
-		0x40000000 | (x1 & 0x3fff ) | ( ( y1 & 0x3fff ) << 14 ),
-		0x00000000 | (x2 & 0x3fff ) | ( ( y2 & 0x3fff ) << 14 ) };
-	QueueCmds( cmds, 2 );
+	uint32_t cmds[3] = { 
+		0x40000000,
+		( (uint16_t)x1 ) | ( (uint16_t)y1 << 16 ),
+		( (uint16_t)x2 ) | ( (uint16_t)y2 << 16 ) };
+	QueueCmds( cmds, 3 );
 }
 
 void CNFGSetLineWidth( short width )
@@ -1908,22 +1914,25 @@ void CNFGTackPoly( RDPoint * points, int verts )
 {
 	uint32_t * cmds = alloca( 4 * verts + 4 );
 	int i;
-	cmds[0]
+	cmds[0] = 0x50000000 | verts;
 	for( i = 0; i < verts; i++ )
 	{
-		cmds[i] = ((i == 0)?0x50000000:0x60000000) | (points[i].x & 0x3fff ) | ( ( points[i].y & 0x3fff ) << 14 );
+		uint16_t lx = points[i].x;
+		uint16_t ly = points[i].y;
+		cmds[i+1] = lx | ( ly << 16 );
 	}
-	QueueCmds( cmds, i + 1 );
+	QueueCmds( cmds, verts + 1 );
 }
 
 void CNFGClearFrame()
 {
 	int sl = strlen( cnfg_http_window_name );
-	int blocks = ( sl + 8 + 4 ) / 4;
+	int blocks = ( sl + 8 + 8 ) / 4;
 	uint32_t * cmds = alloca( blocks * 4 );
-	cmds[0] = 0x80000000 | blocks | (rd_request_fullscreen<<8);
+	cmds[0] = 0x80000000 | blocks | (rd_request_fullscreen<<8) | (sl<<16);
 	cmds[1] = CNFGBGColor;
-	memcpy( cmds+2, cnfg_http_window_name, sl + 1 );
+	cmds[2] = cnfg_req_w | ( cnfg_req_h << 16);
+	memcpy( cmds+3, cnfg_http_window_name, sl + 1 );
 	QueueCmds( cmds, blocks );
 }
 
@@ -1948,10 +1957,11 @@ void CNFGSwapBuffers()
 
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
-	if( x < 0 ) x = 0;  if( y < 0 ) y = 0;
+	if( w < 0  || h < 0 ) return;
+
 	uint32_t * cmds = alloca( 4 * w * h + 8 );
-	cmds[0] = 0x70000000 | ( x & 0x3fff ) | ( ( y & 0x3fff ) << 14 );
-	cmds[1] = 0x00000000 | ( w & 0x3fff ) | ( ( h & 0x3fff ) << 14 );
+	cmds[0] = 0x70000000 | ( w & 0x3fff ) | ( ( h & 0x3fff ) << 14 );
+	cmds[1] =  ( x | ( y<<16) );
 	int i;
 	memcpy( cmds + 2, data, w * h * 4 );
 	QueueCmds( cmds, w * h + 2 );

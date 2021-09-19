@@ -9,10 +9,10 @@
 		</style>
 	</head>
 	<body>
-		<div ID="status" STYLE="position:absolute;width:640;z-index:10;color:white;a:red">...</div>
 		<div STYLE="positon:absolute;z-index:3">
 			<canvas width=500 height=500 id=canvas></canvas>
 		</div>
+		<div ID="status" STYLE="position:fixed;bottom:10;width:640;z-index:10;color:white;a:red">...</div>
 		<script>
 let rendering = false;
 let fullscreen = false;
@@ -78,6 +78,7 @@ function wgl_makeShader( vertText, fragText )
 	//Enable alpha blending
 	wgl.enable(wgl.BLEND);
 	wgl.blendFunc(wgl.SRC_ALPHA, wgl.ONE_MINUS_SRC_ALPHA);
+	console.log( wgl );
 }//Do webgl work that must happen every frame.
 
 
@@ -87,12 +88,13 @@ globalv = null;
 
 function CNFGEmitBackendTrianglesJS( vertsF, colorsI, vertcount )
 {
+	if( vertcount <= 0 ) return; 
 	const ab = wgl.ARRAY_BUFFER;
 	wgl.bindBuffer(ab, wglABV);
 	wgl.bufferData(ab, vertsF, wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(0, 3, wgl.FLOAT, false, 0, 0);
 	wgl.bindBuffer(ab, wglABC);
-	wgl.bufferData(ab, colorsI, wgl.DYNAMIC_DRAW);
+	wgl.bufferData(ab, new Uint8Array( colorsI.buffer ), wgl.DYNAMIC_DRAW);
 	wgl.vertexAttribPointer(1, 4, wgl.UNSIGNED_BYTE, true, 0, 0);
 	wgl.drawArrays(wgl.TRIANGLES, 0, vertcount );
 	globalv = vertsF;
@@ -150,7 +152,7 @@ function CNFGBlitImageInternal(uint8memdata, x, y, w, h )
 let frame_transfer_done = false;
 
 // rest of functionality
-
+/*
 function CNFGSetup( title, w, h )
 {
 	SystemStart( title, w, h );
@@ -163,11 +165,11 @@ function CNFGSetupFullscreen(title,w,h )
 	canvas.style = "position:absolute; top:0; left:0;"
 	fullscreen = true;
 }
-
+*/
 function CNFGClearFrameInternal( color )
 {
 	color |= 0;
-	wgl.clearColor( (color&0xff)/255., ((color>>8)&0xff)/255., ((color>>16)&0xff)/255., ((color>>24)&0xff)/255. ); 
+	wgl.clearColor( ((color>>24)&0xff)/255., ((color>>16)&0xff)/255., ((color>>8)&0xff)/255., ((color>>0)&0xff)/255. ); 
 	wgl.clear( wgl.COLOR_BUFFER_BIT | wgl.COLOR_DEPTH_BIT );
 }
 
@@ -187,8 +189,11 @@ globalwebsocket_connected = false;
 accumulated_buffer = new Uint32Array( 4000000 );
 accumulated_buffer_place = 0;
 
+request_h = 384;
+request_w = 512;
+
 //Other global state
-cnfg_color = 0xffffffffff;
+cnfg_color = 0xffffffff;
 
 function SendSwap()
 {
@@ -227,6 +232,7 @@ function EmitQuad( cx0, cy0, cx1, cy1, cx2, cy2, cx3, cy3 )
 	//Because quads are really useful, but it's best to keep them all triangles if possible.
 	//This lets us draw arbitrary quads.
 	if( CNFGVertPlace >= CNFG_BATCH-6 ) CNFGFlushRender();
+
 	CNFGVertDataV[CNFGVertPlace*3+0] = cx0;  CNFGVertDataV[CNFGVertPlace*3+1] = cy0;
 	CNFGVertDataV[CNFGVertPlace*3+3] = cx1;  CNFGVertDataV[CNFGVertPlace*3+4] = cy1;
 	CNFGVertDataV[CNFGVertPlace*3+6] = cx2;  CNFGVertDataV[CNFGVertPlace*3+7] = cy2;
@@ -253,6 +259,7 @@ function CNFGTackPixel( x1, y1 )
 
 function CNFGTackSegment( x1, y1, x2, y2 )
 {
+//	console.log( x1 + " " + y1 + " " + x2 + " " + y2 ); 
 	let ix1 = x1;
 	let iy1 = y1;
 	let ix2 = x2;
@@ -345,8 +352,8 @@ function TickWebsocket()
 				let data = accumulated_buffer[i++];
 				if( ( data >>> 24 ) & 0xf )
 				{
-					console.log( "Fault at " + i + " Reading " + data + " last " + lastdata );
-					//break;
+					console.log( "Fault at " + i + " Reading " + data + " last " + lastdata + " // " + accumulated_buffer[i-1] + " " + accumulated_buffer[i-2] + " " + accumulated_buffer[i - 3] + " " + accumulated_buffer[i-4] );
+					break;
 				}
 				lastdata = data;
 				switch( data >>> 28 )
@@ -355,67 +362,70 @@ function TickWebsocket()
 					case 0: 	// Continuation - we should never get here.
 						break;
 					case 1:     // Color
-						cnfg_color = accumulated_buffer[i++];
+					{
+						let col = accumulated_buffer[i++];
+						cnfg_color = ( ( col >>> 24 ) & 0xff ) | ( ( ( col >>> 16 ) & 0xff ) << 8 ) | ( ( ( col >>> 8 ) & 0xff ) << 16 ) | ( ( ( col >>> 0 ) & 0xff ) << 24 );
 						break;
+					}
 					case 2:
 						CNFGTackPixel( data & 0x3fff, ( data >>> 14 ) & 0x3fff );
 						break;
 					case 3:
 					{
-						let next = accumulated_buffer[i++];
-						CNFGTackSegment( data & 0x3fff, ( data >>> 14 ) & 0x3fff, next & 0x3fff, ( next >>> 14 ) & 0x3fff );
+						let nextfew = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+8 ) ); i+=2;
+						CNFGTackSegment( nextfew[0], nextfew[1], nextfew[2], nextfew[3] );
 						break;
 					}
 					case 4:
 					{
-						let next = accumulated_buffer[i++];
-						CNFGTackRectangle( data & 0x3fff, ( data >>> 14 ) & 0x3fff, next & 0x3fff, ( next >>> 14 ) & 0x3fff );
+						let nextfew = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+8 ) ); i+=2;
+						CNFGTackRectangle( nextfew[0], nextfew[1], nextfew[2], nextfew[3] );
 						break;
 					}
 					case 5:
 					{
-						let ptarray = [];
-						
-						do {
-							ptarray.push( data & 0x3fff );
-							ptarray.push( (data>>>14) & 0x3fff );
-							data = accumulated_buffer[i++];
-						} while( ( data >>> 28 ) == 5 );
-						ptarray.push( data & 0x3fff );
-						ptarray.push( (data>>>14) & 0x3fff );
-						CNFGTackPoly( ptarray, data.length/ 3 );
+						let numpts = data & 0xfffff;
+						let ab = new Int16Array( accumulated_buffer.buffer.slice( i*4, i*4+numpts*4 ) );
+						i += numpts;
+						CNFGTackPoly( ab, numpts );
 						break;
 					}
 					case 7:
 					{
 						//break;
 						//blit!
-						let wh = accumulated_buffer[i++];
-						let x = data & 0x3fff;
-						let y = (data >>> 14 ) & 0x3fff;
-						let w = wh & 0x3fff;
-						let h = (wh>>>14) & 0x3fff;
-						let ab = new Uint8Array( accumulated_buffer.buffer.slice( i*4, w*h*4 ) );
+						CNFGFlushRender();
+						let xy = accumulated_buffer[i++];
+						let x = xy & 0xffff;
+						let y = (xy >>> 16 ) & 0xffff;
+						let w = data & 0x3fff;
+						let h = (data>>>14) & 0x3fff;
+						let ab = new Uint8Array( accumulated_buffer.buffer.slice( i*4, i*4+ w*h*4 ) );
 						i += w*h;
-						console.log( x + " " + y + " " + w + " " + h );
-						break;
 						CNFGBlitImageInternal( ab, x, y, w, h )
 						break;
 					}
 					case 8:
 					{
+						CNFGFlushRender();
 						let numblocks = data & 0xff;
 						let fsreq = ( data >>> 8 ) & 0x1;
+						let titlelen = (data >>> 16 ) & 0xff;
 						cnfg_bgcolor = accumulated_buffer[i++];
+						let reqs = accumulated_buffer[i++];
+						request_w = reqs & 0xffff;
+						request_h = ( reqs >> 16 ) & 0xffff;
 						CNFGClearFrameInternal( cnfg_bgcolor );
 						let j = 0|0;
-						let title = new Uint8Array( accumulated_buffer.buffer.slice( i*4, (numblocks-2)*4 ) );
-						i += numblocks - 2;
+						let title = new Uint8Array( accumulated_buffer.buffer.slice( i*4, titlelen ) );
+						i += numblocks - 3;
 						document.title = new TextDecoder().decode( title );
+						fullscreen = fsreq;
 						break;
 					}
 					case 9:
 						//Swap buffers (not realy used - we detect end of frame with a 0-length message.)
+						CNFGFlushRender();
 						break;
 					case 10: //set line width
 						CNFGSetLineWidth( data & 0xfff );
@@ -465,19 +475,28 @@ function FrameStart()
 	{
 		wgl.viewportWidth = canvas.width = window.innerWidth;
 		wgl.viewportHeight = canvas.height = window.innerHeight;
+		canvas.style = "position:absolute; top:0; left:0;"
+	}
+	else
+	{
+		wgl.viewportWidth = canvas.width = request_w;
+		wgl.viewportHeight = canvas.height = request_h;		
 	}
 	
-	//Make sure viewport and input to shader is correct.
-	//We do this so we can pass literal coordinates into the shader.
-	wgl.viewport( 0, 0, wgl.viewportWidth, wgl.viewportHeight );
-
-	//Update geometry transform (Scale/shift)
-	wgl.uniform4f( wglUXFRM, 
-		1./wgl.viewportWidth, -1./wgl.viewportHeight,
-		-0.5, 0.5);
-
 	if( frame_transfer_done )
+	{
+		//Make sure viewport and input to shader is correct.
+		//We do this so we can pass literal coordinates into the shader.
+		wgl.viewport( 0, 0, wgl.viewportWidth, wgl.viewportHeight );
+
+		//Update geometry transform (Scale/shift)
+		wgl.uniform4f( wglUXFRM, 
+			1./wgl.viewportWidth, -1./wgl.viewportHeight,
+			-0.5, 0.5);
+
 		SendSwap();
+
+	}
 }
 
 function AnimationFrame()
@@ -489,45 +508,13 @@ function AnimationFrame()
 
 requestAnimationFrame( AnimationFrame );
 
-
+/*
 function SystemStart( title, w, h )
 {
 	document.title = toUTF8( title );
 	wgl.viewportWidth = canvas.width = w;
 	wgl.viewportHeight = canvas.height = h;
 }
-
-/*
-
-function ProcessBuffer()
-{
-		//Various draw-functions.
-		CNFGEmitBackendTriangles : (vertsF, colorsI, vertcount )=>
-		{
-			//Take a float* and uint32_t* of vertices, and flat-render them.
-			CNFGEmitBackendTrianglesJS(
-				HEAPF32.slice(vertsF>>2,(vertsF>>2)+vertcount*3),
-				HEAPU8.slice(colorsI,(colorsI)+vertcount*4),
-				vertcount );
-		},
-		CNFGSetup : (title,w,h ) => {
-			SystemStart( title, w, h );
-			fullscreen = false;
-		},
-		CNFGSetupFullscreen : (title,w,h ) => {
-			SystemStart( title, w, h );
-			canvas.style = "position:absolute; top:0; left:0;"
-			fullscreen = true;
-		},
-		CNFGClearFrameInternal: ( color ) => {
-			wgl.clearColor( (color&0xff)/255., ((color>>8)&0xff)/255.,
-				((color>>16)&0xff)/255., ((color>>24)&0xff)/255. ); 
-			wgl.clear( wgl.COLOR_BUFFER_BIT | wgl.COLOR_DEPTH_BIT );
-		},
-		CNFGGetDimensions: (pw, ph) => {
-			HEAP16[pw>>1] = canvas.width;
-			HEAP16[ph>>1] = canvas.height;
-		},
 */
 		</script>
 	</body>
