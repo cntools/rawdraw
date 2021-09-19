@@ -222,7 +222,7 @@ function HandleKey( key, down )
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Rawdraw functions
 wgl_last_width_over_2 = .5;
-CNFG_BATCH = 131072;
+CNFG_BATCH = 262144;
 
 
 CNFGVertDataV = new Float32Array(CNFG_BATCH*3);
@@ -358,7 +358,7 @@ function TickWebsocket()
 				while( i < accumulated_buffer_place )
 				{
 				let data = accumulated_buffer[i++];
-				if( ( data >>> 24 ) & 0xf )
+				if( ( data >>> 24 ) & 0xf && ( ( data >>> 28) != 2 ) )
 				{
 					console.log( "Fault at " + i + " Reading " + data + " last " + lastdata + " // " + accumulated_buffer[i-1] + " " + accumulated_buffer[i-2] + " " + accumulated_buffer[i - 3] + " " + accumulated_buffer[i-4] );
 					break;

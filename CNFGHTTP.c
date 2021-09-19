@@ -875,7 +875,7 @@ uint8_t WSPOPMASK()
 
 
 
-#ifdef WIN32
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #include <winsock2.h>
 #define socklen_t uint32_t
 #define SHUT_RDWR SD_BOTH
@@ -885,13 +885,12 @@ uint8_t WSPOPMASK()
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/in.h>
+uint16_t htons(uint16_t hostshort);
 #endif
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <poll.h>
-uint16_t htons(uint16_t hostshort);
 
 #include <stdio.h>
 #include <string.h>
@@ -998,6 +997,7 @@ int TCPCanRead( int sock )
 	return r;
 }
 
+
 int TCPException( int sock )
 {
 	int error_code;
@@ -1028,7 +1028,7 @@ void TermHTTPServer()
 int TickHTTP()
 {
 	int i;
-	struct pollfd allpolls[HTTP_CONNECTIONS+1];
+	//struct pollfd allpolls[HTTP_CONNECTIONS+1];
 	short mappedhttp[HTTP_CONNECTIONS+1];
 	if( serverSocket == 0 ) return -1;
 
@@ -1036,7 +1036,7 @@ int TickHTTP()
 	{
 		static double last;
 		double now;
-#ifdef WIN32
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 		static LARGE_INTEGER lpf;
 		LARGE_INTEGER li;
 
@@ -1064,9 +1064,9 @@ int TickHTTP()
 			HTTPTick( 0 );
 		}
 
-		int pollct = 1;
+/*		int pollct = 1;
 		allpolls[0].fd = serverSocket;
-		allpolls[0].events = POLLIN;
+		allpolls[0].events = LISTENPOLL;
 		for( i = 0; i < HTTP_CONNECTIONS;i ++)
 		{
 			if( !sockets[i] || HTTPConnections[i].state == 0 ) continue;
@@ -1078,9 +1078,9 @@ int TickHTTP()
 
 		//Do something to watch all currently-waiting sockets.
 		poll( allpolls, pollct, HTTP_POLL_TIMEOUT ); 
-
+*/
 		//If there's faults, bail.
-		if( allpolls[0].revents & (POLLERR|POLLHUP) )
+		if( TCPException( serverSocket ) )
 		{
 			closesocket( serverSocket );
 			for( i = 0; i < HTTP_CONNECTIONS;i ++)
@@ -1089,14 +1089,14 @@ int TickHTTP()
 			}
 			break;
 		}
-		if( allpolls[0].revents & POLLIN )
+		if( TCPCanRead( serverSocket ) )
 		{
 			struct   sockaddr_in tin;
 			socklen_t addrlen  = sizeof(tin);
 			memset( &tin, 0, addrlen );
 			int tsocket = accept( serverSocket, (struct sockaddr *)&tin, &addrlen );
 
-#ifdef WIN32
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 			struct linger lx;
 			lx.l_onoff = 1;
 			lx.l_linger = 0;
@@ -1123,16 +1123,17 @@ int TickHTTP()
 				sockets[r] = tsocket;
 			}
 		}
-		for( i = 1; i < pollct; i++)
+		for( i = 0; i < HTTP_CONNECTIONS; i++)
 		{
-			int wc = mappedhttp[i];
-			if( allpolls[i].revents & (POLLERR|POLLHUP) )
+			int wc = i;
+			if( !sockets[i] || HTTPConnections[i].state == 0 ) continue;
+			if( TCPException(sockets[i]) )
 			{
 				http_disconnetcb( wc );
 				closesocket( sockets[wc] );
 				sockets[wc] = 0;
 			}
-			else if( allpolls[i].revents & POLLIN )
+			else if( TCPCanRead( sockets[i] ) )
 			{
 				int dco = HTTPConnections[i].corked_data_place;
 				uint8_t data[8192];
@@ -1184,7 +1185,7 @@ int TickHTTP()
 
 int RunHTTP( int port )
 {
-#ifdef WIN32
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 {
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -1214,7 +1215,7 @@ int RunHTTP( int port )
 	}
 
 	//Disable SO_LINGER (Well, enable it but turn it way down)
-#ifdef WIN32
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 	struct linger lx;
 	lx.l_onoff = 1;
 	lx.l_linger = 0;
@@ -1921,8 +1922,8 @@ uint32_t CNFGColor( uint32_t RGBA )
 
 void CNFGTackPixel( short x1, short y1 )
 {
-	if( x1 < 0 | x1 > 0x3fff ) return;
-	if( y1 < 0 | y1 > 0x3fff ) return;
+	if( x1 < 0 || x1 > 0x3fff ) return;
+	if( y1 < 0 || y1 > 0x3fff ) return;
 	uint32_t cmds[1] = { 0x20000000 | (x1 & 0x3fff ) | ( ( y1 & 0x3fff ) << 14 ) };
 	QueueCmds( cmds, 1 );
 }
