@@ -8,14 +8,16 @@
 			document : {overflow: hidden; width=100%; height=100%;}
 		</style>
 	</head>
-	<body>
+	<body style="height:100%;margin:0; padding:0">
 		<div STYLE="positon:absolute;z-index:3">
 			<canvas width=500 height=500 id=canvas></canvas>
 		</div>
-		<div ID="status" STYLE="position:fixed;bottom:10;width:640;z-index:10;color:white;a:red">...</div>
+		<div STYLE="position:absolute;bottom:0;width:640;z-index:10;color:white;a:red;height:50px"><input type=submit value="fs" onclick="ToggleFS();"><div id=status></div></div>
 		<script>
 let rendering = false;
 let fullscreen = false;
+let fullscreenoverride = null;
+function ToggleFS() { fullscreenoverride = !fullscreenoverride; }
 
 //Configure WebGL Stuff (allow to be part of global context)
 let canvas = document.getElementById('canvas');
@@ -152,20 +154,7 @@ function CNFGBlitImageInternal(uint8memdata, x, y, w, h )
 let frame_transfer_done = false;
 
 // rest of functionality
-/*
-function CNFGSetup( title, w, h )
-{
-	SystemStart( title, w, h );
-	fullscreen = false;
-}
 
-function CNFGSetupFullscreen(title,w,h )
-{
-	SystemStart( title, w, h );
-	canvas.style = "position:absolute; top:0; left:0;"
-	fullscreen = true;
-}
-*/
 function CNFGClearFrameInternal( color )
 {
 	color |= 0;
@@ -207,8 +196,27 @@ function SendSwap()
 		h = wgl.drawingBufferHeight;
 	}
 	frame_transfer_done = false;
-    globalwebsocket.send( new Uint8Array( [ 83, 87, 65, 80, w, w>>8, h, h>>8 ] ) );
+    globalwebsocket.send( new Uint8Array( [ 83, 87, 65, 80, w, w>>8, h, h>>8 ] ) ); //"SWAP"
 }
+
+function HandleMotion( x, y, but )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 77, 79, 84, 78, x, x>>8, y, y>>8, 0, 0, 0, but ] ) );	//"MOTN"
+}
+
+function HandleButton( x, y, btn, down )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 66, 85, 84, 78, x, x>>8, y, y>>8, 0, 0, down, btn ] ) );	//"BUTN"
+}
+
+function HandleButton( key, down )
+{
+	if( globalwebsocket_connected )
+	    globalwebsocket.send( new Uint8Array( [ 75, 69, 89, 66, 0, 0, key, down ] ) );	//"KEYB"
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -417,7 +425,7 @@ function TickWebsocket()
 						request_h = ( reqs >> 16 ) & 0xffff;
 						CNFGClearFrameInternal( cnfg_bgcolor );
 						let j = 0|0;
-						let title = new Uint8Array( accumulated_buffer.buffer.slice( i*4, titlelen ) );
+						let title = new Uint8Array( accumulated_buffer.buffer.slice( i*4, i*4+titlelen ) );
 						i += numblocks - 3;
 						document.title = new TextDecoder().decode( title );
 						fullscreen = fsreq;
@@ -470,6 +478,15 @@ function FrameStart()
 	if( !globalwebsocket_connected )
 		return;
 
+	if( fullscreenoverride === null )
+	{
+		// Don't affect fullscreen
+	}
+	else
+	{
+		fullscreen = fullscreenoverride;
+	}
+
 	//Fixup canvas sizes
 	if( fullscreen )
 	{
@@ -507,6 +524,14 @@ function AnimationFrame()
 }
 
 requestAnimationFrame( AnimationFrame );
+canvas.addEventListener('mousemove', e => { HandleMotion( e.offsetX, e.offsetY, e.buttons ); } );
+canvas.addEventListener('touchmove', e => { HandleMotion( e.touches[0].clientX, e.touches[0].clientY, 1 ); } );
+canvas.addEventListener('mouseup', e => {   HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
+canvas.addEventListener('mousedown', e => { HandleButton( e.offsetX, e.offsetY, e.button, 1 ); return false; } );
+document.addEventListener('keydown', e => { HandleKey( e.keyCode, 1 ); } );
+document.addEventListener('keyup', e => {   HandleKey( e.keyCode, 0 ); } );
+
+
 
 /*
 function SystemStart( title, w, h )

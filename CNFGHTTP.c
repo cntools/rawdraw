@@ -733,69 +733,75 @@ void  WebSocketGotData( uint8_t c )
 	{
 		//XXX TODO: Seems to malfunction on large-ish packets.  I know it has problems with 140-byte payloads.
 
-		if( curlen < 5 ) //Can't interpret packet.
-			break;
-
-		uint8_t fin = c & 1;
-		uint8_t opcode = c << 4;
-		uint16_t payloadlen = *(curdata++);
-		curlen--;
-		if( !(payloadlen & 0x80) )
+		do
 		{
-			HTDEBUG( "Unmasked packet.\n" );
-			curhttp->state = HTTP_WAIT_CLOSE;
-			break;
-		}
+			if( curlen < 5 ) //Can't interpret packet.
+				break;
 
-		if( opcode == 128 )
-		{
-			//Close connection.
-			//HTDEBUG( "CLOSE\n" );
-			//curhttp->state = HTTP_WAIT_CLOSE;
-			//break;
-		}
+			uint8_t fin = c & 1;
+			uint8_t opcode = c << 4;
+			uint16_t payloadlen = *(curdata++);
 
-		payloadlen &= 0x7f;
-		if( payloadlen == 127 )
-		{
-			//Very long payload.
-			//Not supported.
-			HTDEBUG( "Unsupported payload packet.\n" );
-			curhttp->state = HTTP_WAIT_CLOSE;
-			break;
-		}
-		else if( payloadlen == 126 )
-		{
-			payloadlen = (curdata[0] << 8) | curdata[1];
-			curdata += 2;
-			curlen -= 2;
-		}
-		wsmask[0] = curdata[0];
-		wsmask[1] = curdata[1];
-		wsmask[2] = curdata[2];
-		wsmask[3] = curdata[3];
-		curdata += 4;
-		curlen -= 4;
-		wsmaskplace = 0;
+			curlen--;
+			if( !(payloadlen & 0x80) )
+			{
+				HTDEBUG( "Unmasked packet (%d)\n", payloadlen );
+				curhttp->state = HTTP_WAIT_CLOSE;
+				break;
+			}
 
-		//XXX Warning: When packets get larger, they may split the
-		//websockets packets into multiple parts.  We could handle this
-		//but at the cost of prescious RAM.  I am chosing to just drop those
-		//packets on the floor, and restarting the connection.
-		if( curlen < payloadlen )
-		{
-			extern int cork_binary_rx;
-			cork_binary_rx = 1;
-			//HTDEBUG( "Websocket Fragmented. %d %d\n", curlen, payloadlen );
-			//curhttp->state = HTTP_WAIT_CLOSE;
-			HTDEBUG( "Websocket Fragmented. %d %d\n", curlen, payloadlen );
-			curhttp->state = HTTP_WAIT_CLOSE;
-			return;
-		}
+			if( opcode == 128 )
+			{
+				//Close connection.
+				//HTDEBUG( "CLOSE\n" );
+				//curhttp->state = HTTP_WAIT_CLOSE;
+				//break;
+			}
 
-		WebSocketData( payloadlen );
-		curlen -= payloadlen; 
-		curdata += payloadlen;
+			payloadlen &= 0x7f;
+			if( payloadlen == 127 )
+			{
+				//Very long payload.
+				//Not supported.
+				HTDEBUG( "Unsupported payload packet.\n" );
+				curhttp->state = HTTP_WAIT_CLOSE;
+				break;
+			}
+			else if( payloadlen == 126 )
+			{
+				payloadlen = (curdata[0] << 8) | curdata[1];
+				curdata += 2;
+				curlen -= 2;
+			}
+			wsmask[0] = curdata[0];
+			wsmask[1] = curdata[1];
+			wsmask[2] = curdata[2];
+			wsmask[3] = curdata[3];
+			curdata += 4;
+			curlen -= 4;
+			wsmaskplace = 0;
+
+			//XXX Warning: When packets get larger, they may split the
+			//websockets packets into multiple parts.  We could handle this
+			//but at the cost of prescious RAM.  I am chosing to just drop those
+			//packets on the floor, and restarting the connection.
+			if( curlen < payloadlen )
+			{
+				extern int cork_binary_rx;
+				cork_binary_rx = 1;
+				//HTDEBUG( "Websocket Fragmented. %d %d\n", curlen, payloadlen );
+				//curhttp->state = HTTP_WAIT_CLOSE;
+				HTDEBUG( "Websocket Fragmented. %d %d\n", curlen, payloadlen );
+				curhttp->state = HTTP_WAIT_CLOSE;
+				return;
+			}
+
+			char * newcurdata = curdata + payloadlen + 1;
+			WebSocketData( payloadlen );
+			curlen -= payloadlen; 
+			curdata = newcurdata;
+		}
+		while( curlen > 5 );
 		break;
 	}
 	default:
@@ -1775,7 +1781,32 @@ static void readrdbuffer_websocket_cmd(  int len )
 		ConsumeBackBufferForTransit();
 		curhttp->bytesleft = transitlen * 4;
 	}
+
+	if( strncmp( buf, "MOTN", 4 ) == 0 )
+	{
+		int x = buf[4] | ( buf[5]<<8 );
+		int y = buf[6] | ( buf[7]<<8 );
+		int but = buf[11];
+		HandleMotion( x, y, but );
+	}
+
+	if( strncmp( buf, "BUTN", 4 ) == 0 )
+	{
+		int x = buf[4] | ( buf[5]<<8 );
+		int y = buf[6] | ( buf[7]<<8 );
+		int down = buf[10];
+		int but = buf[11];
+		HandleButton( x, y, but, down );
+	}
+
+	if( strncmp( buf, "KEYB", 4 ) == 0 )
+	{
+		int key = buf[6];
+		int down = buf[7];
+		HandleKey( key, down );
+	}
 }
+
 
 
 
