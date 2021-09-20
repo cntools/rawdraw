@@ -30,6 +30,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "TextTool/FontData.h"
 #endif
 
+#include <malloc.h>
+
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
 uint32_t CNFGLastColor;
@@ -193,7 +195,7 @@ void CNFGDrawText( const char * text, short scale )
 			}
 
 			lmap = &RawdrawFontCharData[index];
-			short penx, peny;
+			short penx = 0, peny = 0;
 			unsigned char start_seg = 1;
 			do
 			{
@@ -684,6 +686,7 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 			char * log = malloc(ret);
 			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
+			free( log );
 		}
 		goto fail;
 	}

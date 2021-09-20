@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 #ifdef HAS_XINERAMA
 	#include <X11/extensions/shape.h>

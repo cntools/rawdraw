@@ -18,6 +18,7 @@
 
 
 #include <stdint.h>
+#include <malloc.h>
 
 typedef struct {
     uint32_t state[5];
@@ -36,7 +37,6 @@ void static RD_SHA1_Final(uint8_t digest[RD_SHA1_DIGEST_SIZE],RD_SHA1_CTX* conte
 #ifndef _MFS_H
 #define _MFS_H
 
-#include <stdint.h>
 
 #ifndef USE_RAM_MFS
 #include <stdio.h>
@@ -226,7 +226,7 @@ extern int cork_binary_rx;
 
 struct HTTPConnection HTTPConnections[HTTP_CONNECTIONS];
 
-#define HTDEBUG( x... ) printf( x )
+#define HTDEBUG( x, ... ) printf( x, ##__VA_ARGS__ )
 //#define HTDEBUG( x... )
 
 //#define ISKEEPALIVE "keep-alive"
@@ -876,6 +876,7 @@ uint8_t WSPOPMASK()
 
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #define socklen_t uint32_t
 #define SHUT_RDWR SD_BOTH
@@ -885,13 +886,12 @@ uint8_t WSPOPMASK()
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/in.h>
+#include <unistd.h>
+#include <sys/time.h>
 uint16_t htons(uint16_t hostshort);
 #endif
 
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/time.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -1258,6 +1258,7 @@ int RunHTTP( int port )
 		return -1;
 	}
 
+	return 0;
 }
 
 
@@ -1686,11 +1687,6 @@ static void RD_SHA1_Final(uint8_t digest[RD_SHA1_DIGEST_SIZE],RD_SHA1_CTX* conte
 
 /*************************************************************/
 
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1775,7 +1771,7 @@ void ConsumeBackBufferForTransit()
 
 static void readrdbuffer_websocket_cmd(  int len )
 {
-	uint8_t  __attribute__ ((aligned (32))) buf[1300];
+	uint8_t  buf[1300];
 	int i;
 
 	if( len > 1300 ) len = 1300;
@@ -1899,6 +1895,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 int CNFGHandleInput()
 {
 	TickHTTP();
+	return 0;
 }
 
 // command structure:
@@ -1918,6 +1915,7 @@ uint32_t CNFGColor( uint32_t RGBA )
 {
 	uint32_t cmds[2] = { 0x10000000, RGBA };
 	QueueCmds( cmds, 2 );
+	return RGBA;
 }
 
 void CNFGTackPixel( short x1, short y1 )
