@@ -347,8 +347,8 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	InternalLinkScreenAndGo( WindowName );
 
 //Not sure of the purpose of this code - if it's still commented out after 2019-12-31 and no one knows why, please delete it.
-//	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
-//	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
+	Atom WM_DELETE_WINDOW = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
+	XSetWMProtocols( CNFGDisplay, CNFGWindow, &WM_DELETE_WINDOW, 1 );
 
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
@@ -412,8 +412,8 @@ int CNFGHandleInput()
 			HandleMotion( report.xmotion.x, report.xmotion.y, ButtonsDown>>1 );
 			break;
 		case ClientMessage:
-			// Only subscribed to WM_DELETE_WINDOW, so just exit
-			exit( 0 );
+			// Only subscribed to WM_DELETE_WINDOW, so return 0 to let user know of window exit
+			return 0;
 			break;
 		default:
 			break;
