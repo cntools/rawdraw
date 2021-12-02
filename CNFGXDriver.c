@@ -383,6 +383,7 @@ int CNFGHandleInput()
 			CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 			if( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 			CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
+			HandleKey( CNFG_X11_EXPOSE, 0 );
 			break;
 		case KeyRelease:
 		{
