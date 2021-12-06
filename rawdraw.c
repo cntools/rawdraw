@@ -19,7 +19,7 @@ unsigned long iframeno = 0;
 void HandleKey( int keycode, int bDown )
 {
 	printf( "Key: %d -> %d\n", keycode, bDown );
-	if( keycode == 27 || keycode == 65307) exit( 0 );
+	if( keycode == 27 || keycode == CNFG_KEY_ESCAPE) exit( 0 );
 }
 
 void HandleButton( int x, int y, int button, int bDown )
