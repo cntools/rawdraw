@@ -191,7 +191,8 @@ int main()
 		iframeno++;
 		RDPoint pto[3];
 
-		CNFGHandleInput();
+		// CNFGHandleInput() returns 0 on recieving a window close request.
+		if (!CNFGHandleInput()) HandleDestroy();
 
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFFFF );
