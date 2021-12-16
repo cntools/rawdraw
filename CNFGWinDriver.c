@@ -6,6 +6,7 @@
 
 #include "CNFG.h"
 #include <windows.h>
+#include <windowsx.h>
 #include <stdlib.h>
 #include <malloc.h> //for alloca
 #include <ctype.h>
@@ -292,6 +293,12 @@ int CNFGHandleInput()
 		case WM_KEYUP:
 			HandleKey( tolower( (int) msg.wParam ), (msg.message==WM_KEYDOWN) );
 			break;
+		case WM_MOUSEWHEEL:
+		{
+			POINT p = { .x = GET_X_LPARAM(msg.lParam), .y = GET_Y_LPARAM(msg.lParam) };
+			ScreenToClient(CNFGlsHWND, &p);
+			HandleButton(p.x, p.y, GET_WHEEL_DELTA_WPARAM(msg.wParam) > 0 ? 0x0E : 0x0F, 1);
+		} break;
 		default:
 			DispatchMessage(&msg);
 			break;
