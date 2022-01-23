@@ -131,7 +131,9 @@ void CNFGGetDimensions( short * x, short * y )
 	{
 		lastx = *x;
 		lasty = *y;
+#ifndef CNFGCONTEXTONLY
 		CNFGInternalResize( lastx, lasty );
+#endif
 	}
 }
 
@@ -355,7 +357,9 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #endif
 
 #ifdef CNFG_BATCH
+#ifndef CNFGCONTEXTONLY
 	CNFGSetupBatchInternal();
+#endif
 #endif
 
 	return 0;
@@ -444,7 +448,9 @@ void CNFGSwapBuffers()
 	if( CNFGWindowInvisible ) return;
 
 #ifndef CNFGRASTERIZER
+#ifndef CNFGCONTEXTONLY
 	CNFGFlushRender();
+#endif
 #endif
 
 #ifdef CNFG_HAS_XSHAPE
