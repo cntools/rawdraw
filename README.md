@@ -192,6 +192,10 @@ Flags you will probably never want to use:
 
 ## Extra goodies
 
+### RDUI
+
+RDUI is mainted by Overlisted and contains a lot of extra features for rawdraw. You can check it out here: https://github.com/overlisted/rdui
+
 ### chew.h
 
 You can copy-and-paste `chew.c` and `chew.h` into your program for a single-file compile-only
