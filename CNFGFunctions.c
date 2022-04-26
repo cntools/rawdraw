@@ -711,7 +711,7 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			char *log = alloca(ret);
+			char *log = (char*)alloca(ret);
 			CNFGglGetProgramInfoLog(program, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 		}
@@ -725,7 +725,7 @@ fail:
 	return -1;
 }
 
-#ifdef CNFGEWGL
+#if defined( CNFGEWGL ) && !defined( CNFG_NO_PRECISION )
 #define PRECISIONA "lowp"
 #define PRECISIONB "mediump"
 #else
@@ -856,8 +856,8 @@ void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h )
 	glBindTexture(GL_TEXTURE_2D, tex);
 
 	const float verts[] = {
-		0,0, w,0, w,h,
-		0,0, w,h, 0,h, };
+		0,0, (float)w,0, (float)w,(float)h,
+		0,0, (float)w,(float)h, 0,(float)h, };
 	static const uint8_t colors[] = {
 		0,0,   255,0,  255,255,
 		0,0,  255,255, 0,255 };
@@ -897,8 +897,8 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 		GL_UNSIGNED_BYTE, data );
 
 	const float verts[] = {
-		0,0, w,0, w,h,
-		0,0, w,h, 0,h, };
+		0,0, (float)w,0, (float)w,(float)h,
+		0,0, (float)w,(float)h, 0,(float)h, };
 	static const uint8_t colors[] = {
 		0,0,   255,0,  255,255,
 		0,0,  255,255, 0,255 };
