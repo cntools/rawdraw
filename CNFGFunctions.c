@@ -30,7 +30,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "TextTool/FontData.h"
 #endif
 
+//TODO: Refactor to remove malloc reliance.
+#ifndef __clang__
 #include <malloc.h>
+#endif
 
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
@@ -660,9 +663,12 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
+			//TODO: Refactor to remove malloc reliance.
+			#ifndef __clang__
 			char * log = alloca(ret);
 			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
+			#endif
 		}
 		goto fail;
 	}
@@ -683,10 +689,13 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
+			//TODO: Refactor to remove malloc reliance.
+			#ifndef __clang__
 			char * log = malloc(ret);
 			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 			free( log );
+			#endif
 		}
 		goto fail;
 	}
@@ -711,9 +720,12 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
+			//TODO: Refactor to remove malloc reliance.
+			#ifndef __clang__
 			char *log = alloca(ret);
 			CNFGglGetProgramInfoLog(program, ret, NULL, log);
 			fprintf( stderr, "%s", log);
+			#endif
 		}
 		goto fail;
 	}
