@@ -61,6 +61,17 @@ chew_FUN_EXPORT ret usename( __VA_ARGS__ );
 #define GLDEBUGPROC void*
 #endif
 
+#if defined (TCCINSTANCE)
+#undef GLvoid
+#define GLvoid void
+#undef GLintptr
+#define GLintptr int*
+#undef GLchar
+#define GLchar char
+#undef GLsizeiptr
+#define GLsizeiptr unsigned int
+#endif
+
 void chewInit();
 void * chewGetProcAddress( const char *name );
 
@@ -73,7 +84,7 @@ CHEWTYPEDEF( void, glBindVertexArray, , (array), GLuint array )
 CHEWTYPEDEF( void, glGenBuffers, , (n,buffers), GLsizei n, GLuint * buffers )
 CHEWTYPEDEF( void, glBindBuffer, , (target,buffer), GLenum target, GLuint buffer )
 CHEWTYPEDEF( void, glBufferData, , (target,size,data,usage), GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage )
-CHEWTYPEDEF( void, glNamedBufferData, , (buffer,size,data,usage) , GLuint buffer, GLsizeiptr size, const void *data, GLenum usage )
+CHEWTYPEDEF( void, glNamedBufferData, , (buffer,size,data,usage) , GLuint buffer, GLsizeiptr size, const GLvoid *data, GLenum usage )
 CHEWTYPEDEF( void, glEnableVertexAttribArray, , (index), GLuint index )
 CHEWTYPEDEF( void, glDisableVertexAttribArray, , (index), GLuint index )
 CHEWTYPEDEF( void, glEnableVertexArrayAttrib, , (vaobj,index), GLuint vaobj, GLuint index )
@@ -93,8 +104,10 @@ CHEWTYPEDEF2( void, glActiveTexture, glActiveTextureCHEW, , (texture) , GLenum t
 CHEWTYPEDEF2( void, glSampleCoverage, glSampleCoverageCHEW, , (value,invert), GLfloat value, GLboolean invert )
 
 #ifndef EGL_LEAN_AND_MEAN
+#ifndef TCCINSTANCE
 CHEWTYPEDEF( void, glDebugMessageCallback, , (callback,userParam), GLDEBUGPROC callback, const void * userParam )
 CHEWTYPEDEF( void, glDebugMessageControl, , (source,type,severity,count,ids,enabled), GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
+#endif
 #endif
 
 CHEWTYPEDEF2( void, glGenerateMipmap, glGenerateMipmapCHEW, , (index), GLuint index )

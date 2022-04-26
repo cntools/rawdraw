@@ -131,7 +131,9 @@ void CNFGGetDimensions( short * x, short * y )
 	{
 		lastx = *x;
 		lasty = *y;
+#ifndef CNFGCONTEXTONLY
 		CNFGInternalResize( lastx, lasty );
+#endif
 	}
 }
 
@@ -355,7 +357,9 @@ int CNFGSetup( const char * WindowName, int w, int h )
 #endif
 
 #ifdef CNFG_BATCH
+#ifndef CNFGCONTEXTONLY
 	CNFGSetupBatchInternal();
+#endif
 #endif
 
 	return 0;
@@ -383,6 +387,7 @@ int CNFGHandleInput()
 			CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 			if( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 			CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
+			HandleKey( CNFG_X11_EXPOSE, 0 );
 			break;
 		case KeyRelease:
 		{
@@ -443,7 +448,9 @@ void CNFGSwapBuffers()
 	if( CNFGWindowInvisible ) return;
 
 #ifndef CNFGRASTERIZER
+#ifndef CNFGCONTEXTONLY
 	CNFGFlushRender();
+#endif
 #endif
 
 #ifdef CNFG_HAS_XSHAPE

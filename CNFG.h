@@ -209,6 +209,7 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #define CNFG_KEY_BOTTOM_ARROW 65364
 #define CNFG_KEY_ESCAPE 65307
 #define CNFG_KEY_ENTER 65293
+#define CNFG_X11_EXPOSE 0xff00 //65280
 
 #endif
 
