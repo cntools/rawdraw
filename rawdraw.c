@@ -18,8 +18,8 @@ unsigned long iframeno = 0;
 
 void HandleKey( int keycode, int bDown )
 {
-	if( keycode == 27 ) exit( 0 );
 	printf( "Key: %d -> %d\n", keycode, bDown );
+	if( keycode == 27 || keycode == CNFG_KEY_ESCAPE) exit( 0 );
 }
 
 void HandleButton( int x, int y, int button, int bDown )
@@ -31,6 +31,14 @@ void HandleMotion( int x, int y, int mask )
 {
 //	printf( "Motion: %d,%d (%d)\n", x, y, mask );
 }
+
+
+void HandleDestroy()
+{
+	printf( "Destroying\n" );
+	exit(10);
+}
+
 
 #define HMX 40
 #define HMY 40
@@ -152,13 +160,6 @@ void DrawHeightmap()
 
 }
 
-
-void HandleDestroy()
-{
-	printf( "Destroying\n" );
-	exit(10);
-}
-
 uint32_t randomtexturedata[65536];
 
 int main()
@@ -190,7 +191,8 @@ int main()
 		iframeno++;
 		RDPoint pto[3];
 
-		CNFGHandleInput();
+		// CNFGHandleInput() returns 0 on recieving a window close request.
+		if (!CNFGHandleInput()) HandleDestroy();
 
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFFFF );
