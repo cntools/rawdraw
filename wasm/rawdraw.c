@@ -81,7 +81,7 @@ int __attribute__((export_name("main"))) main()
 int __attribute__((export_name("loop"))) loop()
 {
 #else
-while(1)
+while(CNFGHandleInput())
 #endif
 	{
 		int i, pos;
@@ -91,7 +91,7 @@ while(1)
 
 		//Normally this would invoke callbacks, but
 		//at least currently, we do that out-of-band.
-		CNFGHandleInput();
+		//CNFGHandleInput();
 
 
 		CNFGClearFrame();

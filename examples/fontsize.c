@@ -47,8 +47,7 @@ int main()
 
 
 
-	while ( 1 ) {
-		CNFGHandleInput();
+	while (CNFGHandleInput()) {
 		CNFGClearFrame();
 		CNFGColor( 0xffffff );
 		for( i = 1; i < 5; i++ )

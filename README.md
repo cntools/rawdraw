@@ -99,13 +99,12 @@ void HandleDestroy() { }
 int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
-	while(1)
+	while(CNFGHandleInput())
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
 
 		short w, h;
 		CNFGClearFrame();
-		CNFGHandleInput();
 		CNFGGetDimensions( &w, &h );
 
 		//Change color to white.

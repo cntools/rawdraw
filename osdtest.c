@@ -50,14 +50,12 @@ int main()
 	CNFGPrepareForTransparency();
 	CNFGSetupFullscreen( "Test Bench", 0 );
 
-	while(1)
+	while(CNFGHandleInput())
 	{
 		int i, pos;
 		float f;
 		iframeno++;
 		RDPoint pto[3];
-
-		CNFGHandleInput();
 
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFF );

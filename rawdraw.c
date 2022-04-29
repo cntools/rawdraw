@@ -183,14 +183,12 @@ int main()
 		Heightmap[x+y*HMX] = tdPerlin2D( x, y )*8.;
 	}
 
-	while(1)
+	while(CNFGHandleInput())
 	{
 		int i, pos;
 		float f;
 		iframeno++;
 		RDPoint pto[3];
-
-		CNFGHandleInput();
 
 		CNFGClearFrame();
 		CNFGColor( 0xFFFFFFFF );
