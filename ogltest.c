@@ -28,10 +28,9 @@ int main()
 	int frameno = 0;
 	CNFGSetup( "Test", 100, 100 );
 
-	while(1)
+	while(CNFGHandleInput())
 	{
 		CNFGClearFrame();
-		CNFGHandleInput();
 
 		glRotatef( frameno/100.0, 0, 0, 1);
 
