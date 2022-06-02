@@ -338,7 +338,11 @@ void CNFGEmitBackendTriangles( const float * fv, const uint32_t * col, int nr_ve
 //If on WASM, sqrtf is implied. On other platforms, need sqrtf from math.h
 #ifdef __wasm__
 float sqrtf( float f );
+#define cnfg_sqrtf sqrtf
+#elif defined( __TINYC__ ) && defined( WIN32 )
+#define cnfg_sqrtf sqrt
 #else
+#define cnfg_sqrtf sqrtf
 #include <math.h>
 #endif
 
@@ -387,7 +391,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 	float dx = ix2-ix1;
 	float dy = iy2-iy1;
-	float imag = 1./sqrtf(dx*dx+dy*dy);
+	float imag = 1./rd_sqrtf(dx*dx+dy*dy);
 	dx *= imag;
 	dy *= imag;
 	float orthox = dy*wgl_last_width_over_2;
