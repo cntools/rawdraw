@@ -391,7 +391,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 	float dx = ix2-ix1;
 	float dy = iy2-iy1;
-	float imag = 1./rd_sqrtf(dx*dx+dy*dy);
+	float imag = 1./cnfg_sqrtf(dx*dx+dy*dy);
 	dx *= imag;
 	dy *= imag;
 	float orthox = dy*wgl_last_width_over_2;
