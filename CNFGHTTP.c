@@ -44,6 +44,7 @@ void static RD_SHA1_Final(uint8_t digest[RD_SHA1_DIGEST_SIZE],RD_SHA1_CTX* conte
 
 #define MFS_SECTOR	256
 #define MFS_FILENAMELEN 32-8
+#define MFS_FILE_COMPRESSED_MEMORY (-2)
 
 //Format:
 //  [FILE NAME (24)] [Start (4)] [Len (4)]
@@ -525,29 +526,30 @@ void InternalStartHTTP( )
 		if( path[i] == '?' ) path[i] = 0;
 
 	i = MFSOpenFile( path, &curhttp->data.filedescriptor );
+	
 	curhttp->bytessofar = 0;
+	curhttp->is_gzip = 0;
 
-	if( i < 0 )
+	if( i == MFS_FILE_COMPRESSED_MEMORY )
+	{
+		curhttp->is_gzip = 1;
+	}
+	else if( i < 0 )
 	{
 		HTDEBUG( "404(%s)\n", path );
 		curhttp->is404 = 1;
 		curhttp->isfirst = 1;
 		curhttp->isdone = 0;
 		curhttp->is_dynamic = 0;
-	}
-	else
-	{
-		if( i == 99 )
-		{
-			curhttp->is_gzip = 1;
-		}
-		curhttp->isfirst = 1;
-		curhttp->isdone = 0;
-		curhttp->is404 = 0;
-		curhttp->is_dynamic = 0;
-		curhttp->bytesleft = curhttp->data.filedescriptor.filelen;
+		curhttp->bytesleft = 0;
+		return;
 	}
 
+	curhttp->isfirst = 1;
+	curhttp->isdone = 0;
+	curhttp->is404 = 0;
+	curhttp->is_dynamic = 0;
+	curhttp->bytesleft = curhttp->data.filedescriptor.filelen;
 }
 
 
@@ -592,13 +594,6 @@ int httpserver_connectcb( int socket )
 	}
 	if( i == HTTP_CONNECTIONS )
 	{
-#ifndef USE_RAM_MFS
-		HTTPConnections[i].data.filedescriptor.file = 0;
-#endif
-		HTTPConnections[i].rcb = 0;
-		HTTPConnections[i].ccb = 0;
-		HTTPConnections[i].rcbDat = 0;
-		HTTPConnections[i].corked_data_place = 0;
 		return -1;
 	}
 
@@ -1367,7 +1362,7 @@ int8_t MFSOpenFile( const char * fname, struct MFSFileInfo * mfi )
 	{
 		mfi->offset = 0;
 		mfi->filelen = sizeof(webpage_buffer);
-		return 99;
+		return MFS_FILE_COMPRESSED_MEMORY;
 	}
 	else
 		return -1;
