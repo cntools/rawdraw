@@ -695,7 +695,7 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		if (ret > 1) {
 			//TODO: Refactor to remove malloc reliance.
 			#ifndef __clang__
-			char * log = malloc(ret);
+			char * log = (char*)malloc(ret);
 			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 			free( log );
