@@ -22,6 +22,9 @@ extern "C" {
 		CNFGUpdateScreenWithBitmap to send video to webpage.
 	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
 		get an OpenGL context.
+
+    CNFG_IMPLEMENTATION -> #define this and it will make _this_ the file where the cnfg
+		functions actually live.
 		
 Usually tested combinations:
  * TCC On Windows and X11 (Linux) with:
@@ -38,7 +41,8 @@ Usually tested combinations:
  Unusual compiler flags:
 
  * CNFGHTTP - Enable the HTTP server-version of rawdraw, where it renders to a website.
- * CNFGHTTPSERVERONLY - if you want to use the HTTP server w/o rawdraw.
+ * CNFGHTTPSERVERONLY - if you want to use the HTTP server w/o rawdraw.  You will need to implement:
+	- CloseEvent, HTTPCustomCallback, HTTPCustomStart, NewWebSocket, WebSocketData, WebSocketTick
  * CNFG_DISABLE_HTTP_FILES - disable the HTTP file server.
 
 */

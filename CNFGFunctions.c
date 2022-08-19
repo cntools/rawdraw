@@ -26,6 +26,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 #define _CNFG_C
 
 #include "CNFG.h"
+
+#ifndef CNFGHTTPSERVERONLY
+
 #ifdef _CNFG_FANCYFONT
 #include "TextTool/FontData.h"
 #endif
@@ -153,7 +156,6 @@ const unsigned char RawdrawFontCharData[1405] = {
 
 //Set this if you are only using CNFG to create an OpenGL context.
 #ifndef CNFGCONTEXTONLY
-
 uint32_t CNFGDialogColor;
 
 void CNFGDrawBox( short x1, short y1, short x2, short y2 )
@@ -946,4 +948,5 @@ void CNFGFlushRender() { }
 
 
 #endif
+#endif // CNFGHTTPSERVERONLY
 #endif //_CNFG_C
