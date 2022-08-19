@@ -371,7 +371,7 @@ static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, flo
 }
 
 
-#ifndef CNFGRASTERIZER
+#if !defined( CNFGRASTERIZER ) && !defined( CNFGHTTP )
 
 void CNFGTackPixel( short x1, short y1 )
 {
@@ -456,7 +456,7 @@ void	CNFGSetLineWidth( short width )
 #endif
 
 
-#ifndef __wasm__
+#if !defined( __wasm__ ) && !defined( CNFGHTTP )
 //In WASM, Javascript takes over this functionality.
 
 //Shader compilation errors go to stderr.

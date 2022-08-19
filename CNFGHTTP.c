@@ -11,7 +11,9 @@
 //single_file_http.c base from https://github.com/cntools/httptest.
 //scroll to bottom for implementation.
 
+#ifndef CUSTOM_HTTPHEADER_CODE
 #define CUSTOM_HTTPHEADER_CODE 	PushString("Access-Control-Allow-Origin: *\r\n");
+#endif
 
 /* public api for steve reid's public domain SHA-1 implementation */
 /* this file is in the public domain */
@@ -1338,13 +1340,6 @@ uint8_t hex2byte( const char * c )
 	return (hex1byte(c[0])<<4) | (hex1byte(c[1]));
 }
 
-//Copyright 2015 <>< Charles Lohr Under the MIT/x11 License, NewBSD License or
-// ColorChord License.  You Choose.
-
-
-#ifdef USE_RAM_MFS
-#endif
-
 #include <string.h>
 
 #ifdef USE_RAM_MFS
@@ -1357,7 +1352,10 @@ uint8_t hex2byte( const char * c )
 //Returns -1 if can't find file or reached end of file list.
 int8_t MFSOpenFile( const char * fname, struct MFSFileInfo * mfi )
 {
-	printf( "%s\n", fname );
+#ifdef CNFG_DISABLE_HTTP_FILES
+	mfi->filelen = 0;
+	return -1;
+#else
 	if( strcmp( fname, "/" ) == 0 || strcmp( fname, "index.html" ) == 0 )
 	{
 		mfi->offset = 0;
@@ -1366,10 +1364,14 @@ int8_t MFSOpenFile( const char * fname, struct MFSFileInfo * mfi )
 	}
 	else
 		return -1;
+#endif
 }
 
 int32_t MFSReadSector( uint8_t* data, struct MFSFileInfo * mfi )
 {
+#ifdef CNFG_DISABLE_HTTP_FILES
+	return 0;
+#else
 	 //returns # of bytes left tin file.
 	if( !mfi->filelen )
 	{
@@ -1382,6 +1384,7 @@ int32_t MFSReadSector( uint8_t* data, struct MFSFileInfo * mfi )
 	mfi->offset += toread;
 	mfi->filelen -= toread;
 	return mfi->filelen;
+#endif
 }
 
 void MFSClose( struct MFSFileInfo * mfi )
@@ -1680,6 +1683,8 @@ static void RD_SHA1_Final(uint8_t digest[RD_SHA1_DIGEST_SIZE],RD_SHA1_CTX* conte
 #endif
 }
 
+#ifndef CNFGHTTPSERVERONLY
+
 /*************************************************************/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1890,7 +1895,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 int CNFGHandleInput()
 {
 	TickHTTP();
-	return 0;
+	return 1;
 }
 
 // command structure:
@@ -2008,6 +2013,6 @@ void CNFGGetDimensions( short * x, short * y )
 	*y = last_dimensions_h;
 }
 
-
+#endif
 
 #endif

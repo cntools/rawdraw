@@ -34,6 +34,13 @@ Usually tested combinations:
 
  * WASM driver supports both: CNFGRASTERIZER and without CNFGRASTERIZER (Recommended turn rasterizer off)
  * ANDROID (But this automatically sets CNFGRASTERIZER OFF and CNFGOGL ON)
+
+ Unusual compiler flags:
+
+ * CNFGHTTP - Enable the HTTP server-version of rawdraw, where it renders to a website.
+ * CNFGHTTPSERVERONLY - if you want to use the HTTP server w/o rawdraw.
+ * CNFG_DISABLE_HTTP_FILES - disable the HTTP file server.
+
 */
 
 
