@@ -290,7 +290,8 @@ int CNFGHandleInput()
 		case WM_MBUTTONUP:		HandleButton( (msg.lParam & 0xFFFF), (msg.lParam>>16) & 0xFFFF, 3, 0 ); break;
 		case WM_KEYDOWN:
 		case WM_KEYUP:
-			HandleKey( tolower( (int) msg.wParam ), (msg.message==WM_KEYDOWN) );
+			if (msg.lParam & 0x01000000) HandleKey( (int) msg.wParam + 0x7C , (msg.message==WM_KEYDOWN) );
+			else HandleKey( (int) msg.wParam, (msg.message==WM_KEYDOWN) );
 			break;
 		case WM_MOUSEWHEEL:
 		{
