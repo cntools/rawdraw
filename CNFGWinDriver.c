@@ -57,7 +57,9 @@ static void InternalHandleResize() { }
 void CNFGSwapBuffers()
 {
 #ifdef CNFG_BATCH
+#ifndef CNFGCONTEXTONLY
 	CNFGFlushRender();
+#endif
 #endif
 
 	SwapBuffers(CNFGlsWindowHDC);
@@ -75,7 +77,9 @@ void CNFGGetDimensions( short * x, short * y )
 	{
 		lastx = CNFGBufferx;
 		lasty = CNFGBuffery;
+		#ifndef CNFGCONTEXTONLY
 		CNFGInternalResize( lastx, lasty );
+		#endif
 		InternalHandleResize();
 	}
 	*x = CNFGBufferx;
@@ -259,7 +263,9 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	InternalHandleResize();
 
 #ifdef CNFG_BATCH
+#ifndef CNFGCONTEXTONLY
 	CNFGSetupBatchInternal();
+#endif
 #endif
 
 	return 0;
