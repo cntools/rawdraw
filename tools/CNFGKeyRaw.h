@@ -8,7 +8,7 @@
 #define CNFGKeyToRDCode(x) CNFGKeyLUT[x & 0x1FF]
 
 
-
+#define CNFG_X11_EXPOSE 0x100
 #define CNFG_KEY_HOME 0x01
 #define CNFG_KEY_PAGE_UP 0x02
 #define CNFG_KEY_PAGE_DOWN 0x03
