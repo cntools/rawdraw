@@ -35,6 +35,7 @@
 struct android_app * gapp;
 static int OGLESStarted;
 int android_width, android_height;
+int override_android_screen_dimensons = 0;
 int android_sdk_version;
 
 #include <android_native_app_glue.h>
@@ -144,6 +145,8 @@ static const EGLint context_attribute_list[] = {
 
 EGLDisplay egl_display;
 EGLSurface egl_surface;
+EGLContext egl_context;
+EGLConfig  egl_config;
 
 void CNFGSetVSync( int vson )
 {
@@ -157,8 +160,11 @@ void CNFGSwapBuffers()
 	CNFGFlushRender();
 	eglSwapBuffers(egl_display, egl_surface);
 #ifdef ANDROID
-	android_width = ANativeWindow_getWidth( native_window );
-	android_height = ANativeWindow_getHeight( native_window );
+	if( !override_android_screen_dimensons )
+	{
+		android_width = ANativeWindow_getWidth( native_window );
+		android_height = ANativeWindow_getHeight( native_window );
+	}
 	glViewport( 0, 0, android_width, android_height );
 	if( iLastInternalW != android_width || iLastInternalH != android_height )
 		CNFGInternalResize( iLastInternalW=android_width, iLastInternalH=android_height );
@@ -181,9 +187,7 @@ void CNFGGetDimensions( short * x, short * y )
 int CNFGSetup( const char * WindowName, int w, int h )
 {
 	EGLint egl_major, egl_minor;
-	EGLConfig config;
 	EGLint num_config;
-	EGLContext context;
 
 	//This MUST be called before doing any initialization.
 	int events;
@@ -250,23 +254,23 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	printf("EGL Extensions: \"%s\"\n",
 	       eglQueryString(egl_display, EGL_EXTENSIONS));
 
-	eglChooseConfig(egl_display, config_attribute_list, &config, 1,
+	eglChooseConfig(egl_display, config_attribute_list, &egl_config, 1,
 			&num_config);
 	printf( "Config: %d\n", num_config );
 
 	printf( "Creating Context\n" );
-	context = eglCreateContext(egl_display, config, EGL_NO_CONTEXT,
+	egl_context = eglCreateContext(egl_display, egl_config, EGL_NO_CONTEXT,
 //				NULL );
 				context_attribute_list);
-	if (context == EGL_NO_CONTEXT) {
+	if (egl_context == EGL_NO_CONTEXT) {
 		ERRLOG( "Error: eglCreateContext failed: 0x%08X\n",
 			eglGetError());
 		return -1;
 	}
-	printf( "Context Created %p\n", context );
+	printf( "Context Created %p\n", egl_context );
 
 #ifdef USE_EGL_X
-	egl_surface = eglCreateWindowSurface(egl_display, config, XWindow,
+	egl_surface = eglCreateWindowSurface(egl_display, egl_config, XWindow,
 					     window_attribute_list);
 #else
 
@@ -283,10 +287,20 @@ int CNFGSetup( const char * WindowName, int w, int h )
 		printf( "FAULT: Cannot get window\n" );
 		return -5;
 	}
-	android_width = ANativeWindow_getWidth( native_window );
-	android_height = ANativeWindow_getHeight( native_window );
+
+	if( w <= 0 || h <= 0 )
+	{
+		android_width = ANativeWindow_getWidth( native_window );
+		android_height = ANativeWindow_getHeight( native_window );
+	}
+	else
+	{
+		override_android_screen_dimensons = 1;
+		android_width = w;
+		android_height = h;
+	}
 	printf( "Width/Height: %dx%d\n", android_width, android_height );
-	egl_surface = eglCreateWindowSurface(egl_display, config,
+	egl_surface = eglCreateWindowSurface(egl_display, egl_config,
 #ifdef ANDROID
 			     gapp->window,
 #else
@@ -316,7 +330,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	native_window.height = height;
 #endif
 
-	if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, context)) {
+	if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context)) {
 		ERRLOG( "Error: eglMakeCurrent() failed: 0x%08X\n",
 			eglGetError());
 		return -1;
