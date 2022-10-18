@@ -17,6 +17,13 @@ extern int android_width, android_height;
 extern int UpdateScreenWithBitmapOffsetX;
 extern int UpdateScreenWithBitmapOffsetY;
 
+// If you need them, these are the names of raw EGL symbols.
+//extern EGLDisplay egl_display;
+//extern EGLSurface egl_surface;
+//extern EGLContext egl_context;
+//extern EGLConfig  egl_config;
+
+
 //You must implement these.
 void HandleResume();
 void HandleSuspend();

@@ -5,7 +5,6 @@
 #include <math.h>
 #include "CNFG.h"
 #include "os_generic.h"
-#include "CNFG3D.h"
 
 unsigned frames = 0;
 unsigned long iframeno = 0;

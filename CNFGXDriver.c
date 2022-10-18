@@ -51,7 +51,47 @@ int CNFGWindowInvisible;
 Pixmap CNFGPixmap;
 GC     CNFGGC;
 GC     CNFGWindowGC;
+int CNFGDepth;
+int CNFGScreen;
 Visual * CNFGVisual;
+VisualID CNFGVisualID;
+
+#ifdef CNFGOGL
+#include <GL/glx.h>
+#include <GL/glxext.h>
+
+GLXContext CNFGCtx;
+void * CNFGGetExtension( const char * extname ) { return (void*)glXGetProcAddressARB((const GLubyte *) extname); }
+GLXFBConfig CNFGGLXFBConfig;
+
+
+void CNFGGLXSetup( )
+{
+	int attribs[] = { 
+		GLX_RENDER_TYPE, GLX_RGBA_BIT,
+		GLX_DOUBLEBUFFER, True,
+		GLX_RED_SIZE, 1,
+		GLX_GREEN_SIZE, 1,
+		GLX_BLUE_SIZE, 1,
+		GLX_DEPTH_SIZE, 1,
+		None };
+	int elements = 0;
+	GLXFBConfig * cfgs = glXChooseFBConfig(	CNFGDisplay, CNFGScreen, attribs, &elements );
+	if( elements == 0 )
+	{
+		fprintf( stderr, "Error: could not get valid GLXFBConfig visual.\n" );
+		exit( -1 );
+	}
+	CNFGGLXFBConfig = cfgs[0];
+	XVisualInfo * vis = glXGetVisualFromFBConfig( CNFGDisplay, CNFGGLXFBConfig );
+	CNFGVisual = vis->visual;
+	CNFGVisualID = vis->visualid;
+	CNFGDepth = vis->depth;
+	CNFGCtx = glXCreateContext( CNFGDisplay, vis, NULL, True );
+}
+
+#endif
+
 int CNFGX11ForceNoDecoration;
 XImage *xi;
 
@@ -107,14 +147,6 @@ void	CNFGClearTransparencyLevel()
 	XFillRectangle(CNFGDisplay, xspixmap, xsgc, 0, 0, CNFGWinAtt.width, CNFGWinAtt.height);
 	XSetForeground(CNFGDisplay, xsgc, 1);
 }
-#endif
-
-#ifdef CNFGOGL
-#include <GL/glx.h>
-#include <GL/glxext.h>
-
-GLXContext CNFGCtx;
-void * CNFGGetExtension( const char * extname ) { return (void*)glXGetProcAddressARB((const GLubyte *) extname); }
 #endif
 
 int FullScreen = 0;
@@ -202,7 +234,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	int screens;
 	int event_basep, error_basep, a, b;
 	CNFGDisplay = XOpenDisplay(NULL);
-	int screen = XDefaultScreen(CNFGDisplay);
+	CNFGScreen = XDefaultScreen(CNFGDisplay);
 	int xpos, ypos;
 
 	if (!XShapeQueryExtension(CNFGDisplay, &event_basep, &error_basep)) {
@@ -210,21 +242,12 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 		exit( 1 );
 	}
 
- 	CNFGVisual = DefaultVisual(CNFGDisplay, screen);
-	CNFGWinAtt.depth = DefaultDepth(CNFGDisplay, screen);
+ 	CNFGVisual = DefaultVisual(CNFGDisplay, CNFGScreen);
+	CNFGVisualID = 0;
+	CNFGWinAtt.depth = DefaultDepth(CNFGDisplay, CNFGScreen);
 
 #ifdef CNFGOGL
-	int attribs[] = { GLX_RGBA,
-		GLX_DOUBLEBUFFER, 
-		GLX_RED_SIZE, 1,
-		GLX_GREEN_SIZE, 1,
-		GLX_BLUE_SIZE, 1,
-		GLX_DEPTH_SIZE, 1,
-		None };
-	XVisualInfo * vis = glXChooseVisual(CNFGDisplay, screen, attribs);
-	CNFGVisual = vis->visual;
-	CNFGWinAtt.depth = vis->depth;
-	CNFGCtx = glXCreateContext( CNFGDisplay, vis, NULL, True );
+	CNFGGLXSetup();
 #endif
 
 	if (XineramaQueryExtension(CNFGDisplay, &a, &b ) &&
@@ -238,8 +261,8 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 		ypos = screeninfo[screen_no].y_org;
 	} else
 	{
-		CNFGWinAtt.width = XDisplayWidth(CNFGDisplay, screen);
-		CNFGWinAtt.height = XDisplayHeight(CNFGDisplay, screen);
+		CNFGWinAtt.width = XDisplayWidth(CNFGDisplay, CNFGScreen);
+		CNFGWinAtt.height = XDisplayHeight(CNFGDisplay, CNFGScreen);
 		xpos = 0;
 		ypos = 0;
 	}
@@ -266,7 +289,7 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 	setwinattr.border_pixel = 0;
 	setwinattr.colormap = XCreateColormap( CNFGDisplay, RootWindow(CNFGDisplay, 0), CNFGVisual, AllocNone);
 
-	CNFGWindow = XCreateWindow(CNFGDisplay, XRootWindow(CNFGDisplay, screen),
+	CNFGWindow = XCreateWindow(CNFGDisplay, XRootWindow(CNFGDisplay, CNFGScreen),
 		xpos, ypos, CNFGWinAtt.width, CNFGWinAtt.height,
 		0, CNFGWinAtt.depth, InputOutput, CNFGVisual, 
 		CWBorderPixel/* | CWEventMask */ | CWOverrideRedirect | CWSaveUnder | CWColormap, 
@@ -314,35 +337,26 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	}
 	atexit( CNFGTearDown );
 
-	int screen = DefaultScreen(CNFGDisplay);
-	int depth = DefaultDepth(CNFGDisplay, screen);
- 	CNFGVisual = DefaultVisual(CNFGDisplay, screen);
+	CNFGScreen = DefaultScreen(CNFGDisplay);
+	CNFGDepth = DefaultDepth(CNFGDisplay, CNFGScreen);
+ 	CNFGVisual = DefaultVisual(CNFGDisplay, CNFGScreen);
+	CNFGVisualID = 0;
 	Window wnd = DefaultRootWindow( CNFGDisplay );
 
 #ifdef CNFGOGL
-	int attribs[] = { GLX_RGBA,
-		GLX_DOUBLEBUFFER, 
-		GLX_RED_SIZE, 1,
-		GLX_GREEN_SIZE, 1,
-		GLX_BLUE_SIZE, 1,
-		GLX_DEPTH_SIZE, 1,
-		None };
-	XVisualInfo * vis = glXChooseVisual(CNFGDisplay, screen, attribs);
-	CNFGVisual = vis->visual;
-	depth = vis->depth;
-	CNFGCtx = glXCreateContext( CNFGDisplay, vis, NULL, True );
+	CNFGGLXSetup( );
 #endif
 
 	XSetWindowAttributes attr;
 	attr.background_pixel = 0;
 	attr.colormap = XCreateColormap( CNFGDisplay, wnd, CNFGVisual, AllocNone);
 	if( w  > 0 && h > 0 )
-		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, CNFGDepth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
 	else
 	{
 		if( w < 0 ) w = -w;
 		if( h < 0 ) h = -h;
-		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, depth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
+		CNFGWindow = XCreateWindow(CNFGDisplay, wnd, 1, 1, w, h, 0, CNFGDepth, InputOutput, CNFGVisual, CWBackPixel | CWColormap, &attr );
 		CNFGWindowInvisible = 1;
 	}
 
@@ -473,23 +487,15 @@ void CNFGSwapBuffers()
 #ifndef CNFGRASTERIZER
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
-	static int depth;
 	static int lw, lh;
 
-	if( !xi )
-	{
-		int screen = DefaultScreen(CNFGDisplay);
-		depth = DefaultDepth(CNFGDisplay, screen)/8;
-	}
-
-	if( lw != w || lh != h )
+	if( lw != w || lh != h || !xi )
 	{
 		if( xi ) free( xi );
-		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
 	}
-
 	//Draw image to pixmap (not a screen flip)
 	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
 }
@@ -497,22 +503,12 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
-	static int depth;
 	static int lw, lh;
-
-	if( !xi )
-	{
-		int screen = DefaultScreen(CNFGDisplay);
-		depth = DefaultDepth(CNFGDisplay, screen)/8;
-//		xi = XCreateImage(CNFGDisplay, DefaultVisual( CNFGDisplay, DefaultScreen(CNFGDisplay) ), depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
-//		lw = w;
-//		lh = h;
-	}
 
 	if( lw != w || lh != h )
 	{
 		if( xi ) free( xi );
-		xi = XCreateImage(CNFGDisplay, CNFGVisual, depth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
 	}
