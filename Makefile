@@ -38,7 +38,7 @@ rawdraw_ogl : rawdraw.c
 	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -lGL -g -DCNFGOGL -lm -ldl
 
 osdtest : osdtest.c CNFG.c
-	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -DHAS_XINERAMA -DHAS_XSHAPE -lm -ldl
+	gcc -o $@ $^ -lX11 -lpthread -lXinerama -lXext -DCNFG_HAS_XINERAMA -DCNFG_HAS_XSHAPE -lm -ldl
 
 ogltest : ogltest.c CNFG.c
 	gcc -o $@ $^  -lX11 -lXinerama -lGL   -DCNFGOGL -lm
