@@ -67,8 +67,9 @@ GLXFBConfig CNFGGLXFBConfig;
 
 void CNFGGLXSetup( )
 {
-	int attribs[] = { GLX_RGBA,
-		GLX_DOUBLEBUFFER, 
+	int attribs[] = { 
+		GLX_RENDER_TYPE, GLX_RGBA_BIT,
+		GLX_DOUBLEBUFFER, True,
 		GLX_RED_SIZE, 1,
 		GLX_GREEN_SIZE, 1,
 		GLX_BLUE_SIZE, 1,
@@ -488,14 +489,13 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
 	static int lw, lh;
 
-	if( lw != w || lh != h )
+	if( lw != w || lh != h || !xi )
 	{
 		if( xi ) free( xi );
-		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
 	}
-
 	//Draw image to pixmap (not a screen flip)
 	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
 }
@@ -508,7 +508,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 	if( lw != w || lh != h )
 	{
 		if( xi ) free( xi );
-		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth*8, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
+		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
 		lw = w;
 		lh = h;
 	}
