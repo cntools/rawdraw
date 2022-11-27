@@ -144,8 +144,33 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-//This was from the article, too... well, mostly.
+int CNFGSetupWinInternal( const char * name_of_window, int width, int height, int isFullscreen );
+
+void CNFGSetupFullscreen( const char * WindowName, int screen_number )
+{
+	// Get primary monitor dimensions, but default to 1920x1080
+	int monitorW = GetSystemMetrics(SM_CXSCREEN);
+	if(0 == monitorW)
+	{
+		monitorW = 1920;
+	}
+
+	int monitorH = GetSystemMetrics(SM_CYSCREEN);
+	if(0 == monitorH)
+	{
+		monitorH = 1080;
+	}
+
+	CNFGSetupWinInternal(WindowName, monitorW, monitorH, 1);
+}
+
 int CNFGSetup( const char * name_of_window, int width, int height )
+{
+	return CNFGSetupWinInternal(name_of_window, width, height, 0);
+}
+
+//This was from the article, too... well, mostly.
+int CNFGSetupWinInternal( const char * name_of_window, int width, int height, int isFullscreen )
 {
 	static LPSTR szClassName = "MyClass";
 	RECT client, window;
@@ -186,7 +211,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 
 	CNFGlsHWND = CreateWindow(szClassName,
 		name_of_window,      //name_of_window,
-		WS_OVERLAPPEDWINDOW, //basic window style
+		isFullscreen ? (WS_MAXIMIZE | WS_POPUP) : (WS_OVERLAPPEDWINDOW), //basic window style
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,       //set starting point to default value
 		CNFGBufferx,
@@ -249,7 +274,7 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 	//lsHPEN = CreatePen( PS_SOLID, 0, 0xFFFFFF );
 
 	if( show_window )
-		ShowWindow(CNFGlsHWND, 1);              //display the window on the screen
+		ShowWindow(CNFGlsHWND, isFullscreen ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);              //display the window on the screen
 
 	//Once set up... we have to change the window's borders so we get the client size right.
 	GetClientRect( CNFGlsHWND, &client );
