@@ -300,6 +300,11 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_no )
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
 #endif
+#ifdef CNFG_BATCH
+#ifndef CNFGCONTEXTONLY
+	CNFGSetupBatchInternal();
+#endif
+#endif
 
 #else
 	CNFGSetup( WindowName, 640, 480 );
