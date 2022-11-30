@@ -3,10 +3,14 @@
 # If you want uglify-js, install node to your system paths, https://nodejs.org/en/download/
 #  Execute: npm install -g terser
 
-$Clang = "C:\Program Files\LLVM\bin\clang"
+# You can also install clang via msys2 with "pacman -S llvm mingw-w64-clang-x86_64-wasm-pack mingw-w64-clang-x86_64-binaryen lld"
+
+#$Clang = "C:\Program Files\LLVM\bin\clang"
+$Clang = "D:\msys64\usr\bin\clang"
 
 # Assuming you have downloaded binaryen-98 and put it someheere that is in your paths.
-$WASMOpt = "wasm-opt"
+#$WASMOpt = "wasm-opt"
+$WASMOpt = "D:\msys64\clang64\bin\wasm-opt"
 
 
 $OutFile = 'index.html'
@@ -42,14 +46,14 @@ $AsyncProc = Start-Process -NoNewWindow -FilePath $WASMOpt -PassThru -ArgumentLi
     '--pass-arg=asyncify-ignore-indirect'
     '-Oz',
     $MainWASM,
-    "-o $MainWASM"
+    "-o $MainWASM.opt"
 )
 $AsyncProc.WaitForExit();
 
 Write-Host 'Merging files...'
 Write-Host ("WASM Binary size: {0:N0} B" -f (Get-Item $PSScriptRoot\$MainWASM).length)
-$WASMasB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PSScriptRoot\$MainWASM"))
-Remove-Item $MainWASM
+$WASMasB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PSScriptRoot\$MainWASM.opt"))
+#Remove-Item $MainWASM
 
 $ContentHT = Get-Content $TemplateHT -Raw
 $ContentJS = Get-Content $TemplateJS -Raw
