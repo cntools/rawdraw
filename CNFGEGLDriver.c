@@ -551,11 +551,17 @@ void AndroidMakeFullscreen()
 	jclass activityClass = env->FindClass( ENVCALL "android/app/NativeActivity");
 	jmethodID getWindow = env->GetMethodID( ENVCALL activityClass, "getWindow", "()Landroid/view/Window;");
 	jobject window = env->CallObjectMethod( ENVCALL gapp->activity->clazz, getWindow);
-
-	//Get android.view.Window class, then get getDecorView method handle, returns view.View type
 	jclass windowClass = env->FindClass( ENVCALL "android/view/Window");
 	jmethodID getDecorView = env->GetMethodID( ENVCALL windowClass, "getDecorView", "()Landroid/view/View;");
 	jobject decorView = env->CallObjectMethod( ENVCALL window, getDecorView);
+
+	/*
+		jclass ClassActivity = env->FindClass( ENVCALL "android/app/Activity" );
+		const int flag_WindowProp = env->GetStaticIntField( ENVCALL windowClass, env->GetStaticFieldID( ENVCALL windowClass, "FEATURE_NO_TITLE", "I") );
+		jmethodID requestWindowFeature = env->GetMethodID( ENVCALL ClassActivity, "requestWindowFeature", "(I)Z" );
+		jobject lNativeActivity = gapp->activity->clazz;
+		env->CallBooleanMethod( ENVCALL lNativeActivity, requestWindowFeature, flag_WindowProp );
+	*/
 
 	//Get the flag values associated with systemuivisibility
 	jclass viewClass = env->FindClass( ENVCALL "android/view/View");
@@ -565,24 +571,46 @@ void AndroidMakeFullscreen()
 	const int flagHideNavigation = env->GetStaticIntField( ENVCALL viewClass, env->GetStaticFieldID( ENVCALL viewClass, "SYSTEM_UI_FLAG_HIDE_NAVIGATION", "I"));
 	const int flagFullscreen = env->GetStaticIntField( ENVCALL viewClass, env->GetStaticFieldID( ENVCALL viewClass, "SYSTEM_UI_FLAG_FULLSCREEN", "I"));
 	const int flagImmersiveSticky = env->GetStaticIntField( ENVCALL viewClass, env->GetStaticFieldID( ENVCALL viewClass, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "I"));
-
+	const int flagLayoutStable = env->GetStaticIntField( ENVCALL viewClass, env->GetStaticFieldID( ENVCALL viewClass, "SYSTEM_UI_FLAG_LAYOUT_STABLE", "I"));
 	jmethodID setSystemUiVisibility = env->GetMethodID( ENVCALL viewClass, "setSystemUiVisibility", "(I)V");
-
 	//Call the decorView.setSystemUiVisibility(FLAGS)
 	env->CallVoidMethod( ENVCALL decorView, setSystemUiVisibility,
-		        (flagLayoutHideNavigation | flagLayoutFullscreen | flagLowProfile | flagHideNavigation | flagFullscreen | flagImmersiveSticky));
+		        (flagLayoutHideNavigation | flagLayoutFullscreen | flagLowProfile | flagHideNavigation | flagFullscreen | flagImmersiveSticky | flagLayoutStable));
 
 	//now set some more flags associated with layoutmanager -- note the $ in the class path
 	//search for api-versions.xml
 	//https://android.googlesource.com/platform/development/+/refs/tags/android-9.0.0_r48/sdk/api-versions.xml
-
 	jclass layoutManagerClass = env->FindClass( ENVCALL "android/view/WindowManager$LayoutParams");
 	const int flag_WinMan_Fullscreen = env->GetStaticIntField( ENVCALL layoutManagerClass, (env->GetStaticFieldID( ENVCALL layoutManagerClass, "FLAG_FULLSCREEN", "I") ));
 	const int flag_WinMan_KeepScreenOn = env->GetStaticIntField( ENVCALL layoutManagerClass, (env->GetStaticFieldID( ENVCALL layoutManagerClass, "FLAG_KEEP_SCREEN_ON", "I") ));
 	const int flag_WinMan_hw_acc = env->GetStaticIntField( ENVCALL layoutManagerClass, (env->GetStaticFieldID( ENVCALL layoutManagerClass, "FLAG_HARDWARE_ACCELERATED", "I") ));
+	const int flag_WinMan_NoLimits = env->GetStaticIntField( ENVCALL layoutManagerClass, (env->GetStaticFieldID( ENVCALL layoutManagerClass, "FLAG_LAYOUT_NO_LIMITS", "I") ));
 	//    const int flag_WinMan_flag_not_fullscreen = env->GetStaticIntField(layoutManagerClass, (env->GetStaticFieldID(layoutManagerClass, "FLAG_FORCE_NOT_FULLSCREEN", "I") ));
 	//call window.addFlags(FLAGS)
-	env->CallVoidMethod( ENVCALL window, (env->GetMethodID (ENVCALL windowClass, "addFlags" , "(I)V")), (flag_WinMan_Fullscreen | flag_WinMan_KeepScreenOn | flag_WinMan_hw_acc));
+	env->CallVoidMethod( ENVCALL window, (env->GetMethodID (ENVCALL windowClass, "addFlags" , "(I)V")), (flag_WinMan_Fullscreen | flag_WinMan_KeepScreenOn | flag_WinMan_hw_acc | flag_WinMan_NoLimits));
+
+	jmethodID setDecorFitsSystemWindows = env->GetMethodID( ENVCALL windowClass, "setDecorFitsSystemWindows", "(Z)V");
+	// Seems to have no impact.
+	env->CallVoidMethod( ENVCALL window, setDecorFitsSystemWindows, JNI_FALSE );
+
+
+/*
+	// "Immersive Mode" (Since Android 11+)
+	jmethodID getWindowInsetsController = env->GetMethodID( ENVCALL viewClass, "getWindowInsetsController", "()Landroid/view/WindowInsetsController;" );
+	if( getWindowInsetsController )
+	{
+		//windowInsetsController.hide(Type.systemBars())
+		jobject windowInsetsController = env->CallObjectMethod( ENVCALL decorView, getWindowInsetsController );
+		jclass windowInsetsControllerClass = env->FindClass( ENVCALL "android/view/WindowInsetsController" );
+
+		jclass windowInsetsTypeClass = env->FindClass( ENVCALL "android/view/WindowInsets/Type" );
+		jmethodID typeSystemBars = env->GetStaticMethodID( ENVCALL windowInsetsTypeClass, "systemBars", "()I" );
+		int systemBarsType = env->CallStaticIntMethod( ENVCALL windowInsetsTypeClass, typeSystemBars );
+
+		jmethodID hide = env->GetMethodID( ENVCALL windowInsetsControllerClass, "hide", "(I)V" );
+		env->CallVoidMethod( ENVCALL windowInsetsController, hide, systemBarsType );
+	}
+*/
 
 	JAVA_CALL_DETACH
 }
