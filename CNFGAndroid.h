@@ -4,6 +4,13 @@
 //This file contains the additional functions that are available on the Android platform.
 //In order to build rawdraw for Android, please compile CNFGEGLDriver.c with -DANDROID
 
+// Tricky: Android headers are confused by c++ if linking statically.
+#ifdef __cplusplus
+extern "C" {
+	int __system_property_get(const char* __name, char* __value);
+};
+#endif
+
 extern struct android_app * gapp;
 void AndroidMakeFullscreen();
 int AndroidHasPermissions(const char* perm_name);
