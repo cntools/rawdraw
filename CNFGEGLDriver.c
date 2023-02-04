@@ -40,7 +40,7 @@ int android_sdk_version;
 
 #include <android_native_app_glue.h>
 #include <jni.h>
-#include <native_activity.h>
+#include <android/native_activity.h>
 #define ERRLOG(...) printf( __VA_ARGS__ );
 #else
 #define ERRLOG(...) fprintf( stderr, __VA_ARGS__ );
