@@ -172,9 +172,9 @@ int CNFGSetup( const char * name_of_window, int width, int height )
 //This was from the article, too... well, mostly.
 int CNFGSetupWinInternal( const char * name_of_window, int width, int height, int isFullscreen )
 {
-	static LPSTR szClassName = "MyClass";
+	static LPCSTR szClassName = "MyClass";
 	RECT client, window;
-	WNDCLASS wnd;
+	WNDCLASSA wnd;
 	int w, h, wd, hd;
 	int show_window = 1;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -204,13 +204,27 @@ int CNFGSetupWinInternal( const char * name_of_window, int width, int height, in
 	wnd.lpszMenuName = NULL;                     //no menu
 	wnd.lpszClassName = szClassName;
 
-	if(!RegisterClass(&wnd))                     //register the WNDCLASS
+	if(!RegisterClassA(&wnd))                     //register the WNDCLASS
 	{
-		MessageBox(NULL, "This Program Requires Windows NT", "Error", MB_OK);
+		MessageBoxA(NULL, "This Program Requires Windows NT", "Error", MB_OK);
 	}
+	
+#ifdef UNICODE
+	// CreateWindowA **requires** unicode window name even in non-unicode mode.
+	int wlen = strlen( name_of_window );
+	char * unicodeao = (char*)alloca( wlen * 2 + 2 );
+	int i;
+	for( i = 0; i <= wlen; i++ )
+	{
+		unicodeao[i * 2 + 1] = 0;
+		unicodeao[i * 2 + 0] = name_of_window[i];
+	}
+	name_of_window = unicodeao;
+#endif
 
-	CNFGlsHWND = CreateWindow(szClassName,
-		name_of_window,      //name_of_window,
+
+	CNFGlsHWND = CreateWindowA(szClassName,
+		name_of_window,      //name_of_window, but must always be 
 		isFullscreen ? (WS_MAXIMIZE | WS_POPUP) : (WS_OVERLAPPEDWINDOW), //basic window style
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,       //set starting point to default value
@@ -249,17 +263,17 @@ int CNFGSetupWinInternal( const char * name_of_window, int width, int height, in
 	GLuint      PixelFormat = ChoosePixelFormat( CNFGlsWindowHDC, &pfd );
 	if( !SetPixelFormat( CNFGlsWindowHDC, PixelFormat, &pfd ) )
 	{
-		MessageBox( 0, "Could not create PFD for OpenGL Context\n", 0, 0 );
+		MessageBoxA( 0, "Could not create PFD for OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
 	if (!(hRC=wglCreateContext(CNFGlsWindowHDC)))                   // Are We Able To Get A Rendering Context?
 	{
-		MessageBox( 0, "Could not create OpenGL Context\n", 0, 0 );
+		MessageBoxA( 0, "Could not create OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
 	if(!wglMakeCurrent(CNFGlsWindowHDC,hRC))                        // Try To Activate The Rendering Context
 	{
-		MessageBox( 0, "Could not current OpenGL Context\n", 0, 0 );
+		MessageBoxA( 0, "Could not current OpenGL Context\n", 0, 0 );
 		exit( -1 );
 	}
 #endif
@@ -296,6 +310,8 @@ int CNFGSetupWinInternal( const char * name_of_window, int width, int height, in
 	return 0;
 }
 
+
+
 int CNFGHandleInput()
 {
 #ifdef CNFGOGL
@@ -326,7 +342,9 @@ int CNFGHandleInput()
 			break;
 		case WM_MOUSEWHEEL:
 		{
-			POINT p = { .x = /*GET_X_LPARAM*/LOWORD(msg.lParam), .y = /*GET_Y_LPARAM*/HIWORD(msg.lParam) };
+			POINT p = { 0 };
+			p.x = LOWORD( msg.lParam );
+			p.y = HIWORD( msg.lParam );
 			ScreenToClient(CNFGlsHWND, &p);
 			HandleButton(p.x, p.y, GET_WHEEL_DELTA_WPARAM(msg.wParam) > 0 ? 0x0E : 0x0F, 1);
 		} break;

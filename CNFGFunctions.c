@@ -352,7 +352,7 @@ float sqrtf( float f );
 float CNFGVertDataV[CNFG_BATCH*3];
 uint32_t CNFGVertDataC[CNFG_BATCH];
 int CNFGVertPlace;
-static float wgl_last_width_over_2 = .5;
+static float wgl_last_width_over_2 = .5f;
 
 static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
 {
@@ -378,8 +378,8 @@ static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, flo
 void CNFGTackPixel( short x1, short y1 )
 {
 	x1++; y1++;
-	const short l2 = wgl_last_width_over_2;
-	const short l2u = wgl_last_width_over_2+0.5;
+	const float l2 = wgl_last_width_over_2;
+	const float l2u = wgl_last_width_over_2+0.5f;
 	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
 }
 
@@ -393,16 +393,16 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 	float dx = ix2-ix1;
 	float dy = iy2-iy1;
-	float imag = 1./cnfg_sqrtf(dx*dx+dy*dy);
+	float imag = 1.f/(float)(cnfg_sqrtf(dx*dx+dy*dy));
 	dx *= imag;
 	dy *= imag;
 	float orthox = dy*wgl_last_width_over_2;
 	float orthoy =-dx*wgl_last_width_over_2;
 
-	ix2 += dx/2 + 0.5;
-	iy2 += dy/2 + 0.5;
-	ix1 -= dx/2 - 0.5;
-	iy1 -= dy/2 - 0.5;
+	ix2 += dx/2 + 0.5f;
+	iy2 += dy/2 + 0.5f;
+	ix1 -= dx/2 - 0.5f;
+	iy1 -= dy/2 - 0.5f;
 
 	//This logic is incorrect. XXX FIXME.
 	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
@@ -452,7 +452,7 @@ uint32_t CNFGColor( uint32_t RGB )
 
 void	CNFGSetLineWidth( short width )
 {
-	wgl_last_width_over_2 = width/2.0;// + 0.5;
+	wgl_last_width_over_2 = width/2.0f;// + 0.5;
 }
 
 #endif
@@ -487,9 +487,11 @@ void	CNFGSetLineWidth( short width )
 	#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 	// Make sure to use __stdcall on Windows
 		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+			typedef ret (__stdcall *CNFGTYPE##name)( __VA_ARGS__ ); \
 			ret (__stdcall *CNFG##name)( __VA_ARGS__ );
 	#else
 		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
+			typedef ret (*CNFGTYPE##name)( __VA_ARGS__ ); \
 			ret (*CNFG##name)( __VA_ARGS__ );
 	#endif
 #else
@@ -584,25 +586,25 @@ void * CNFGGetProcAddress(const char *name)
 // Try and load openGL extension functions required for rawdraw
 static void CNFGLoadExtensionsInternal()
 {
-	CNFGglGetUniformLocation = CNFGGetProcAddress( "glGetUniformLocation" );
-	CNFGglEnableVertexAttribArray = CNFGGetProcAddress( "glEnableVertexAttribArray" );
-	CNFGglUseProgram = CNFGGetProcAddress( "glUseProgram" );
-	CNFGglGetProgramInfoLog = CNFGGetProcAddress( "glGetProgramInfoLog" );
-	CNFGglBindAttribLocation = CNFGGetProcAddress( "glBindAttribLocation" );
-	CNFGglGetProgramiv = CNFGGetProcAddress( "glGetProgramiv" );
-	CNFGglGetShaderiv = CNFGGetProcAddress( "glGetShaderiv" );
-	CNFGglVertexAttribPointer = CNFGGetProcAddress( "glVertexAttribPointer" );
-	CNFGglCreateShader = CNFGGetProcAddress( "glCreateShader" );
-	CNFGglShaderSource = CNFGGetProcAddress( "glShaderSource" );
-	CNFGglAttachShader = CNFGGetProcAddress( "glAttachShader" );
-	CNFGglCompileShader = CNFGGetProcAddress( "glCompileShader" );
-	CNFGglGetShaderInfoLog = CNFGGetProcAddress( "glGetShaderInfoLog" );
-	CNFGglDeleteShader = CNFGGetProcAddress( "glDeleteShader" );
-	CNFGglLinkProgram = CNFGGetProcAddress( "glLinkProgram" );
-	CNFGglCreateProgram = CNFGGetProcAddress( "glCreateProgram" );
-	CNFGglUniform4f = CNFGGetProcAddress( "glUniform4f" );
-	CNFGglUniform1i = CNFGGetProcAddress( "glUniform1i" );
-	CNFGglActiveTexture = CNFGGetProcAddress("glActiveTexture");
+	CNFGglGetUniformLocation = (CNFGTYPEglGetUniformLocation) CNFGGetProcAddress( "glGetUniformLocation" );
+	CNFGglEnableVertexAttribArray = (CNFGTYPEglEnableVertexAttribArray)CNFGGetProcAddress( "glEnableVertexAttribArray" );
+	CNFGglUseProgram = (CNFGTYPEglUseProgram)CNFGGetProcAddress( "glUseProgram" );
+	CNFGglGetProgramInfoLog = (CNFGTYPEglGetProgramInfoLog)CNFGGetProcAddress( "glGetProgramInfoLog" );
+	CNFGglBindAttribLocation = (CNFGTYPEglBindAttribLocation)CNFGGetProcAddress( "glBindAttribLocation" );
+	CNFGglGetProgramiv = (CNFGTYPEglGetProgramiv)CNFGGetProcAddress( "glGetProgramiv" );
+	CNFGglGetShaderiv = (CNFGTYPEglGetShaderiv)CNFGGetProcAddress( "glGetShaderiv" );
+	CNFGglVertexAttribPointer = (CNFGTYPEglVertexAttribPointer)CNFGGetProcAddress( "glVertexAttribPointer" );
+	CNFGglCreateShader = (CNFGTYPEglCreateShader)CNFGGetProcAddress( "glCreateShader" );
+	CNFGglShaderSource = (CNFGTYPEglShaderSource)CNFGGetProcAddress( "glShaderSource" );
+	CNFGglAttachShader = (CNFGTYPEglAttachShader)CNFGGetProcAddress( "glAttachShader" );
+	CNFGglCompileShader = (CNFGTYPEglCompileShader)CNFGGetProcAddress( "glCompileShader" );
+	CNFGglGetShaderInfoLog = (CNFGTYPEglGetShaderInfoLog)CNFGGetProcAddress( "glGetShaderInfoLog" );
+	CNFGglDeleteShader = (CNFGTYPEglDeleteShader)CNFGGetProcAddress( "glDeleteShader" );
+	CNFGglLinkProgram = (CNFGTYPEglLinkProgram)CNFGGetProcAddress( "glLinkProgram" );
+	CNFGglCreateProgram = (CNFGTYPEglCreateProgram)CNFGGetProcAddress( "glCreateProgram" );
+	CNFGglUniform4f = (CNFGTYPEglUniform4f)CNFGGetProcAddress( "glUniform4f" );
+	CNFGglUniform1i = (CNFGTYPEglUniform1i)CNFGGetProcAddress( "glUniform1i" );
+	CNFGglActiveTexture = (CNFGTYPEglActiveTexture)CNFGGetProcAddress("glActiveTexture");
 
 	// Check if any of these functions didn't get loaded
 	uint8_t not_all_functions_loaded = 
@@ -671,7 +673,7 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		if (ret > 1) {
 			//TODO: Refactor to remove malloc reliance.
 			#ifndef __clang__
-			char * log = alloca(ret);
+			char * log = (char*)alloca(ret);
 			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
 			#endif
@@ -929,10 +931,10 @@ void CNFGFlushRender()
 
 void CNFGClearFrame()
 {
-	glClearColor( ((CNFGBGColor&0xff000000)>>24)/255.0, 
-		((CNFGBGColor&0xff0000)>>16)/255.0,
-		(CNFGBGColor&0xff00)/65280.0,
-		(CNFGBGColor&0xff)/255.0);
+	glClearColor( ((CNFGBGColor&0xff000000)>>24)/255.0f, 
+		((CNFGBGColor&0xff0000)>>16)/255.0f,
+		(CNFGBGColor&0xff00)/65280.0f,
+		(CNFGBGColor&0xff)/255.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
