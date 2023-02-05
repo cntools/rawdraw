@@ -500,6 +500,11 @@ void	CNFGSetLineWidth( short width )
 	ret name (__VA_ARGS__);
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int (*MyFunc)( int program, const LGLchar *name );
 
 CHEWTYPEDEF( GLint, glGetUniformLocation, return, (program,name), GLuint program, const LGLchar *name )
@@ -544,6 +549,11 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #define CNFGglVertexAttribPointer glVertexAttribPointer
 #define CNFGglUniform1i glUniform1i
 #define CNFGglActiveTexture glActiveTexture
+
+#ifdef __cplusplus
+};
+#endif
+
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
