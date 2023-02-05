@@ -550,10 +550,10 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #define CNFGglUniform1i glUniform1i
 #define CNFGglActiveTexture glActiveTexture
 
-#ifdef __cplusplus
-};
 #endif
 
+#ifdef __cplusplus
+};
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
