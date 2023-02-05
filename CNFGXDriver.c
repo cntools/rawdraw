@@ -43,8 +43,8 @@ void CNFGSetupBatchInternal();
 
 XWindowAttributes CNFGWinAtt;
 XClassHint *CNFGClassHint;
-char *wm_res_name = "rawdraw";
-char *wm_res_class = "rawdraw";
+char * wm_res_name = 0;
+char * wm_res_class = 0;
 Display *CNFGDisplay;
 Window CNFGWindow;
 int CNFGWindowInvisible;
@@ -178,6 +178,9 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 {
 	XFlush(CNFGDisplay);
 	XGetWindowAttributes( CNFGDisplay, CNFGWindow, &CNFGWinAtt );
+
+	if( !wm_res_name ) wm_res_name = strdup( "rawdraw" );
+	if( !wm_res_class ) wm_res_class = strdup( "rawdraw" );
 
 	XGetClassHint( CNFGDisplay, CNFGWindow, CNFGClassHint );
 	if (!CNFGClassHint) {
