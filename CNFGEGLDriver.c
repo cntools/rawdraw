@@ -589,12 +589,13 @@ void AndroidMakeFullscreen()
 	//call window.addFlags(FLAGS)
 	env->CallVoidMethod( ENVCALL window, (env->GetMethodID (ENVCALL windowClass, "addFlags" , "(I)V")), (flag_WinMan_Fullscreen | flag_WinMan_KeepScreenOn | flag_WinMan_hw_acc | flag_WinMan_NoLimits));
 
-	jmethodID setDecorFitsSystemWindows = env->GetMethodID( ENVCALL windowClass, "setDecorFitsSystemWindows", "(Z)V");
-	// Seems to have no impact.
-	env->CallVoidMethod( ENVCALL window, setDecorFitsSystemWindows, JNI_FALSE );
 
 
 /*
+	// Seems to have no impact, and doesn't work with older Android versions.
+	jmethodID setDecorFitsSystemWindows = env->GetMethodID( ENVCALL windowClass, "setDecorFitsSystemWindows", "(Z)V");
+	env->CallVoidMethod( ENVCALL window, setDecorFitsSystemWindows, JNI_FALSE );
+
 	// "Immersive Mode" (Since Android 11+)
 	jmethodID getWindowInsetsController = env->GetMethodID( ENVCALL viewClass, "getWindowInsetsController", "()Landroid/view/WindowInsetsController;" );
 	if( getWindowInsetsController )
