@@ -63,21 +63,41 @@ To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 ```
 
 
-## prerequisites and some instructions for running on linux
+## Prerequisites and some instructions for running on linux
 
-firstly, make sure you have the following libraries installed:
+Firstly, make sure you have the following packages and libraries installed:
+
+### Debian/Ubuntu:
 ```
 xorg-dev
 libx-dev
 libxinerama-dev libxext-dev
 mesa-common-dev libglu1-mesa-dev
 ```
-to do so and also to install them incase they are not already, run the following commands:
+to install:
 ```
 sudo apt-get update
 sudo apt-get install xorg-dev libx11-dev libxinerama-dev libxext-dev mesa-common-dev libglu1-mesa-dev
 ```
-then to run the sample program in rawdraw, go to the clone of the repository on your system, open a terminal window there, and run the command `make`. this will create an executable file called "simple" from the c file called "simple.c". You should be able to run the executable "simple" with the command `./simple`
+### Arch Linux:
+```
+xorg-server-devel
+libx11
+libxinerama libxext
+mesa glu
+```
+to install:
+```
+sudo pacman -Sy xorg-server-devel libx11 libxinerama libxext mesa glu
+```
+
+**NOTE**: make sure to update LLVM (`llvm-dev` for Debian/Ubuntu, `llvm-libs` for Arch Linux) to the latest version. This will make sure that the drivers are loaded correctly by having Mesa access shared objects without any errors when executing the binary.
+
+
+To run the sample program in rawdraw:
+1. Clone the repository on your system and run `cd rawdraw/`.
+2. Run the command `make` (compiles and creates an executable called "simple" from "simple.c").
+3. Run the command `./simple` to execute "simple".
 
 
 ## Example program
@@ -112,7 +132,7 @@ int main()
 
 		CNFGPenX = 1; CNFGPenY = 1;
 		CNFGDrawText( "Hello, World", 2 );
-		//Draw a white pixel at 3,0 30 
+		//Draw a white pixel at 30, 30 
 		CNFGTackPixel( 30, 30 );         
 
 		//Draw a line from 50,50 to 100,50
@@ -149,7 +169,6 @@ int main()
 ```
 
 ## Building
-
 Windows compile:
 Build with clang
 ```
@@ -163,7 +182,7 @@ C:\tcc\tcc simple.c -Irawdraw -lopengl32 -lgdi32 -luser32 C:\windows\system32\ms
 
 Linux compile:
 ```
-gcc -o simple simple.c -lm -lX11
+gcc -o simple simple.c -lm -lX11 -lGL
 ```
 
 Note, with the STB-style header, you don't need to
