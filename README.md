@@ -66,7 +66,7 @@ To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 ## Usage on Linux
 ### Prerequisites
 
-Firstly, make sure you have the necessary packages and libraries installed:
+Firstly, make sure you have the necessary packages and libraries installed.
 
 To install on **Debian/Ubuntu**:
 ```
@@ -77,8 +77,6 @@ To install on **Arch Linux**:
 ```
 sudo pacman -Sy xorg-server-devel libx11 libxinerama libxext mesa glu
 ```
-
-**NOTE**: make sure to update LLVM (`llvm-dev` for Debian/Ubuntu, `llvm-libs` for Arch Linux) to the latest version. This will make sure that the drivers are loaded correctly by having Mesa access shared objects without any errors when executing the binary.
 
 ### Running
 
