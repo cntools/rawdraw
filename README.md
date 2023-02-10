@@ -63,36 +63,24 @@ To use CNFG, be sure to do this, or include "CNFG.c" in your project.
 ```
 
 
-## Prerequisites and some instructions for running on linux
+## Usage on Linux
+### Prerequisites
 
-Firstly, make sure you have the following packages and libraries installed:
+Firstly, make sure you have the necessary packages and libraries installed:
 
-### Debian/Ubuntu:
-```
-xorg-dev
-libx-dev
-libxinerama-dev libxext-dev
-mesa-common-dev libglu1-mesa-dev
-```
-to install:
+To install on **Debian/Ubuntu**:
 ```
 sudo apt-get update
 sudo apt-get install xorg-dev libx11-dev libxinerama-dev libxext-dev mesa-common-dev libglu1-mesa-dev
 ```
-### Arch Linux:
-```
-xorg-server-devel
-libx11
-libxinerama libxext
-mesa glu
-```
-to install:
+To install on **Arch Linux**:
 ```
 sudo pacman -Sy xorg-server-devel libx11 libxinerama libxext mesa glu
 ```
 
 **NOTE**: make sure to update LLVM (`llvm-dev` for Debian/Ubuntu, `llvm-libs` for Arch Linux) to the latest version. This will make sure that the drivers are loaded correctly by having Mesa access shared objects without any errors when executing the binary.
 
+### Running
 
 To run the sample program in rawdraw:
 1. Clone the repository on your system and run `cd rawdraw/`.
