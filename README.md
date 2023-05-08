@@ -198,7 +198,7 @@ Flags you will probably never want to use:
 
 ### RDUI
 
-RDUI is mainted by Overlisted and contains a lot of extra features for rawdraw. You can check it out here: https://github.com/overlisted/rdui
+RDUI is mainted by Overlisted and contains a lot of extra features for rawdraw. You can check it out here: https://git.overlisted.net/me/rdui/
 
 ### chew.h
 
