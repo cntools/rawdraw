@@ -311,3 +311,4 @@ if( RAWDRAW_NEED_BLITTER )
 
 	//Code here would continue executing, but this code is executed *before* main.
 }
+
