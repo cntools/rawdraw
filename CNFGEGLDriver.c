@@ -492,7 +492,7 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 		//Not sure why - callbacks here seem to break stuff.
 	//	break;
 	default:
-		printf( "event not handled: %d", cmd);
+		printf( "event not handled: %d\n", cmd);
 	}
 }
 
