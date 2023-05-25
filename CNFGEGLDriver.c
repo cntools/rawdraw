@@ -491,6 +491,14 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 		//This also gets called when you are brought into standby.
 		//Not sure why - callbacks here seem to break stuff.
 	//	break;
+
+	case APP_CMD_PAUSE:
+		HandleSuspend();
+		break;
+
+	case APP_CMD_RESUME:
+		HandleResume();
+		break;
 	default:
 		printf( "event not handled: %d\n", cmd);
 	}
