@@ -89,6 +89,7 @@ void CNFGGLXSetup( )
 	CNFGVisualID = vis->visualid;
 	CNFGDepth = vis->depth;
 	CNFGCtx = glXCreateContext( CNFGDisplay, vis, NULL, True );
+	XFree( vis );
 }
 
 #endif
