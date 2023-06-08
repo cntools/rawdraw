@@ -133,7 +133,7 @@ void HandleKey( int keycode, int bDown );
 void HandleButton( int x, int y, int button, int bDown );
 void HandleMotion( int x, int y, int mask );
 void HandleDestroy();
-#if defined( ANDROID )
+#ifdef ANDROID_WANT_WINDOW_TERMINATION
 void HandleWindowTermination();
 #endif
 

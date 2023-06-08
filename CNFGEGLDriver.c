@@ -464,6 +464,7 @@ int CNFGHandleInput()
 
 #ifdef ANDROID
 
+void HandleWindowTermination() __attribute__((weak)) { }
 
 void handle_cmd(struct android_app* app, int32_t cmd)
 {
@@ -504,7 +505,9 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 		egl_context = EGL_NO_CONTEXT;
 		egl_surface = EGL_NO_SURFACE;
 		egl_display = EGL_NO_DISPLAY;
+#ifdef ANDROID_WANT_WINDOW_TERMINATION
 		HandleWindowTermination();
+#endif
 		break;
 
 	case APP_CMD_PAUSE:
