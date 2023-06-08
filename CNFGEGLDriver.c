@@ -160,6 +160,7 @@ static short iLastInternalW, iLastInternalH;
 
 void CNFGSwapBuffers()
 {
+	if ( egl_display == EGL_NO_DISPLAY ) return;
 	CNFGFlushRender();
 	eglSwapBuffers(egl_display, egl_surface);
 #ifdef ANDROID
@@ -486,11 +487,25 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 			HandleResume();
 		}
 		break;
-	//case APP_CMD_TERM_WINDOW:
+	case APP_CMD_TERM_WINDOW:
 		//This gets called initially when you click "back"
 		//This also gets called when you are brought into standby.
 		//Not sure why - callbacks here seem to break stuff.
-	//	break;
+		if( egl_display != EGL_NO_DISPLAY ) {
+			eglMakeCurrent( egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+			if( egl_context != EGL_NO_CONTEXT ) {
+				eglDestroyContext( egl_display, egl_context );
+			}
+			if( egl_surface != EGL_NO_SURFACE ) {
+				eglDestroySurface( egl_display, egl_surface );
+			}
+			eglTerminate( egl_display );
+		}
+		egl_context = EGL_NO_CONTEXT;
+		egl_surface = EGL_NO_SURFACE;
+		egl_display = EGL_NO_DISPLAY;
+		HandleWindowTermination();
+		break;
 
 	case APP_CMD_PAUSE:
 		HandleSuspend();
