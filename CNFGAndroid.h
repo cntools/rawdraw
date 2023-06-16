@@ -23,6 +23,9 @@ extern int android_sdk_version; //Derived at start from property ro.build.versio
 extern int android_width, android_height;
 extern int UpdateScreenWithBitmapOffsetX;
 extern int UpdateScreenWithBitmapOffsetY;
+extern void (*HandleCustomEventCallback)();
+extern void (*HandleWindowTermination)();
+
 
 // If you need them, these are the names of raw EGL symbols.
 //extern EGLDisplay egl_display;

@@ -37,6 +37,7 @@
 #include "CNFGAndroid.h"
 struct android_app * gapp;
 static int OGLESStarted;
+void (*HandleCustomEventCallback)();
 int android_width, android_height;
 int override_android_screen_dimensons = 0;
 int android_sdk_version;
@@ -464,7 +465,7 @@ int CNFGHandleInput()
 
 #ifdef ANDROID
 
-void HandleWindowTermination() __attribute__((weak)) { }
+void (*HandleWindowTermination)();
 
 void handle_cmd(struct android_app* app, int32_t cmd)
 {
@@ -506,7 +507,7 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 		egl_surface = EGL_NO_SURFACE;
 		egl_display = EGL_NO_DISPLAY;
 #ifdef ANDROID_WANT_WINDOW_TERMINATION
-		HandleWindowTermination();
+		if( HandleWindowTermination ) HandleWindowTermination();
 #endif
 		break;
 
@@ -516,6 +517,9 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 
 	case APP_CMD_RESUME:
 		HandleResume();
+		break;
+	case APP_CMD_CUSTOM_EVENT:
+		if( HandleCustomEventCallback ) HandleCustomEventCallback();
 		break;
 	default:
 		printf( "event not handled: %d\n", cmd);
