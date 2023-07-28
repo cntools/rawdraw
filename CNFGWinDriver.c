@@ -411,7 +411,7 @@ void FlushTacking()
 	}
 
 	if( possible_lastline )
-		CNFGTackPixel( last_linex, last_liney );
+		CNFGTackPixel( (short)last_linex, (short)last_liney );
 	possible_lastline = 0;
 
 	//XXX TODO: Consider locking the bitmap, and manually drawing the pixels.
@@ -470,7 +470,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 
 	if( ( x1 != last_linex || y1 != last_liney ) && possible_lastline )
 	{
-		CNFGTackPixel( last_linex, last_liney );
+		CNFGTackPixel( (short)last_linex, (short)last_liney );
 	}
 
 	if( x1 == x2 && y1 == y2 )
@@ -522,7 +522,7 @@ void CNFGClearFrame()
 	RECT r = { 0, 0, CNFGBufferx, CNFGBuffery };
 	DeleteObject( lsClearBrush  );
 	lsClearBrush = CreateSolidBrush( COLORSWAPS(CNFGBGColor) );
-	HBRUSH prevBrush = SelectObject( CNFGlsHDC, lsClearBrush );
+	HBRUSH prevBrush = (HBRUSH)SelectObject( CNFGlsHDC, lsClearBrush );
 	FillRect( CNFGlsHDC, &r, lsClearBrush);
 	SelectObject( CNFGlsHDC, prevBrush );
 }
