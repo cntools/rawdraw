@@ -176,12 +176,12 @@ void CNFGDrawText( const char * text, short scale )
 	float iox = (float)CNFGPenX; //x offset
 	float ioy = (float)CNFGPenY; //y offset
 
-	int place = 0;
+	int drawPlace = 0;
 	unsigned short index;
 	int bQuit = 0;
-	while( text[place] )
+	while( text[drawPlace] )
 	{
-		unsigned char c = text[place];
+		unsigned char c = text[drawPlace];
 		switch( c )
 		{
 		case 9: // tab
@@ -227,7 +227,7 @@ void CNFGDrawText( const char * text, short scale )
 
 			iox += 3 * scale;
 		}
-		place++;
+        drawPlace++;
 	}
 }
 
