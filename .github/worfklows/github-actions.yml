@@ -1,0 +1,34 @@
+name: rawdraw
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on:
+  push:
+    branches:
+      - '**' # All branches.
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Triggered by ${{ github.event_name }} on ${{ runner.os }}.  Branch Ref ${{ github.ref }}.
+      - name: Install dependencies.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends
+            build-essential
+            openjdk-11-jdk-headless
+            unzip
+            wget
+            zip
+            git
+            vim
+            gettext-base
+      - name: Check out respository code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Building rawdraw_sf.h
+        run: rm rawdraw_sf.h
+        run: make rawdraw_sf.h
+      - name: artifacts
+        uses: actions/upload-artifacts@v3
+        with:
+          name: rawdraw_sf
+          path: rawdraw_sf.h
+
