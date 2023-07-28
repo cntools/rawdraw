@@ -1,5 +1,5 @@
 name: rawdraw
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: ${{ github.actor }} Executing
 on:
   push:
     branches:
@@ -30,8 +30,7 @@ jobs:
         run: |
           rm rawdraw_sf.h
           make rawdraw_sf.h
-      - name: artifacts
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3
         with:
           name: rawdraw_sf
           path: rawdraw_sf.h
