@@ -11,7 +11,7 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Triggered by ${{ github.event_name }} on ${{ runner.os }}.  Branch Ref ${{ github.ref }}.
+      - run: echo "Triggered by ${{ github.event_name }} on ${{ runner.os }}.  Branch Ref ${{ github.ref }}."
       - name: Install dependencies.
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends
             build-essential
