@@ -27,8 +27,9 @@ jobs:
         with:
           submodules: recursive
       - name: Building rawdraw_sf.h
-        run: rm rawdraw_sf.h
-        run: make rawdraw_sf.h
+        run: |
+          rm rawdraw_sf.h
+          make rawdraw_sf.h
       - name: artifacts
         uses: actions/upload-artifacts@v3
         with:
