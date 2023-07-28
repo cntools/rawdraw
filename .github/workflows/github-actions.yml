@@ -31,7 +31,7 @@ jobs:
           rm rawdraw_sf.h
           make rawdraw_sf.h
       - name: artifacts
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v3
         with:
           name: rawdraw_sf
           path: rawdraw_sf.h
