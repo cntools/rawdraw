@@ -227,7 +227,7 @@ void CNFGDrawText( const char * text, short scale )
 
 			iox += 3 * scale;
 		}
-        drawPlace++;
+		drawPlace++;
 	}
 }
 

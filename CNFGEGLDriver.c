@@ -35,7 +35,7 @@
 
 
 #include "CNFGAndroid.h"
-struct android_app * gapp;
+extern struct android_app * gapp;
 static int OGLESStarted;
 void (*HandleCustomEventCallback)();
 int android_width, android_height;
