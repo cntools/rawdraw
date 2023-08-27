@@ -84,6 +84,7 @@ void CNFGGLXSetup( )
 		exit( -1 );
 	}
 	CNFGGLXFBConfig = cfgs[0];
+	XFree( cfgs );
 	XVisualInfo * vis = glXGetVisualFromFBConfig( CNFGDisplay, CNFGGLXFBConfig );
 	CNFGVisual = vis->visual;
 	CNFGVisualID = vis->visualid;
