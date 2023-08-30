@@ -64,6 +64,7 @@ VisualID CNFGVisualID;
 GLXContext CNFGCtx;
 void * CNFGGetExtension( const char * extname ) { return (void*)glXGetProcAddressARB((const GLubyte *) extname); }
 GLXFBConfig CNFGGLXFBConfig;
+GLXFBConfig* CNFGGLXFBConfigs;
 
 
 void CNFGGLXSetup( )
@@ -83,6 +84,7 @@ void CNFGGLXSetup( )
 		fprintf( stderr, "Error: could not get valid GLXFBConfig visual.\n" );
 		exit( -1 );
 	}
+	CNFGGLXFBConfigs = cfgs;
 	CNFGGLXFBConfig = cfgs[0];
 	XVisualInfo * vis = glXGetVisualFromFBConfig( CNFGDisplay, CNFGGLXFBConfig );
 	CNFGVisual = vis->visual;
@@ -325,6 +327,8 @@ void CNFGTearDown()
 	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
 	if ( CNFGDisplay ) XCloseDisplay( CNFGDisplay );
+	if ( CNFGGLXFBConfigs ) XFree( CNFGGLXFBConfigs );
+	CNFGGLXFBConfigs = NULL;
 	CNFGDisplay = NULL;
 	CNFGWindowGC = CNFGGC = NULL;
 	CNFGClassHint = NULL;
