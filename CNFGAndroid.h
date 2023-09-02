@@ -52,6 +52,10 @@ void HandleSuspend();
 
 // For debugging:
 
+#ifdef ANDROID
+
+#include <jni.h>
+
 static inline void PrintClassOfObject( jobject bundle )
 {
 	const struct JNINativeInterface * env = 0;
@@ -206,15 +210,7 @@ static inline void DumpObjectClassProperties( jobject objToDump )
 
 	env->DeleteLocalRef( envptr, mpclass );
 }
-
-
-
-
-
-
-
-
-
+#endif
 
 #endif
 
