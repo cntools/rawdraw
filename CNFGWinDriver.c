@@ -307,6 +307,8 @@ int CNFGSetupWinInternal( const char * name_of_window, int width, int height, in
 #endif
 #endif
 
+	ShouldClose = 0;
+
 	return 0;
 }
 
