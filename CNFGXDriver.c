@@ -327,8 +327,10 @@ void CNFGTearDown()
 	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
 	if ( CNFGDisplay ) XCloseDisplay( CNFGDisplay );
+#ifdef CNFGOGL
 	if ( CNFGGLXFBConfigs ) XFree( CNFGGLXFBConfigs );
 	CNFGGLXFBConfigs = NULL;
+#endif
 	CNFGDisplay = NULL;
 	CNFGWindowGC = CNFGGC = NULL;
 	CNFGClassHint = NULL;
