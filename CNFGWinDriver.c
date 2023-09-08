@@ -136,9 +136,12 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 #endif
-	case WM_DESTROY:
+	case WM_QUIT:
 		if( !HandleDestroy() )
-			CNFGTearDown();
+			return 0;
+		break;
+	case WM_DESTROY:
+		CNFGTearDown();
 		return 0;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
