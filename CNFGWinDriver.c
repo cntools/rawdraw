@@ -136,7 +136,7 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 #endif
-	case WM_QUIT:
+	case WM_CLOSE:
 		if( !HandleDestroy() )
 			return 0;
 		break;
