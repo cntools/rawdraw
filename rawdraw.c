@@ -153,10 +153,11 @@ void DrawHeightmap()
 }
 
 
-void HandleDestroy()
+int HandleDestroy()
 {
 	printf( "Destroying\n" );
 	exit(10);
+	return 0;
 }
 
 uint32_t randomtexturedata[65536];

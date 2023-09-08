@@ -473,8 +473,8 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 	{
 	case APP_CMD_DESTROY:
 		//This gets called initially after back.
-		HandleDestroy();
-		ANativeActivity_finish( gapp->activity );
+		if( !HandleDestroy() )
+			ANativeActivity_finish( gapp->activity );
 		break;
 	case APP_CMD_INIT_WINDOW:
 		//When returning from a back button suspension, this isn't called.

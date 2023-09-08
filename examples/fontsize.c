@@ -30,10 +30,11 @@ void HandleMotion( int x, int y, int mask )
 //	printf( "Motion: %d,%d (%d)\n", x, y, mask );
 }
 
-void HandleDestroy()
+int HandleDestroy()
 {
 	printf( "Destroying\n" );
 	exit(10);
+	return 0;
 }
 
 int main()

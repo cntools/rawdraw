@@ -26,10 +26,11 @@ void HandleMotion( int x, int y, int mask )
 }
 
 
-void HandleDestroy()
+int HandleDestroy()
 {
 	printf( "Destroying\n" );
 	exit(10);
+	return 0;
 }
 
 

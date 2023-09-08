@@ -17,9 +17,10 @@ void HandleMotion( int x, int y, int mask )
 {
 }
 
-void HandleDestroy()
+int HandleDestroy()
 {
 	exit(10);
+	return 0;
 }
 
 int main()
