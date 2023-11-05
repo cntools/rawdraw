@@ -101,7 +101,7 @@ is as follows:
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
 void HandleMotion( int x, int y, int mask ) { }
-int HandleDestroy() { reutrn 0; }
+int HandleDestroy() { return 0; }
 int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
