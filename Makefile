@@ -65,5 +65,5 @@ rawdraw_sf.h : tools/single_file_creator CNFG.h tools/rawdraw_http_page.h
 	./tools/single_file_creator CNFG.h CNFG.c CNFGWinDriver.c CNFGEGLLeanAndMean.c CNFGRasterizer.c CNFGEGLDriver.c CNFGWASMDriver.c CNFGXDriver.c CNFGFunctions.c CNFG3D.c CNFGAndroid.h CNFGHTTP.c tools/rawdraw_http_page.h >> $@
 
 clean : 
-	rm -rf *.o *~ rawdraw.exe rawdrawogl.exe rawdraw rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl rawdraw_http rawdraw_sf.h tools/single_file_creator tools/binary_to_buffer tools/rawdraw_http_page.h
+	rm -rf *.o *~ simple simple.exe rawdraw.exe rawdrawogl.exe rawdraw rawdraw_ogl rawdraw_mac rawdraw_mac_soft rawdraw_mac_cg rawdraw_mac_ogl ogltest ogltest.exe rawdraw_egl rawdraw_http rawdraw_sf.h rawdraw_sf.hf tools/single_file_creator tools/binary_to_buffer tools/rawdraw_http_page.h
 
