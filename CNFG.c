@@ -2,6 +2,10 @@
 //want to include this in your build, but instead, #include "CNFG.h"
 //after #define CNFG_IMPLEMENTATION in one of your C files.
 
+// Defined here for universal definition
+int CNFGLastCharacter = 0;
+int CNFGLastScancode = 0;
+
 #if defined( CNFGHTTP )
 #include "CNFGHTTP.c"
 #elif defined( __wasm__ )

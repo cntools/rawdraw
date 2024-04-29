@@ -99,6 +99,9 @@ void CNFGGLXSetup( )
 int CNFGX11ForceNoDecoration;
 XImage *xi;
 
+XIM CNFGXIM = NULL;
+XIC CNFGXIC = NULL;
+
 int g_x_global_key_state;
 int g_x_global_shift_key;
 
@@ -221,6 +224,9 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 	if( !CNFGWindowInvisible )
 		XMapWindow(CNFGDisplay, CNFGWindow);
 
+	CNFGXIM = XOpenIM(CNFGDisplay, NULL, wm_res_name, wm_res_class);
+	CNFGXIC = XCreateIC(CNFGXIM, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, NULL);
+
 #ifdef CNFG_HAS_XSHAPE
 	if( prepare_xshape )
 	{
@@ -327,6 +333,9 @@ void CNFGTearDown()
 	if ( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 	if ( CNFGWindowGC ) XFreeGC( CNFGDisplay, CNFGWindowGC );
 	if ( CNFGDisplay ) XCloseDisplay( CNFGDisplay );
+	if ( CNFGXIC ) XDestroyIC( CNFGXIC );
+	if ( CNFGXIM ) XCloseIM( CNFGXIM );
+
 #ifdef CNFGOGL
 	if ( CNFGGLXFBConfigs ) XFree( CNFGGLXFBConfigs );
 	CNFGGLXFBConfigs = NULL;
@@ -418,6 +427,8 @@ int CNFGHandleInput()
 			CNFGPixmap = XCreatePixmap( CNFGDisplay, CNFGWindow, CNFGWinAtt.width, CNFGWinAtt.height, CNFGWinAtt.depth );
 			if( CNFGGC ) XFreeGC( CNFGDisplay, CNFGGC );
 			CNFGGC = XCreateGC(CNFGDisplay, CNFGPixmap, 0, 0);
+
+			CNFGLastScancode = 0;
 			HandleKey( CNFG_X11_EXPOSE, 0 );
 			break;
 		case KeyRelease:
@@ -435,7 +446,23 @@ int CNFGHandleInput()
 		case KeyPress:
 			g_x_global_key_state = report.xkey.state;
 			g_x_global_shift_key = XLookupKeysym(&report.xkey, 1);
-			HandleKey( XLookupKeysym(&report.xkey, 0), bKeyDirection );
+			
+			CNFGLastScancode = report.xkey.keycode;
+
+			// Chars should ONLY be handled on Key Press
+			if (report.type == KeyPress) { 
+				char buf[8] = {0};
+				if (Xutf8LookupString(CNFGXIC, &report.xkey, buf, 8, NULL, NULL)) CNFGLastCharacter = *((int*)buf);
+				else CNFGLastCharacter = 0;
+			}
+
+			KeySym sym = XLookupKeysym(&report.xkey, 0);
+			HandleKey( sym, bKeyDirection );
+			
+			// Don't confuse the program when CNFGLastCharacter is set on KeyRelease.
+			// Since we shouldn't be using CNFGLastCharacter outside HandleKey anyways, just clear it here.
+			CNFGLastCharacter = 0;
+
 			break;
 		case ButtonRelease:
 			bKeyDirection = 0;

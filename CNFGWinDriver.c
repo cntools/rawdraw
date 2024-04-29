@@ -328,6 +328,7 @@ int CNFGHandleInput()
 	while( PeekMessage( &msg, NULL, 0, 0xFFFF, 1 ) )
 	{
 		TranslateMessage(&msg);
+		MSG charMSG;
 
 		switch( msg.message )
 		{
@@ -341,9 +342,21 @@ int CNFGHandleInput()
 		case WM_RBUTTONUP:		HandleButton( (msg.lParam & 0xFFFF), (msg.lParam>>16) & 0xFFFF, 2, 0 ); break;
 		case WM_MBUTTONUP:		HandleButton( (msg.lParam & 0xFFFF), (msg.lParam>>16) & 0xFFFF, 3, 0 ); break;
 		case WM_KEYDOWN:
+			// Check if there is a WM_CHAR message in the queue. If there is one, put it into CNFGLastCharacter
+			// Otherwise, we don't want HandleKey to handle the wrong character, so set to 0
+			if (PeekMessage(&charMSG, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) CNFGLastCharacter = charMSG.wParam;
+			else CNFGLastCharacter = 0;
+
+			// fall through
 		case WM_KEYUP:
+			CNFGLastScancode = (msg.lParam >> 16) & 0xFF;
+
 			if (msg.lParam & 0x01000000) HandleKey( (int) msg.wParam + 0x7C , (msg.message==WM_KEYDOWN) );
 			else HandleKey( (int) msg.wParam, (msg.message==WM_KEYDOWN) );
+
+			// Don't confuse the program when CNFGLastCharacter is set on WM_KEYUP.
+			// Since we shouldn't be using CNFGLastCharacter outside HandleKey anyways, just clear it here.
+			CNFGLastCharacter = 0;
 			break;
 		case WM_MOUSEWHEEL:
 		{
