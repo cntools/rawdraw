@@ -10,3 +10,8 @@ rawdraw_ogl
 simple
 examples/fontsize
 examples/fontsize_ogl
+
+tools/binary_to_buffer
+tools/single_file_creator
+tools/rawdraw_http_page.h
+rawdraw_sf.hf
