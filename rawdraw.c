@@ -7,7 +7,7 @@
 
 #define CNFG3D
 #define CNFG_IMPLEMENTATION
-#define CNFGOGL
+//#define CNFGOGL
 //#define CNFGRASTERIZER
 //#define CNFG_WINDOWS_DISABLE_BATCH
 
@@ -20,6 +20,8 @@ void HandleKey( int keycode, int bDown )
 {
 	if( keycode == 27 ) exit( 0 );
 	printf( "Key: %d -> %d\n", keycode, bDown );
+	printf( "Scancode: %d -> %d\n", CNFGLastScancode, bDown );
+	printf( "Char: %c\n", CNFGLastCharacter );
 }
 
 void HandleButton( int x, int y, int button, int bDown )

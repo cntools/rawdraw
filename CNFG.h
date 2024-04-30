@@ -137,6 +137,11 @@ int HandleDestroy(); // Return nonzero if you want to cancel destroy.
 void HandleWindowTermination();
 #endif
 
+// Guaranteed to be for the current key inside HandleKey for drivers that support it
+// If drivers don't support it, it is 0
+extern int CNFGLastCharacter;
+extern int CNFGLastScancode;
+
 //Internal function for resizing rasterizer for rasterizer-mode.
 void CNFGInternalResize( short x, short y ); //don't call this.
 
