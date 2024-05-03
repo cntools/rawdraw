@@ -51,7 +51,7 @@ Usually tested combinations:
 #include <stdint.h>
 
 //Some per-platform logic.
-#if defined( ANDROID ) || defined( __android__ )
+#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 	#define CNFGOGL
 #endif
 
@@ -59,7 +59,7 @@ Usually tested combinations:
 
 	#define CNFG_BATCH 8192 //131,072 bytes.
 
-	#if defined( ANDROID ) || defined( __android__ ) || defined( __wasm__ ) || defined( EGL_LEAN_AND_MEAN )
+	#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID) || defined( __wasm__ ) || defined( EGL_LEAN_AND_MEAN )
 		#define CNFGEWGL //EGL or WebGL
 	#else
 		#define CNFGDESKTOPGL
@@ -191,7 +191,12 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #endif
 
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__)
 
 #define CNFG_KEY_BACKSPACE 0x08
 #define CNFG_KEY_TAB 0x09
@@ -271,7 +276,7 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #define CNFG_KEY_RIGHT_ALT 0xA5
 
 #elif defined( EGL_LEAN_AND_MEAN ) // doesn't have any keys
-#elif defined( __android__ ) || defined( ANDROID ) // ^
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID) // ^
 #elif defined( __wasm__ )
 
 #define CNFG_KEY_BACKSPACE 8
@@ -518,7 +523,7 @@ extern const unsigned short RawdrawFontCharMap[256];
 #endif
 
 
-#if defined( ANDROID ) || defined( __android__ )
+#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 #include "CNFGAndroid.h"
 #endif
 

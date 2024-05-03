@@ -477,14 +477,24 @@ void	CNFGSetLineWidth( short width )
 #define LGLchar GLchar
 #endif
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__)
 #define CNFGOGL_NEED_EXTENSION
 #include <GL/gl.h>
 #endif
 
 #ifdef  CNFGOGL_NEED_EXTENSION
 // If we are going to be defining our own function pointer call
-	#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+	#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__)
 	// Make sure to use __stdcall on Windows
 		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
 			typedef ret (__stdcall *CNFGTYPE##name)( __VA_ARGS__ ); \
@@ -557,7 +567,12 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
-#if defined( WIN32 ) || defined( WINDOWS ) || defined( WIN64 )
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__)
 
 //From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 void * CNFGGetProcAddress(const char *name)

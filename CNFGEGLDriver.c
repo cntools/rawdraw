@@ -23,7 +23,7 @@
  */
 
 
-#if defined( __android__ ) && !defined( ANDROID )
+#if (defined(__ANDROID__) || defined(__android__)) && !defined(ANDROID)
 #define ANDROID
 #endif
 

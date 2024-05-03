@@ -53,7 +53,7 @@ Usually tested combinations:
 #include <stdint.h>
 
 //Some per-platform logic.
-#if defined( ANDROID ) || defined( __android__ )
+#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 	#define CNFGOGL
 #endif
 
@@ -61,7 +61,7 @@ Usually tested combinations:
 
 	#define CNFG_BATCH 8192 //131,072 bytes.
 
-	#if defined( ANDROID ) || defined( __android__ ) || defined( __wasm__ ) || defined( EGL_LEAN_AND_MEAN )
+	#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID) || defined( __wasm__ ) || defined( EGL_LEAN_AND_MEAN )
 		#define CNFGEWGL //EGL or WebGL
 	#else
 		#define CNFGDESKTOPGL
@@ -193,7 +193,12 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #endif
 
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 
 #define CNFG_KEY_BACKSPACE 0x08
 #define CNFG_KEY_TAB 0x09
@@ -273,7 +278,7 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #define CNFG_KEY_RIGHT_ALT 0xA5
 
 #elif defined( EGL_LEAN_AND_MEAN ) // doesn't have any keys
-#elif defined( __android__ ) || defined( ANDROID ) // ^
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID) // ^
 #elif defined( __wasm__ )
 
 #define CNFG_KEY_BACKSPACE 8
@@ -520,7 +525,7 @@ extern const unsigned short RawdrawFontCharMap[256];
 #endif
 
 
-#if defined( ANDROID ) || defined( __android__ )
+#if defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 #ifndef _CNFG_ANDROID_H
 #define _CNFG_ANDROID_H
 
@@ -575,7 +580,7 @@ void HandleSuspend();
 
 // For debugging:
 
-#if defined( ANDROID ) && !defined( __cplusplus )
+#if (defined(__ANDROID__) || defined(__android__) || defined(ANDROID)) && !defined( __cplusplus )
 
 #include <jni.h>
 
@@ -1624,7 +1629,12 @@ uint8_t WSPOPMASK()
 
 
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #define socklen_t uint32_t
@@ -1785,7 +1795,12 @@ int TickHTTP()
 	{
 		static double last;
 		double now;
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 		static LARGE_INTEGER lpf;
 		LARGE_INTEGER li;
 
@@ -1845,7 +1860,12 @@ int TickHTTP()
 			memset( &tin, 0, addrlen );
 			int tsocket = accept( serverSocket, (struct sockaddr *)&tin, &addrlen );
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 			struct linger lx;
 			lx.l_onoff = 1;
 			lx.l_linger = 0;
@@ -1934,7 +1954,12 @@ int TickHTTP()
 
 int RunHTTP( int port )
 {
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 {
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -1964,7 +1989,12 @@ int RunHTTP( int port )
 	}
 
 	//Disable SO_LINGER (Well, enable it but turn it way down)
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 	struct linger lx;
 	lx.l_onoff = 1;
 	lx.l_linger = 0;
@@ -3299,12 +3329,17 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                       || defined(WIN32)       || defined(WIN64) \
+                       || defined(_WIN32)      || defined(_WIN64) \
+                       || defined(__WIN32__)   || defined(__CYGWIN__) \
+                       || defined(__MINGW32__) || defined(__MINGW64__) \
+                       || defined(__TOS_WIN__) || defined(_MSC_VER)
 				uint32_t newv = 255UL<<24; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
-#elif defined( ANDROID ) || defined( __android__ )
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 				uint32_t newv = 255<<16; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
@@ -3357,7 +3392,12 @@ void CNFGHandleInput()
 
 #endif
 
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                       || defined(WIN32)       || defined(WIN64) \
+                       || defined(_WIN32)      || defined(_WIN64) \
+                       || defined(__WIN32__)   || defined(__CYGWIN__) \
+                       || defined(__MINGW32__) || defined(__MINGW64__) \
+                       || defined(__TOS_WIN__) || defined(_MSC_VER)
 //Copyright (c) 2011-2019 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
 //Portion from: http://en.wikibooks.org/wiki/Windows_Programming/Window_Creation
 
@@ -3697,12 +3737,17 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                       || defined(WIN32)       || defined(WIN64) \
+                       || defined(_WIN32)      || defined(_WIN64) \
+                       || defined(__WIN32__)   || defined(__CYGWIN__) \
+                       || defined(__MINGW32__) || defined(__MINGW64__) \
+                       || defined(__TOS_WIN__) || defined(_MSC_VER)
 				uint32_t newv = 255UL<<24; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
-#elif defined( ANDROID ) || defined( __android__ )
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 				uint32_t newv = 255<<16; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
@@ -4470,7 +4515,7 @@ void CNFGSwapBuffers()
 }
 
 
-#elif defined( __android__ ) || defined( ANDROID )
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 /*
  * Copyright (c) 2011-2013 Luc Verhaegen <libv@skynet.be>
  * Copyright (c) 2018-2020 <>< Charles Lohr
@@ -4496,7 +4541,7 @@ void CNFGSwapBuffers()
  */
 
 
-#if defined( __android__ ) && !defined( ANDROID )
+#if (defined(__ANDROID__) || defined(__android__)) && !defined( ANDROID )
 #define ANDROID
 #endif
 
@@ -4793,7 +4838,7 @@ int android_sdk_version;
 		unsigned int format; /* extra format information in case rgbal is not enough, especially for YUV formats */
 	} fbdev_pixmap;
 
-#if defined( ANDROID )
+#ifdef ANDROID
 EGLNativeWindowType native_window;
 #else
 struct fbdev_window native_window;
@@ -6406,12 +6451,17 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                       || defined(WIN32)       || defined(WIN64) \
+                       || defined(_WIN32)      || defined(_WIN64) \
+                       || defined(__WIN32__)   || defined(__CYGWIN__) \
+                       || defined(__MINGW32__) || defined(__MINGW64__) \
+                       || defined(__TOS_WIN__) || defined(_MSC_VER)
 				uint32_t newv = 255UL<<24; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
-#elif defined( ANDROID ) || defined( __android__ )
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 				uint32_t newv = 255<<16; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
@@ -7002,14 +7052,24 @@ void	CNFGSetLineWidth( short width )
 #define LGLchar GLchar
 #endif
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 #define CNFGOGL_NEED_EXTENSION
 #include <GL/gl.h>
 #endif
 
 #ifdef  CNFGOGL_NEED_EXTENSION
 // If we are going to be defining our own function pointer call
-	#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+	#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                         || defined(WIN32)       || defined(WIN64) \
+                         || defined(_WIN32)      || defined(_WIN64) \
+                         || defined(__WIN32__)   || defined(__CYGWIN__) \
+                         || defined(__MINGW32__) || defined(__MINGW64__) \
+                         || defined(__TOS_WIN__) || defined(_MSC_VER)
 	// Make sure to use __stdcall on Windows
 		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
 			typedef ret (__stdcall *CNFGTYPE##name)( __VA_ARGS__ ); \
@@ -7082,7 +7142,12 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
-#if defined( WIN32 ) || defined( WINDOWS ) || defined( WIN64 )
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                       || defined(WIN32)       || defined(WIN64) \
+                       || defined(_WIN32)      || defined(_WIN64) \
+                       || defined(__WIN32__)   || defined(__CYGWIN__) \
+                       || defined(__MINGW32__) || defined(__MINGW64__) \
+                       || defined(__TOS_WIN__) || defined(_MSC_VER)
 
 //From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 void * CNFGGetProcAddress(const char *name)

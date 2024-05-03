@@ -180,8 +180,8 @@ Rawdraw is a very disjoint set of configurations
 
 CNFG Configuration options include:
 * `CNFG_IMPLEMENTATION` = Include code for implementation.
-* `__android__` = build Android port
-* `WINDOWS`, `WIN32`, `WIN64` = Windows build
+* `__ANDROID__`, `__android__`, `ANDROID` = build Android port
+* `WINDOWS`, `__WINDOWS__`, `_WINDOWS`, `WIN32`, `WIN64`, `_WIN32`, `_WIN64`, `__WIN32__`, `__CYGWIN__`, `__MINGW32__`, `__MINGW64__`, `__TOS_WIN__`, `_MSC_VER` = Windows build
 * `CNFGOGL` = Make underlying functions use OpenGL if possible.
 * `CNFGRASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
 * `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides *rasterized* graphics functions.  Only use this option with the rasterizer.

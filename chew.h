@@ -3,7 +3,12 @@
 
 #ifndef TABLEONLY
 
-#if defined( WINDOWS ) || defined( _WINDOWS ) || defined( WIN32 ) || defined( WIN64 )
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 #ifdef __TINYC__
 #define GLsizeiptr intptr_t
 #define GLintptr   intptr_t
@@ -54,7 +59,12 @@ typedef ret (STDCALL *usename##_t)( __VA_ARGS__ );	\
 chew_FUN_EXPORT usename##_t	usename##fnptr; \
 chew_FUN_EXPORT ret usename( __VA_ARGS__ );
 
-#if defined( __TINYC__ ) && ( defined( WINDOWS ) || defined( _WINDOWS ) || defined( WIN32 ) || defined( WIN64 ) )
+#if defined( __TINYC__ ) && ( #if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                                                   || defined(WIN32)       || defined(WIN64) \
+                                                   || defined(_WIN32)      || defined(_WIN64) \
+                                                   || defined(__WIN32__)   || defined(__CYGWIN__) \
+                                                   || defined(__MINGW32__) || defined(__MINGW64__) \
+                                                   || defined(__TOS_WIN__) || defined(_MSC_VER) )
 #undef GLchar
 #define GLchar char
 #undef GLDEBUGPROC
