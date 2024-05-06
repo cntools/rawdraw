@@ -199,7 +199,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	while( !OGLESStarted )
 	{
 		struct android_poll_source* source;
-		if (ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0)
+		if (ALooper_pollOnce( 0, 0, &events, (void**)&source) >= 0)
 		{
 			if (source != NULL) source->process(gapp, source);
 		}
@@ -433,7 +433,7 @@ int CNFGHandleInput()
 #ifdef ANDROID
 	int events;
 	struct android_poll_source* source;
-	while( ALooper_pollAll( 0, 0, &events, (void**)&source) >= 0 )
+	while( ALooper_pollOnce( 0, 0, &events, (void**)&source) >= 0 )
 	{
 		if (source != NULL)
 		{
@@ -473,8 +473,8 @@ void handle_cmd(struct android_app* app, int32_t cmd)
 	{
 	case APP_CMD_DESTROY:
 		//This gets called initially after back.
-		if( !HandleDestroy() )
-			ANativeActivity_finish( gapp->activity );
+		HandleDestroy();
+		ANativeActivity_finish( gapp->activity );
 		break;
 	case APP_CMD_INIT_WINDOW:
 		//When returning from a back button suspension, this isn't called.
