@@ -162,6 +162,20 @@ void	CNFGChangeWindowTitle( const char * windowtitle );
 void	CNFGSetWindowIconData( int w, int h, uint32_t * data );
 int 	CNFGSetupWMClass( const char * WindowName, int w, int h , char * wm_res_name_ , char * wm_res_class_ );
 
+// Mouse related functions on systems that support it.
+
+// enum just in case we want more cursor shapes
+typedef enum {
+	CNFG_CURSOR_HIDDEN, CNFG_CURSOR_ARROW, CNFG_CURSOR_LAST
+} CNFGCursorShape;
+
+// This may put a motion event into the queue, which will call HandleMotion
+void CNFGSetMousePosition( int x, int y );
+
+void CNFGConfineMouse( int confined );
+void CNFGSetCursor( CNFGCursorShape shape );
+
+
 //If you're using a batching renderer, for instance on Android or an OpenGL
 //You will need to call this function inbetewen swtiching properties of drawing.  This is usually
 //only needed if you calling OpenGL / OGLES functions directly and outside of CNFG.

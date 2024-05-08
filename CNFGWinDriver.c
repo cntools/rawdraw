@@ -65,6 +65,49 @@ void CNFGSwapBuffers()
 }
 #endif
 
+CNFGCursorShape CNFGCurShape = CNFG_CURSOR_ARROW;
+
+void CNFGSetMousePosition( int x, int y ) {
+	RECT window;
+	
+	int bordersize = GetSystemMetrics( SM_CXSIZEFRAME );
+
+	GetWindowRect( CNFGlsHWND, &window );
+	x += window.left + bordersize;
+	y += window.top + GetSystemMetrics( SM_CYCAPTION ) + bordersize;
+
+	SetCursorPos( x, y );
+}
+
+void CNFGConfineMouse( int confined ) {
+	if ( !confined ) {
+		ClipCursor( NULL );
+		return;
+	}
+
+	int bordersize = GetSystemMetrics( SM_CXSIZEFRAME );
+	RECT window;
+	GetWindowRect( CNFGlsHWND, &window );
+	window.left += bordersize;
+	window.top += GetSystemMetrics( SM_CYCAPTION ) + bordersize;
+	window.right -= bordersize;
+	window.bottom -= bordersize;
+
+	ClipCursor( &window );
+}
+
+void CNFGSetCursor( CNFGCursorShape shape ) {
+	if (shape == CNFGCurShape ) return;
+
+	// If the current shape's visibility is the opposite of the new shape, toggle the cursor visibility
+	// According to MSDN, ShowCursor increments and decrements an internal counter, which is used to determine visibility
+	// The internal counter seemingly has no limit
+	if ( shape == CNFG_CURSOR_HIDDEN && CNFGCurShape != CNFG_CURSOR_HIDDEN )      ShowCursor( FALSE );
+	else if ( shape != CNFG_CURSOR_HIDDEN && CNFGCurShape == CNFG_CURSOR_HIDDEN ) ShowCursor( TRUE );
+
+	CNFGCurShape = shape;
+}
+
 void CNFGGetDimensions( short * x, short * y )
 {
 	static short lastx, lasty;

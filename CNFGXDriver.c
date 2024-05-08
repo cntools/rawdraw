@@ -15,6 +15,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
+#include <X11/cursorfont.h>
 #include <X11/keysym.h>
 
 #include <stdio.h>
@@ -154,6 +155,25 @@ void	CNFGClearTransparencyLevel()
 	XSetForeground(CNFGDisplay, xsgc, 1);
 }
 #endif
+
+void CNFGSetMousePosition( int x, int y ) {
+	XWarpPointer( CNFGDisplay, None, CNFGWindow, 0, 0, 0, 0, x, y );
+}
+
+void CNFGConfineMouse( int confined ) {
+	if (confined) {
+		XGrabPointer( CNFGDisplay, CNFGWindow, True, 0, GrabModeAsync, GrabModeAsync, CNFGWindow, None, CurrentTime );
+	} else {
+		XUngrabPointer( CNFGDisplay, CurrentTime );
+	}
+}
+
+Cursor CNFGCursors[CNFG_CURSOR_LAST] = { None };
+
+void CNFGSetCursor( CNFGCursorShape shape ) {
+	if (shape == CNFG_CURSOR_ARROW) XUndefineCursor( CNFGDisplay, CNFGWindow );
+	else XDefineCursor( CNFGDisplay, CNFGWindow, CNFGCursors[shape] );
+}
 
 int FullScreen = 0;
 
@@ -390,6 +410,12 @@ int CNFGSetup( const char * WindowName, int w, int h )
 //Not sure of the purpose of this code - if it's still commented out after 2019-12-31 and no one knows why, please delete it.
 	CFNGWMDeleteWindow = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
 	XSetWMProtocols( CNFGDisplay, CNFGWindow, &CFNGWMDeleteWindow, 1 );
+
+	// X11 doesn't have a concept of a hidden cursor. Make a blank cursor as a substitute
+	XColor col = { 0 };
+	Pixmap blank = XCreateBitmapFromData( CNFGDisplay, CNFGWindow, (char*)(&col), 1, 1 );
+	CNFGCursors[CNFG_CURSOR_HIDDEN] = XCreatePixmapCursor( CNFGDisplay, blank, blank, &col, &col, 0, 0 );
+	XFreePixmap( CNFGDisplay, blank );
 
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
