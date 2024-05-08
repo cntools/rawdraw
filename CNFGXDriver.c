@@ -222,7 +222,7 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 		fprintf( stderr, "Pre-existing XClassHint\n" );
 	}
 
-	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
+	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask | FocusChangeMask );
 
 
 	CNFGWindowGC = XCreateGC(CNFGDisplay, CNFGWindow, 0, 0);
@@ -498,6 +498,11 @@ int CNFGHandleInput()
 			//Intentionall fall through -- we want to send a motion in event of a button as well.
 		case MotionNotify:
 			HandleMotion( report.xmotion.x, report.xmotion.y, ButtonsDown>>1 );
+			break;
+		case FocusIn:
+		case FocusOut:
+			CNFGLastScancode = 0;
+			HandleKey( CNFG_KEY_FOCUS, report.type == FocusIn );
 			break;
 		case ClientMessage:
 			if ( report.xclient.data.l[0] == CFNGWMDeleteWindow )

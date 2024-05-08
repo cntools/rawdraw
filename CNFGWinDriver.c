@@ -178,6 +178,11 @@ LRESULT CALLBACK MyWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 #endif
+	case WM_KILLFOCUS:
+	case WM_SETFOCUS:
+		CNFGLastScancode = 0;
+		HandleKey( CNFG_KEY_FOCUS, msg == WM_SETFOCUS );
+		return 0;
 	case WM_CLOSE:
 		if( HandleDestroy() )
 			return 0;

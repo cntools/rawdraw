@@ -204,6 +204,7 @@ extern float CNFGVertDataV[CNFG_BATCH*3];
 extern uint32_t CNFGVertDataC[CNFG_BATCH];
 #endif
 
+#define CNFG_KEY_FOCUS 0xf000
 
 #if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 
