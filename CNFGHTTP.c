@@ -20,7 +20,6 @@
 
 
 #include <stdint.h>
-#include <malloc.h>
 
 typedef struct {
     uint32_t state[5];
