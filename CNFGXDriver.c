@@ -540,6 +540,7 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 		lw = w;
 		lh = h;
 	}
+	xi->data = (char*)data;
 	//Draw image to pixmap (not a screen flip)
 	XPutImage(CNFGDisplay, CNFGPixmap, CNFGGC, xi, 0, 0, x, y, w, h );
 }
@@ -556,7 +557,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 		lw = w;
 		lh = h;
 	}
-
+	xi->data = (char*)data;
 	//Directly write image to screen (effectively a flip)
 	XPutImage(CNFGDisplay, CNFGWindow, CNFGWindowGC, xi, 0, 0, 0, 0, w, h );
 }
