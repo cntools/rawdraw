@@ -10,11 +10,16 @@ int CNFGLastScancode = 0;
 #include "CNFGHTTP.c"
 #elif defined( __wasm__ )
 #include "CNFGWASMDriver.c"
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__)
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
-#elif defined( __android__ ) || defined( ANDROID )
+#elif defined(__ANDROID__) || defined(__android__) || defined(ANDROID)
 #include "CNFGEGLDriver.c"
 #else
 #include "CNFGXDriver.c"

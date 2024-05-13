@@ -133,7 +133,12 @@ OSG_PREFIX void OGSetTLS( og_tls_t key, void * data );
 
 #ifndef OSG_NO_IMPLEMENTATION
 
-#if defined( WIN32 ) || defined (WINDOWS) || defined( _WIN32)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WINDOWS) \
+                     || defined(WIN32)       || defined(WIN64) \
+                     || defined(_WIN32)      || defined(_WIN64) \
+                     || defined(__WIN32__)   || defined(__CYGWIN__) \
+                     || defined(__MINGW32__) || defined(__MINGW64__) \
+                     || defined(__TOS_WIN__) || defined(_MSC_VER)
 #define USE_WINDOWS
 #endif
 
