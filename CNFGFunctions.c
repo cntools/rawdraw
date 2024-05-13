@@ -35,7 +35,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 //TODO: Refactor to remove malloc reliance.
 #ifndef __clang__
-#include <malloc.h>
 #endif
 
 int CNFGPenX, CNFGPenY;
