@@ -33,10 +33,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "TextTool/FontData.h"
 #endif
 
-//TODO: Refactor to remove malloc reliance.
-#ifndef __clang__
-#endif
-
 int CNFGPenX, CNFGPenY;
 uint32_t CNFGBGColor;
 uint32_t CNFGLastColor;

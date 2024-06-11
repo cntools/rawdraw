@@ -549,7 +549,7 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	static int lw, lh;
 
-	if( lw != w || lh != h )
+	if( lw != w || lh != h || !xi )
 	{
 		if( xi ) free( xi );
 		xi = XCreateImage(CNFGDisplay, CNFGVisual, CNFGDepth, ZPixmap, 0, (char*)data, w, h, 32, w*4 );
