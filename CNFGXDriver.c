@@ -491,9 +491,10 @@ int CNFGHandleInput()
 void   CNFGSetVSync( int vson )
 {
 	void (*glfn)( int );
+	void (*glfnXE)( Display *, GLXDrawable, int );
 	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalMESA" );	if( glfn ) glfn( vson );
 	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalSGI" );	if( glfn ) glfn( vson );
-	glfn = (void (*)( int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfn( vson );
+	glfnXE = (void (*)( Display *, GLXDrawable, int ))CNFGGetExtension( "glXSwapIntervalEXT" );	if( glfn ) glfnXE( CNFGDisplay, CNFGWindow, vson );
 }
 
 #ifdef CNFGRASTERIZER
