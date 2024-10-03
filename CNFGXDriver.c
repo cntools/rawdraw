@@ -15,6 +15,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
+#include <X11/cursorfont.h>
 #include <X11/keysym.h>
 
 #include <stdio.h>
@@ -155,6 +156,25 @@ void	CNFGClearTransparencyLevel()
 }
 #endif
 
+void CNFGSetMousePosition( int x, int y ) {
+	XWarpPointer( CNFGDisplay, None, CNFGWindow, 0, 0, 0, 0, x, y );
+}
+
+void CNFGConfineMouse( int confined ) {
+	if (confined) {
+		XGrabPointer( CNFGDisplay, CNFGWindow, True, 0, GrabModeAsync, GrabModeAsync, CNFGWindow, None, CurrentTime );
+	} else {
+		XUngrabPointer( CNFGDisplay, CurrentTime );
+	}
+}
+
+Cursor CNFGCursors[CNFG_CURSOR_LAST] = { None };
+
+void CNFGSetCursor( CNFGCursorShape shape ) {
+	if (shape == CNFG_CURSOR_ARROW) XUndefineCursor( CNFGDisplay, CNFGWindow );
+	else XDefineCursor( CNFGDisplay, CNFGWindow, CNFGCursors[shape] );
+}
+
 int FullScreen = 0;
 
 void CNFGGetDimensions( short * x, short * y )
@@ -202,7 +222,7 @@ static void InternalLinkScreenAndGo( const char * WindowName )
 		fprintf( stderr, "Pre-existing XClassHint\n" );
 	}
 
-	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask );
+	XSelectInput (CNFGDisplay, CNFGWindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | PointerMotionMask | FocusChangeMask );
 
 
 	CNFGWindowGC = XCreateGC(CNFGDisplay, CNFGWindow, 0, 0);
@@ -391,6 +411,12 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	CFNGWMDeleteWindow = XInternAtom( CNFGDisplay, "WM_DELETE_WINDOW", False );
 	XSetWMProtocols( CNFGDisplay, CNFGWindow, &CFNGWMDeleteWindow, 1 );
 
+	// X11 doesn't have a concept of a hidden cursor. Make a blank cursor as a substitute
+	XColor col = { 0 };
+	Pixmap blank = XCreateBitmapFromData( CNFGDisplay, CNFGWindow, (char*)(&col), 1, 1 );
+	CNFGCursors[CNFG_CURSOR_HIDDEN] = XCreatePixmapCursor( CNFGDisplay, blank, blank, &col, &col, 0, 0 );
+	XFreePixmap( CNFGDisplay, blank );
+
 #ifdef CNFGOGL
 	glXMakeCurrent( CNFGDisplay, CNFGWindow, CNFGCtx );
 #endif
@@ -472,6 +498,11 @@ int CNFGHandleInput()
 			//Intentionall fall through -- we want to send a motion in event of a button as well.
 		case MotionNotify:
 			HandleMotion( report.xmotion.x, report.xmotion.y, ButtonsDown>>1 );
+			break;
+		case FocusIn:
+		case FocusOut:
+			CNFGLastScancode = 0;
+			HandleKey( CNFG_KEY_FOCUS, report.type == FocusIn );
 			break;
 		case ClientMessage:
 			if ( report.xclient.data.l[0] == CFNGWMDeleteWindow )
