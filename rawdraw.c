@@ -18,10 +18,10 @@ unsigned long iframeno = 0;
 
 void HandleKey( int keycode, int bDown )
 {
-	if( keycode == 27 ) exit( 0 );
 	printf( "Key: %d -> %d\n", keycode, bDown );
 	printf( "Scancode: %d -> %d\n", CNFGLastScancode, bDown );
 	printf( "Char: %c\n", CNFGLastCharacter );
+	if( keycode == 27 || keycode == CNFG_KEY_ESCAPE ) exit( 0 );
 }
 
 void HandleButton( int x, int y, int button, int bDown )
@@ -32,6 +32,13 @@ void HandleButton( int x, int y, int button, int bDown )
 void HandleMotion( int x, int y, int mask )
 {
 //	printf( "Motion: %d,%d (%d)\n", x, y, mask );
+}
+
+int HandleDestroy()
+{
+	printf( "Destroying\n" );
+	exit(10);
+	return 0;
 }
 
 #define HMX 40
@@ -154,13 +161,6 @@ void DrawHeightmap()
 
 }
 
-
-int HandleDestroy()
-{
-	printf( "Destroying\n" );
-	exit(10);
-	return 0;
-}
 
 uint32_t randomtexturedata[65536];
 
