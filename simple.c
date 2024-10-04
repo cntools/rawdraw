@@ -15,7 +15,7 @@ int main()
 {
 	CNFGSetup( "Example App", 1024, 768 );
 
-	while(1)
+	while( CNFGHandleInput() )
 	{
 		CNFGBGColor = 0x000080ff; //Dark Blue Background
 
