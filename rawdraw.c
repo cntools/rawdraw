@@ -21,7 +21,7 @@ void HandleKey( int keycode, int bDown )
 	printf( "Key: %d -> %d\n", keycode, bDown );
 	printf( "Scancode: %d -> %d\n", CNFGLastScancode, bDown );
 	printf( "Char: %c\n", CNFGLastCharacter );
-	if( keycode == 27 || keycode == CNFG_KEY_ESCAPE ) exit( 0 );
+	if( keycode == CNFG_KEY_ESCAPE ) exit( 0 );
 }
 
 void HandleButton( int x, int y, int button, int bDown )
