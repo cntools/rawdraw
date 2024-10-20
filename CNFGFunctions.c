@@ -676,12 +676,9 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetShaderiv(vertex_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			//TODO: Refactor to remove malloc reliance.
-			#ifndef __clang__
-			char * log = (char*)alloca(ret);
+			char * log = (char*)alloca(ret+1);
 			CNFGglGetShaderInfoLog(vertex_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
-			#endif
 		}
 		goto fail;
 	}
@@ -702,13 +699,9 @@ GLuint CNFGGLInternalLoadShader( const char * vertex_shader, const char * fragme
 		CNFGglGetShaderiv(fragment_shader_object, GL_INFO_LOG_LENGTH, &ret);
 
 		if (ret > 1) {
-			//TODO: Refactor to remove malloc reliance.
-			#ifndef __clang__
-			char * log = (char*)malloc(ret);
+			char * log = (char*)alloca(ret+1);
 			CNFGglGetShaderInfoLog(fragment_shader_object, ret, NULL, log);
 			fprintf( stderr, "%s", log);
-			free( log );
-			#endif
 		}
 		goto fail;
 	}
