@@ -30,8 +30,9 @@ int CNFGSetup( const char * WindowName, int sw, int sh )
 	return 0;
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
+	return 0;
 }
 
 

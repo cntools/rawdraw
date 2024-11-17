@@ -75,10 +75,11 @@ void	CNFGSetLineWidth( short width )
 	//Rasterizer does not support line width.
 }
 
-void CNFGHandleInput()
+int CNFGHandleInput()
 {
 	//Do nothing.
 	//Input is handled on swap frame.
+	return 0;
 }
 
 #endif
