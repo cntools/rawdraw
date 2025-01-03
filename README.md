@@ -94,9 +94,9 @@ is as follows:
 
 
 //Make it so we don't need to include any other C files in our build.
-#define CNFG_IMPLEMENTATION
-
+#include <android_native_app_glue.h>
 #include "rawdraw_sf.h"
+#define CNFG_IMPLEMENTATION
 
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
