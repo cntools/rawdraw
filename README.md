@@ -30,7 +30,7 @@ platform.
  * Windows, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (GDI32) does not support alpha-blitting, or variable line width.
  * Linux, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (X11) does not support alpha-blitting, or variable line thickness
 .
- * Android, 100% Support for CNFGOGL (It is forced on) CNFGRASTERIZER not allowed.
+ * Android, 100% Support for CNFGOGL (It is forced on) CNFGRASTERIZER not allowed. **PLEASE** Only report android-related issues to [rawdrawandroid](https://github.com/cnlohr/rawdrawandroid)
  * WASM, 100% Support for CNFGOGL
  * Other EGL (Like Raspberry Pi Raw Metal) Platforms, same as Android, but fixed window size.
  * EGL, CNFGOGL represent OpenGL or OpenGL ES depending on platform support.
