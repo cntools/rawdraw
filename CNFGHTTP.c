@@ -871,7 +871,7 @@ uint8_t WSPOPMASK()
 
 
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #define socklen_t uint32_t
@@ -1032,7 +1032,7 @@ int TickHTTP()
 	{
 		static double last;
 		double now;
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 		static LARGE_INTEGER lpf;
 		LARGE_INTEGER li;
 
@@ -1092,7 +1092,7 @@ int TickHTTP()
 			memset( &tin, 0, addrlen );
 			int tsocket = accept( serverSocket, (struct sockaddr *)&tin, &addrlen );
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 			struct linger lx;
 			lx.l_onoff = 1;
 			lx.l_linger = 0;
@@ -1181,7 +1181,7 @@ int TickHTTP()
 
 int RunHTTP( int port )
 {
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 {
     WORD wVersionRequested;
     WSADATA wsaData;
@@ -1211,7 +1211,7 @@ int RunHTTP( int port )
 	}
 
 	//Disable SO_LINGER (Well, enable it but turn it way down)
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 	struct linger lx;
 	lx.l_onoff = 1;
 	lx.l_linger = 0;
