@@ -23,7 +23,7 @@ jobs:
             vim
             gettext-base
       - name: Check out respository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Building rawdraw_sf.h
@@ -34,7 +34,7 @@ jobs:
       #  run: |
       #    git_hash=$(git rev-parse --short "$GITHUB_SHA")
       #    git commit -m "Updating rawdraw_sf.h to ${git_hash}" rawdraw_sf.h
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: rawdraw_sf
           path: rawdraw_sf.h

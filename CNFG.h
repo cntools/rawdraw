@@ -206,7 +206,7 @@ extern uint32_t CNFGVertDataC[CNFG_BATCH];
 
 #define CNFG_KEY_FOCUS 0xf000
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 
 #define CNFG_KEY_BACKSPACE 0x08
 #define CNFG_KEY_TAB 0x09

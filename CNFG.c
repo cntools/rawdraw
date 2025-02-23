@@ -10,7 +10,7 @@ int CNFGLastScancode = 0;
 #include "CNFGHTTP.c"
 #elif defined( __wasm__ )
 #include "CNFGWASMDriver.c"
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
