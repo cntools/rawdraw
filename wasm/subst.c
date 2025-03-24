@@ -45,10 +45,11 @@ char *readfile(const char *filename, int flags)
 	size = ftell(file);
 	rewind(file);
 	
-	buffer = malloc(size);
+	buffer = malloc(size+1);
 
 	fread(buffer, size, 1, file);
-	
+	buffer[size] = 0;
+
 	if ((flags & SWALLOW) != 0) {
 		if (buffer[size - 1] == '\n')
 			buffer[size - 1] = 0x00;
