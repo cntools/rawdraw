@@ -104,6 +104,8 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 void CNFGDeleteTex( unsigned int tex );
 unsigned int CNFGTexImage( uint32_t *data, int w, int h );
 void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h );
+void CNFGSetScissors( int * xywh );
+void CNFGGetScissors( int * xywh );
 #endif
 
 void CNFGTackPixel( short x1, short y1 );

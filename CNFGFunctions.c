@@ -885,6 +885,20 @@ void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h )
 
 	glDrawArrays( GL_TRIANGLES, 0, 6);
 }
+
+void CNFGSetScissors( int * xywh )
+{
+	CNFGFlushRender();
+	glEnable( GL_SCISSOR_TEST );
+	glScissor( xywh[0], xywh[1], xywh[2], xywh[3] );
+}
+
+void CNFGGetScissors( int * xywh )
+{
+	CNFGFlushRender();
+	glGetIntegerv( GL_SCISSOR_BOX, xywh );
+}
+
 #endif
 
 #ifdef CNFGRASTERIZER

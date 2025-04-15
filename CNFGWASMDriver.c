@@ -24,11 +24,13 @@ void CNFGFlushRender()
 	CNFGEmitBackendTriangles( CNFGVertDataV, CNFGVertDataC, CNFGVertPlace );
 	CNFGVertPlace = 0;
 }
+
 void CNFGClearFrame()
 {
 	CNFGFlushRender();
 	CNFGClearFrameInternal( CNFGBGColor );
 }
+
 void CNFGSwapBuffers()
 {
 	CNFGFlushRender();
@@ -42,9 +44,18 @@ int CNFGHandleInput()
 	return 1;
 }
 
-void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
+void CNFGSetScissorsInternal( int * xywh );
+void CNFGGetScissorsInternal( int * xywh );
+
+void CNFGSetScissors( int * xywh )
 {
-	CNFGBlitImageInternal( data, x, y, w, h );
+	CNFGFlushRender();
+	CNFGSetScissorsInternal( xywh );
+}
+
+void CNFGGetScissors( int * xywh )
+{
+	CNFGGetScissorsInternal( xywh );
 }
 
 #else
