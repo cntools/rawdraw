@@ -370,7 +370,7 @@ bool touch_is_down[10];
 
 int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
-	#ifdef ANDROID
+#ifdef ANDROID
 	//Potentially do other things here.
 
 
@@ -411,9 +411,9 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 	else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY)
 	{
 		int code = AKeyEvent_getKeyCode(event);
-		#ifdef ANDROID_USE_SCANCODES
+#ifdef ANDROID_USE_SCANCODES
 		HandleKey( code, AKeyEvent_getAction(event) );
-		#else
+#else
 		int unicode = AndroidGetUnicodeChar( code, AMotionEvent_getMetaState( event ) );
 		if( unicode )
 			HandleKey( unicode, AKeyEvent_getAction(event) );
@@ -422,11 +422,11 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 			HandleKey( code, !AKeyEvent_getAction(event) );
 			return (code == 4)?1:0; //don't override functionality.
 		}
-		#endif
+#endif
 
 		return 1;
 	}
-	#endif
+#endif
 	return 0;
 }
 
