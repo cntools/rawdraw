@@ -366,51 +366,54 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 
 int debuga, debugb, debugc;
 
+bool touch_is_down[10];
+
 int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
-#ifdef ANDROID
+	#ifdef ANDROID
 	//Potentially do other things here.
+
 
 	if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
 	{
-		int action = AMotionEvent_getAction( event );
-		int whichsource = action >> 8;
-		action &= AMOTION_EVENT_ACTION_MASK;
-		size_t pointerCount = AMotionEvent_getPointerCount(event);
+		int pointer_count = AMotionEvent_getPointerCount(event);
+		int32_t action = AMotionEvent_getAction(event);
+		int flags = action & AMOTION_EVENT_ACTION_MASK;
+		int id = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+		int pid = AMotionEvent_getPointerId(event, id);
 
-		for (size_t i = 0; i < pointerCount; ++i)
-		{
-			int x, y, index;
-			x = AMotionEvent_getX(event, i);
-			y = AMotionEvent_getY(event, i);
-			index = AMotionEvent_getPointerId( event, i );
-
-			if( action == AMOTION_EVENT_ACTION_POINTER_DOWN || action == AMOTION_EVENT_ACTION_DOWN )
-			{
-				int id = index;
-				if( action == AMOTION_EVENT_ACTION_POINTER_DOWN && id != whichsource ) continue;
-				HandleButton( x, y, id, 1 );
-				ANativeActivity_showSoftInput( gapp->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED );
+		switch(flags){
+			case AMOTION_EVENT_ACTION_POINTER_UP:
+			case AMOTION_EVENT_ACTION_UP:{
+				touch_is_down[pid] = 0;
+				HandleButton(AMotionEvent_getX(event, id), AMotionEvent_getY(event, id), pid, 0);
+				break;
 			}
-			else if( action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL )
-			{
-				int id = index;
-				if( action == AMOTION_EVENT_ACTION_POINTER_UP && id != whichsource ) continue;
-				HandleButton( x, y, id, 0 );
+			case AMOTION_EVENT_ACTION_POINTER_DOWN:
+			case AMOTION_EVENT_ACTION_DOWN:{
+				touch_is_down[id] = 1;
+				HandleButton(AMotionEvent_getX(event, id), AMotionEvent_getY(event, id), pid, 1);
+				break;
 			}
-			else if( action == AMOTION_EVENT_ACTION_MOVE )
-			{
-				HandleMotion( x, y, index );
+			case AMOTION_EVENT_ACTION_MOVE:{
+				int off = 0; //number of touches preceeding i that are not down
+				for(int i = 0; i-off < pointer_count && pid+i<10; i++){
+					if(touch_is_down[pid+i] == 0){
+						off++;
+						continue;
+					}
+					HandleMotion(AMotionEvent_getX(event, i-off), AMotionEvent_getY(event, i-off), pid+i);
+				}
+				break;
 			}
 		}
-		return 1;
 	}
 	else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY)
 	{
 		int code = AKeyEvent_getKeyCode(event);
-#ifdef ANDROID_USE_SCANCODES
+		#ifdef ANDROID_USE_SCANCODES
 		HandleKey( code, AKeyEvent_getAction(event) );
-#else
+		#else
 		int unicode = AndroidGetUnicodeChar( code, AMotionEvent_getMetaState( event ) );
 		if( unicode )
 			HandleKey( unicode, AKeyEvent_getAction(event) );
@@ -419,11 +422,11 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 			HandleKey( code, !AKeyEvent_getAction(event) );
 			return (code == 4)?1:0; //don't override functionality.
 		}
-#endif
+		#endif
 
 		return 1;
 	}
-#endif
+	#endif
 	return 0;
 }
 
