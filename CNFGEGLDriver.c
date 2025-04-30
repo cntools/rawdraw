@@ -373,7 +373,6 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 #ifdef ANDROID
 	//Potentially do other things here.
 
-
 	if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
 	{
 		int pointer_count = AMotionEvent_getPointerCount(event);
