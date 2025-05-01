@@ -381,6 +381,11 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		int id = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
 		int pid = AMotionEvent_getPointerId(event, id);
 
+		if(pid > 9 || pointer_count > 10){
+			printf("No support for more than 10 pointers\n");
+			return 0;
+		}
+
 		switch(flags){
 			case AMOTION_EVENT_ACTION_POINTER_UP:
 			case AMOTION_EVENT_ACTION_UP:{
