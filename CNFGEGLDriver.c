@@ -366,7 +366,10 @@ void CNFGSetupFullscreen( const char * WindowName, int screen_number )
 
 int debuga, debugb, debugc;
 
-bool touch_is_down[10];
+#ifndef MAX_NUM_TOUCHES
+#define MAX_NUM_TOUCHES 10
+#endif
+bool touch_is_down[MAX_NUM_TOUCHES];
 
 int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
@@ -381,8 +384,8 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 		int id = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
 		int pid = AMotionEvent_getPointerId(event, id);
 
-		if(pid > 9 || pointer_count > 10){
-			printf("No support for more than 10 pointers\n");
+		if(pid > 9 || pointer_count > MAX_NUM_TOUCHES){
+			printf("Pointer id larger than MAX_NUM_TOUCHES\n");
 			return 0;
 		}
 
@@ -401,7 +404,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 			}
 			case AMOTION_EVENT_ACTION_MOVE:{
 				int off = 0; //number of touches preceeding i that are not down
-				for(int i = 0; i-off < pointer_count && pid+i<10; i++){
+				for(int i = 0; i-off < pointer_count && pid+i<MAX_NUM_TOUCHES; i++){
 					if(touch_is_down[pid+i] == 0){
 						off++;
 						continue;
