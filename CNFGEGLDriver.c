@@ -398,7 +398,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 			}
 			case AMOTION_EVENT_ACTION_POINTER_DOWN:
 			case AMOTION_EVENT_ACTION_DOWN:{
-				touch_is_down[id] = 1;
+				touch_is_down[pid] = 1;
 				HandleButton(AMotionEvent_getX(event, id), AMotionEvent_getY(event, id), pid, 1);
 				break;
 			}
