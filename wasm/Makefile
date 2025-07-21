@@ -43,4 +43,4 @@ main.wasm: rawdraw.c
 	#wasm-objdump -d main.wasm > main.disassembly.txt
 
 clean:
-	rm -rf main.wasm opt.js index.html blob_b64
+	rm -rf main.wasm opt.js index.html blob_b64 mid.js subst

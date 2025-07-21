@@ -8,8 +8,6 @@
 
 #include "CNFG.h"
 
-double OGGetAbsoluteTime();
-void OGUSleep( int us );
 void prints( const char * sdebug );
 void print( double idebug );
 double sin( double x );
@@ -39,8 +37,9 @@ void __attribute__((export_name("HandleMotion"))) HandleMotion( int x, int y, in
 	lastmousey = y;
 }
 
-void HandleDestroy()
+int HandleDestroy()
 {
+	return 0;
 	//printf( "Destroying\n" );
 }
 
@@ -272,5 +271,3 @@ void DrawHeightmap()
 		CNFGTackSegment( pta[0], pta[1], ptc[0], ptc[1] );	
 	}
 }
-
-

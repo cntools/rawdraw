@@ -58,6 +58,10 @@ void CNFGGetScissors( int * xywh )
 	CNFGGetScissorsInternal( xywh );
 }
 
+void CNFGBlitImage(uint32_t *data, int x, int y, int w, int h) {
+	CNFGBlitImageInternal(data, x, y, w, h);
+}
+
 #else
 	
 //Rasterizer - if you want to do this, you will need to enable blitting in the javascript.
@@ -90,7 +94,7 @@ int CNFGHandleInput()
 {
 	//Do nothing.
 	//Input is handled on swap frame.
-	return 0;
+	return 1;
 }
 
 #endif
