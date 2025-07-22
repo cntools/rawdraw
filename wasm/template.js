@@ -150,7 +150,9 @@ let imports = {
 			SystemStart( title, w, h );
 			fullscreen = false;
 		},
-		CNFGSetupFullscreen : (title,w,h ) => {
+		CNFGSetupFullscreen : (title,screenno) => {
+			let w = document.documentElement.clientWidth;
+			let h = document.documentElement.clientHeight;
 			SystemStart( title, w, h );
 			canvas.style = "position:absolute; top:0; left:0;"
 			fullscreen = true;
@@ -311,4 +313,3 @@ if( RAWDRAW_NEED_BLITTER )
 
 	//Code here would continue executing, but this code is executed *before* main.
 }
-
