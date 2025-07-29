@@ -333,7 +333,7 @@ void CNFGGetTextExtents( const char * text, int * w, int * h, int textsize )
 void CNFGEmitBackendTriangles( const float * fv, const uint32_t * col, int nr_verts );
 
 //If on WASM, sqrtf is implied. On other platforms, need sqrtf from math.h
-#ifdef __wasm__
+#ifdef CNFG_WASM
 float sqrtf( float f );
 #define cnfg_sqrtf sqrtf
 #elif defined( __TINYC__ ) && defined( WIN32 )
@@ -453,7 +453,7 @@ void	CNFGSetLineWidth( short width )
 #endif
 
 
-#if !defined( __wasm__ ) && !defined( CNFGHTTP )
+#if !defined( CNFG_WASM ) && !defined( CNFGHTTP )
 //In WASM, Javascript takes over this functionality.
 
 //Shader compilation errors go to stderr.
@@ -472,14 +472,14 @@ void	CNFGSetLineWidth( short width )
 #define LGLchar GLchar
 #endif
 
-#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#ifdef CNFG_WINDOWS
 #define CNFGOGL_NEED_EXTENSION
 #include <GL/gl.h>
 #endif
 
 #ifdef  CNFGOGL_NEED_EXTENSION
 // If we are going to be defining our own function pointer call
-	#if defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+	#ifdef CNFG_WINDOWS
 	// Make sure to use __stdcall on Windows
 		#define CHEWTYPEDEF( ret, name, rv, paramcall, ... ) \
 			typedef ret (__stdcall *CNFGTYPE##name)( __VA_ARGS__ ); \
@@ -552,7 +552,7 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
-#if defined( WIN32 ) || defined( WINDOWS ) || defined( WIN64 )
+#ifdef CNFG_WINDOWS
 
 //From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 void * CNFGGetProcAddress(const char *name)
@@ -952,7 +952,7 @@ void CNFGClearFrame()
 
 #endif
 
-#endif //__wasm__
+#endif // CNFG_WASM
 
 #else
 

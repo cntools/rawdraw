@@ -53,7 +53,7 @@ void HandleSuspend();
 
 // For debugging:
 
-#if defined( ANDROID ) && !defined( __cplusplus )
+#if defined( CNFG_ANDROID ) && !defined( __cplusplus )
 
 #include <jni.h>
 
