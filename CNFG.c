@@ -8,13 +8,13 @@ int CNFGLastScancode = 0;
 
 #if defined( CNFGHTTP )
 #include "CNFGHTTP.c"
-#elif defined( __wasm__ )
+#elif defined( CNFG_WASM )
 #include "CNFGWASMDriver.c"
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+#elif defined( CNFG_WINDOWS )
 #include "CNFGWinDriver.c"
 #elif defined( EGL_LEAN_AND_MEAN )
 #include "CNFGEGLLeanAndMean.c"
-#elif defined( __android__ ) || defined( ANDROID )
+#elif defined( CNFG_ANDROID )
 #include "CNFGEGLDriver.c"
 #else
 #include "CNFGXDriver.c"

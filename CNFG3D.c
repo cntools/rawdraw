@@ -7,7 +7,7 @@
 
 #include "CNFG.h"
 
-#ifdef __wasm__
+#ifdef CNFG_WASM
 double sin( double v );
 double cos( double v );
 double tan( double v );
@@ -262,7 +262,7 @@ void tdMultiply( float * fin1, float * fin2, float * fout )
 	tdMATCOPY( fout, fotmp );
 }
 
-#ifndef __wasm__
+#ifndef CNFG_WASM
 void tdPrint( const float * f )
 {
 	int i;

@@ -22,16 +22,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-
-#if defined( __android__ ) && !defined( ANDROID )
-#define ANDROID
-#endif
-
 //Note: This interface provides the following two things privately.
 //you may "extern" them in your code.
 
 
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 
 
 #include "CNFGAndroid.h"
@@ -60,7 +55,7 @@ int android_sdk_version;
 #include <stdint.h>
 #include <EGL/egl.h>
 
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 #include <GLES3/gl3.h>
 #else
 #include <GLES2/gl2.h>
@@ -105,7 +100,7 @@ int android_sdk_version;
 		unsigned int format; /* extra format information in case rgbal is not enough, especially for YUV formats */
 	} fbdev_pixmap;
 
-#if defined( ANDROID )
+#if defined( CNFG_ANDROID )
 EGLNativeWindowType native_window;
 #else
 struct fbdev_window native_window;
@@ -123,7 +118,7 @@ static EGLint const config_attribute_list[] = {
 	EGL_STENCIL_SIZE, 0,
 	EGL_DEPTH_SIZE, EGL_ZBITS,
 	//EGL_SAMPLES, 1,
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 #if ANDROIDVERSION >= 28
 	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
 #else
@@ -164,7 +159,7 @@ void CNFGSwapBuffers()
 	if ( egl_display == EGL_NO_DISPLAY ) return;
 	CNFGFlushRender();
 	eglSwapBuffers(egl_display, egl_surface);
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 	if( !override_android_screen_dimensons )
 	{
 		android_width = ANativeWindow_getWidth( native_window );
@@ -178,7 +173,7 @@ void CNFGSwapBuffers()
 
 void CNFGGetDimensions( short * x, short * y )
 {
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 	*x = android_width;
 	*y = android_height;
 #else
@@ -232,7 +227,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	egl_display = eglGetDisplay((EGLNativeDisplayType) XDisplay);
 #else
 
-#ifndef ANDROID
+#ifndef CNFG_ANDROID
 	if( w >= 1 && h >= 1 )
 	{
 		native_window.width = w;
@@ -306,7 +301,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 	}
 	printf( "Width/Height: %dx%d\n", android_width, android_height );
 	egl_surface = eglCreateWindowSurface(egl_display, egl_config,
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 			     gapp->window,
 #else
 			     (EGLNativeWindowType)&native_window,
@@ -321,7 +316,7 @@ int CNFGSetup( const char * WindowName, int w, int h )
 		return -1;
 	}
 
-#ifndef ANDROID
+#ifndef CNFG_ANDROID
 	int width, height;
 	if (!eglQuerySurface(egl_display, egl_surface, EGL_WIDTH, &width) ||
 	    !eglQuerySurface(egl_display, egl_surface, EGL_HEIGHT, &height)) {
@@ -373,7 +368,7 @@ bool touch_is_down[MAX_NUM_TOUCHES];
 
 int32_t handle_input(struct android_app* app, AInputEvent* event)
 {
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 	//Potentially do other things here.
 
 	if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION)
@@ -440,7 +435,7 @@ int32_t handle_input(struct android_app* app, AInputEvent* event)
 int CNFGHandleInput()
 {
 
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 	int events;
 	struct android_poll_source* source;
 	while( ALooper_pollOnce( 0, 0, &events, (void**)&source) >= 0 )
@@ -473,7 +468,7 @@ int CNFGHandleInput()
 
 
 
-#ifdef ANDROID
+#ifdef CNFG_ANDROID
 
 void (*HandleWindowTermination)();
 
