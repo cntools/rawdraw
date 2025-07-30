@@ -48,17 +48,17 @@ static short CNFGBufferx, CNFGBuffery;
 static void InternalHandleResize();
 #endif
 
+#ifdef CNFG_BATCH
+static void InternalHandleResize() { }
+#endif
 
 #ifdef CNFGOGL
 #include <GL/gl.h>
 static HGLRC           hRC=NULL; 
-static void InternalHandleResize() { }
 void CNFGSwapBuffers()
 {
-#ifdef CNFG_BATCH
 #ifndef CNFGCONTEXTONLY
 	CNFGFlushRender();
-#endif
 #endif
 
 	SwapBuffers(CNFGlsWindowHDC);
@@ -128,7 +128,7 @@ void CNFGGetDimensions( short * x, short * y )
 	*y = CNFGBuffery;
 }
 
-#ifndef CNFGOGL
+#ifndef CNFG_BATCH
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	RECT r;
@@ -422,7 +422,7 @@ int CNFGHandleInput()
 	return !ShouldClose;
 }
 
-#ifndef CNFGOGL
+#ifndef CNFG_BATCH
 
 #ifndef CNFGRASTERIZER
 

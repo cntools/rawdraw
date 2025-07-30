@@ -559,6 +559,7 @@ void CNFGSwapBuffers()
 
 #else //CNFGOGL
 
+#ifndef CNFG_BATCH
 #ifndef CNFGRASTERIZER
 void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 {
@@ -593,9 +594,10 @@ void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 	XPutImage(CNFGDisplay, CNFGWindow, CNFGWindowGC, xi, 0, 0, 0, 0, w, h );
 }
 
+#endif
 #endif //CNFGOGL
 
-#if !defined( CNFGOGL)
+#if !defined( CNFG_BATCH )
 #define AGLF(x) x
 #else
 #define AGLF(x) static inline BACKEND_##x

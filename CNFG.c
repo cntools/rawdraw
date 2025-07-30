@@ -22,6 +22,10 @@ int CNFGLastScancode = 0;
 
 #include "CNFGFunctions.c"
 
+#ifdef CNFGOGL
+#include "CNFGOGL.c"
+#endif
+
 #ifdef CNFG3D
 #include "CNFG3D.c"
 #endif
