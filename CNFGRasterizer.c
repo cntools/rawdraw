@@ -27,7 +27,7 @@ void CNFGInternalResize( short x, short y )
 #endif
 }
 
-#ifdef __wasm__
+#ifdef CNFG_WASM
 static uint32_t SWAPS( uint32_t r )
 {
 	uint32_t ret = (r&0xFF)<<24;
@@ -299,17 +299,17 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h )
 				//Alpha blend.
 				int alfa = newm&0xff;
 				int onemalfa = 255-alfa;
-#ifdef __wasm__
+#if defined( CNFG_WASM )
 				uint32_t newv = 255<<0; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
-#elif defined(WINDOWS) || defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+#elif defined( CNFG_WINDOWS )
 				uint32_t newv = 255UL<<24; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>16)&0xff) * onemalfa + 128)>>8)<<16;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>8)&0xff) * onemalfa + 128)>>8)<<8;
 				newv |= ((((newm>>8)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
-#elif defined( ANDROID ) || defined( __android__ )
+#elif defined( CNFG_ANDROID )
 				uint32_t newv = 255<<16; //Alpha, then RGB
 				newv |= ((((newm>>24)&0xff) * alfa + ((oldm>>24)&0xff) * onemalfa + 128)>>8)<<24;
 				newv |= ((((newm>>16)&0xff) * alfa + ((oldm>>0)&0xff) * onemalfa + 128)>>8)<<0;
