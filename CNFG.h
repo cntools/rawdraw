@@ -18,6 +18,9 @@ extern "C" {
 		CNFG_USE_DOUBLE_FUNCTIONS -> Use double-precision floating point for CNFG3D.
 	CNFGOGL -> Use an OpenGL Backend for all rawdraw functionality.
 		->Caveat->If using CNFG_HAS_XSHAPE, then, we do something realy wacky.
+	CNFGVK -> Use the experimental Vulkan backend
+		CNFGVK_VALIDATION_LAYERS -> Enable the validation layers of the batched renderer
+		CNFGVK_IMAGE_ALLOCATION -> Specify the amount of VRAM allocated towards images in the batched renderer
 	CNFGRASTERIZER -> Software-rasterize the rawdraw calls, and, use
 		CNFGUpdateScreenWithBitmap to send video to webpage.
 	CNFGCONTEXTONLY -> Don't add any drawing functions, only opening a window to
@@ -73,6 +76,15 @@ Usually tested combinations:
 	#endif
 #endif
 
+#ifdef CNFGVK
+	#define CNFG_BATCH 8192
+	
+	#include <vulkan/vulkan.h>
+	
+	// The drivers define the CNFG_SURFACE_EXTENSION macro for their required extensions
+	VkResult CNFGCreateVkSurface( VkInstance inst, const VkAllocationCallbacks* alloc, VkSurfaceKHR* surface );
+#endif
+
 typedef struct {
     short x, y; 
 } RDPoint; 
@@ -111,6 +123,10 @@ void CNFGBlitImage( uint32_t * data, int x, int y, int w, int h );
 void CNFGDeleteTex( unsigned int tex );
 unsigned int CNFGTexImage( uint32_t *data, int w, int h );
 void CNFGBlitTex( unsigned int tex, int x, int y, int w, int h );
+#endif
+
+#if defined( CNFGOGL ) || defined( CNFGVK )
+void CNFGSetVSync( int vson ); // Not supported on all systems
 void CNFGSetScissors( int * xywh );
 void CNFGGetScissors( int * xywh );
 #endif
@@ -156,7 +172,6 @@ void CNFGInternalResize( short x, short y ); //don't call this.
 
 //Not available on all systems.  Use The OGL portion with care.
 #ifdef CNFGOGL
-void   CNFGSetVSync( int vson );
 void * CNFGGetExtension( const char * extname );
 #endif
 

@@ -96,6 +96,19 @@ void CNFGGLXSetup( )
 
 #endif
 
+#ifdef CNFGVK
+#include <vulkan/vulkan_xlib.h>
+#define CNFG_SURFACE_EXTENSION "VK_KHR_xlib_surface", "VK_KHR_surface"
+VkResult CNFGCreateVkSurface( VkInstance inst, const VkAllocationCallbacks* alloc, VkSurfaceKHR* surface )
+{
+	VkXlibSurfaceCreateInfoKHR sci = {
+		.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+		.pNext = NULL, .dpy = CNFGDisplay, .window = CNFGWindow,
+	};
+	return vkCreateXlibSurfaceKHR( inst, &sci, alloc, surface );
+}
+#endif
+
 int CNFGX11ForceNoDecoration;
 XImage *xi;
 
