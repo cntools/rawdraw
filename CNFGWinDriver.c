@@ -65,6 +65,19 @@ void CNFGSwapBuffers()
 }
 #endif
 
+#ifdef CNFGVK
+#include <vulkan/vulkan_win32.h>
+#define CNFG_SURFACE_EXTENSION "VK_KHR_win32_surface", "VK_KHR_surface"
+VkResult CNFGCreateVkSurface( VkInstance inst, const VkAllocationCallbacks* alloc, VkSurfaceKHR* surface )
+{
+	VkWin32SurfaceCreateInfoKHR sci = {
+		.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+		.pNext = NULL, .hinstance = GetModuleHandle( NULL ), .hwnd = CNFGlsHWND
+	};
+	return vkCreateWin32SurfaceKHR( inst, &sci, alloc, surface );
+}
+#endif
+
 CNFGCursorShape CNFGCurShape = CNFG_CURSOR_ARROW;
 
 void CNFGSetMousePosition( int x, int y ) {

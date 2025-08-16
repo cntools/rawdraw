@@ -26,6 +26,12 @@ int CNFGLastScancode = 0;
 #include "CNFGOGL.c"
 #endif
 
+#ifdef CNFGVK
+#ifndef CNFGCONTEXTONLY
+#include "CNFGVK.c"
+#endif
+#endif
+
 #ifdef CNFG3D
 #include "CNFG3D.c"
 #endif

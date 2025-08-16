@@ -27,14 +27,14 @@ platform.
 
 ## Platform statuses
 
- * Windows, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (GDI32) does not support alpha-blitting, or variable line width.
- * Linux, 100% Support for CNFGOGL and/or CNFGRASTERIZER, Native (X11) does not support alpha-blitting, or variable line thickness
+ * Windows, 100% Support for CNFGOGL, CNFGVK, and/or CNFGRASTERIZER, Native (GDI32) does not support alpha-blitting, or variable line width.
+ * Linux, 100% Support for CNFGOGL, CNFGVK, and/or CNFGRASTERIZER, Native (X11) does not support alpha-blitting, or variable line thickness
 .
  * Android, 100% Support for CNFGOGL (It is forced on) CNFGRASTERIZER not allowed. **PLEASE** Only report android-related issues to [rawdrawandroid](https://github.com/cnlohr/rawdrawandroid)
  * WASM, 100% Support for CNFGOGL
  * Other EGL (Like Raspberry Pi Raw Metal) Platforms, same as Android, but fixed window size.
  * EGL, CNFGOGL represent OpenGL or OpenGL ES depending on platform support.
- * Vulkan support in progress.
+ * Vulkan support is experimental
  * CNFG3D Support has been ported with fixed-precision numericals to ESP8266.
  * Mac/OSX Support currently unknown.  Legacy files moved here: https://github.com/cntools/rawdrawtools/tree/main/attic
 
@@ -183,6 +183,7 @@ CNFG Configuration options include:
 * `__android__` = build Android port
 * `WINDOWS`, `WIN32`, `WIN64` = Windows build
 * `CNFGOGL` = Make underlying functions use OpenGL if possible.
+* `CNFGVK` = Make underlying functions use Vulkan if possible
 * `CNFGRASTERIZER` = Make the underlying graphics engine rasterized functions (software rendering)
 * `CNFG3D` = Include CNFG3D with this rawdraw build.  This provides *rasterized* graphics functions.  Only use this option with the rasterizer.
 

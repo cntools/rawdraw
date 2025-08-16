@@ -7,6 +7,7 @@ TextTool/text
 ogltest
 rawdraw
 rawdraw_ogl
+rawdraw_vk
 simple
 examples/fontsize
 examples/fontsize_ogl

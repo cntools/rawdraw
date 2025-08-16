@@ -349,7 +349,7 @@ uint32_t CNFGVertDataC[CNFG_BATCH];
 int CNFGVertPlace;
 static float wgl_last_width_over_2 = .5f;
 
-static void EmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
+void CNFGEmitQuad( float cx0, float cy0, float cx1, float cy1, float cx2, float cy2, float cx3, float cy3 ) 
 {
 	//Because quads are really useful, but it's best to keep them all triangles if possible.
 	//This lets us draw arbitrary quads.
@@ -375,7 +375,7 @@ void CNFGTackPixel( short x1, short y1 )
 	x1++; y1++;
 	const float l2 = wgl_last_width_over_2;
 	const float l2u = wgl_last_width_over_2+0.5f;
-	EmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
+	CNFGEmitQuad( x1-l2u, y1-l2u, x1+l2, y1-l2u, x1-l2u, y1+l2, x1+l2, y1+l2 );
 }
 
 
@@ -400,7 +400,7 @@ void CNFGTackSegment( short x1, short y1, short x2, short y2 )
 	iy1 -= dy/2 - 0.5f;
 
 	//This logic is incorrect. XXX FIXME.
-	EmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
+	CNFGEmitQuad( (ix1 - orthox), (iy1 - orthoy), (ix1 + orthox), (iy1 + orthoy), (ix2 - orthox), (iy2 - orthoy), ( ix2 + orthox), ( iy2 + orthoy) );
 }
 
 void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
@@ -409,7 +409,7 @@ void CNFGTackRectangle( short x1, short y1, short x2, short y2 )
 	float iy1 = y1;
 	float ix2 = x2;
 	float iy2 = y2;
-	EmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
+	CNFGEmitQuad( ix1,iy1,ix2,iy1,ix1,iy2,ix2,iy2 );
 }
 
 void CNFGTackPoly( RDPoint * points, int verts )

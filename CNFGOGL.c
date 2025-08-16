@@ -29,6 +29,44 @@
 #include <GL/gl.h>
 #endif
 
+#if defined(CNFGCONTEXTONLY) || defined(CNFGOGL_NEED_EXTENSION)
+#ifdef CNFG_WINDOWS
+
+//From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
+void * CNFGGetProcAddress(const char *name)
+{
+	void *p = (void *)wglGetProcAddress(name);
+	if(p == 0 ||
+		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+		(p == (void*)-1) )
+	{
+		static HMODULE module;
+		if( !module ) module = LoadLibraryA("opengl32.dll");
+		p = (void *)GetProcAddress(module, name);
+	}
+	// We were unable to load the required openGL function 
+	if (!p) {
+		fprintf(stderr,"[rawdraw][warn]: Unable to load openGL extension \"%s\"\n", name);
+	}
+	return p;
+}
+
+#else
+#include <dlfcn.h>
+
+
+void * CNFGGetProcAddress(const char *name)
+{
+	//Tricky use RTLD_NEXT first so we don't accidentally link against ourselves.
+	void * v1 = dlsym( (void*)((intptr_t)-1) /*RTLD_NEXT = -1*/ /*RTLD_DEFAULT = 0*/, name );
+	//printf( "%s = %p\n", name, v1 );
+	if( !v1 ) v1 = dlsym( 0, name );
+	return v1;
+}
+
+#endif
+#endif
+
 #ifdef  CNFGOGL_NEED_EXTENSION
 // If we are going to be defining our own function pointer call
 	#ifdef CNFG_WINDOWS
@@ -47,6 +85,7 @@
 	ret name (__VA_ARGS__);
 #endif
 
+#ifndef CNFGCONTEXTONLY
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,41 +143,6 @@ CHEWTYPEDEF( void, glActiveTexture, , (texture), GLenum texture )
 #endif
 
 #ifdef CNFGOGL_NEED_EXTENSION
-#ifdef CNFG_WINDOWS
-
-//From https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
-void * CNFGGetProcAddress(const char *name)
-{
-	void *p = (void *)wglGetProcAddress(name);
-	if(p == 0 ||
-		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
-		(p == (void*)-1) )
-	{
-		static HMODULE module;
-		if( !module ) module = LoadLibraryA("opengl32.dll");
-		p = (void *)GetProcAddress(module, name);
-	}
-	// We were unable to load the required openGL function 
-	if (!p) {
-		fprintf(stderr,"[rawdraw][warn]: Unable to load openGL extension \"%s\"\n", name);
-	}
-	return p;
-}
-
-#else
-#include <dlfcn.h>
-
-
-void * CNFGGetProcAddress(const char *name)
-{
-	//Tricky use RTLD_NEXT first so we don't accidentally link against ourselves.
-	void * v1 = dlsym( (void*)((intptr_t)-1) /*RTLD_NEXT = -1*/ /*RTLD_DEFAULT = 0*/, name );
-	//printf( "%s = %p\n", name, v1 );
-	if( !v1 ) v1 = dlsym( 0, name );
-	return v1;
-}
-
-#endif
 
 // Try and load openGL extension functions required for rawdraw
 static void CNFGLoadExtensionsInternal()
@@ -484,4 +488,5 @@ void CNFGGetScissors( int * xywh )
 	glGetIntegerv( GL_SCISSOR_BOX, xywh );
 }
 
+#endif // CNFGCONTEXTONLY
 #endif // CNFG_WASM
