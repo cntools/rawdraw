@@ -48,20 +48,33 @@ static short CNFGBufferx, CNFGBuffery;
 static void InternalHandleResize();
 #endif
 
+#ifdef CNFG_BATCH
+static void InternalHandleResize() { }
+#endif
 
 #ifdef CNFGOGL
 #include <GL/gl.h>
 static HGLRC           hRC=NULL; 
-static void InternalHandleResize() { }
 void CNFGSwapBuffers()
 {
-#ifdef CNFG_BATCH
 #ifndef CNFGCONTEXTONLY
 	CNFGFlushRender();
 #endif
-#endif
 
 	SwapBuffers(CNFGlsWindowHDC);
+}
+#endif
+
+#ifdef CNFGVK
+#include <vulkan/vulkan_win32.h>
+#define CNFG_SURFACE_EXTENSION "VK_KHR_win32_surface", "VK_KHR_surface"
+VkResult CNFGCreateVkSurface( VkInstance inst, const VkAllocationCallbacks* alloc, VkSurfaceKHR* surface )
+{
+	VkWin32SurfaceCreateInfoKHR sci = {
+		.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+		.pNext = NULL, .hinstance = GetModuleHandle( NULL ), .hwnd = CNFGlsHWND
+	};
+	return vkCreateWin32SurfaceKHR( inst, &sci, alloc, surface );
 }
 #endif
 
@@ -128,7 +141,7 @@ void CNFGGetDimensions( short * x, short * y )
 	*y = CNFGBuffery;
 }
 
-#ifndef CNFGOGL
+#ifndef CNFG_BATCH
 void CNFGUpdateScreenWithBitmap( uint32_t * data, int w, int h )
 {
 	RECT r;
@@ -422,7 +435,7 @@ int CNFGHandleInput()
 	return !ShouldClose;
 }
 
-#ifndef CNFGOGL
+#ifndef CNFG_BATCH
 
 #ifndef CNFGRASTERIZER
 
