@@ -5,8 +5,7 @@ rawdrawwasm
 ## Prerequisites
 
 ```
-sudo apt-get install npm binaryen clang llvm lld
-sudo npm install terser -g
+sudo apt-get install binaryen clang llvm lld terser
 ```
 
 You may need to add llvm bins to your path, i.e.
