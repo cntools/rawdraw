@@ -150,7 +150,7 @@ let imports = {
 			HEAP16[pw>>1] = canvas.width;
 			HEAP16[ph>>1] = canvas.height;
 		},
-		OGGetAbsoluteTime : () => { return performance.now() * 1000;  },
+		OGGetAbsoluteTime : () => { return (performance.now() * 1000)/1000000.0;  },
 
 		Add1 : (i) => { return i+1; }, //Super simple function for speed testing.
 
@@ -286,7 +286,6 @@ startup = async () => {
 				canvas.addEventListener('touchmove', e => { instance.exports.HandleMotion( e.touches[0].clientX, e.touches[0].clientY, 1 ); } );
 			}
 
-			console.log( instance.exports.HandleButton );
 			if( instance.exports.HandleButton )
 			{
 				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
