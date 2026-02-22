@@ -13,18 +13,21 @@ CFLAGS:=-I..
 CLANG?=clang
 WASMOPT?=wasm-opt
 TERSER?=terser
-TERSERFLAGS?= --ecma 2017 -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=true
+TERSERFLAGS?= --ecma 2017 -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=true -d COMPRESS_BLOB_AS_GZIP=false
 
 CFLAGS+=-DWASM -nostdlib --target=wasm32 \
 		-flto -Oz \
 		-Wl,--lto-O3 \
 		-Wl,--no-entry \
 		-Wl,--allow-undefined \
-		-Wl,--import-memory
+		-mbulk-memory
 
-WOFLAGS:=--asyncify --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify-ignore-indirect
+# Note: Dependin gon what you're working on, you may not want the bsyncify flags.
+WOFLAGS:=--asyncify  --pass-arg=asyncify-imports@bynsyncify.* --pass-arg=asyncify-ignore-indirect
 
 opt.js : template.js main.wasm
+	# If you want super compression, undo this, then, in the template.js enable compression.
+	#cat main.wasm | gzip -9 | dd bs=1 skip=10 | head -c -8 | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" > blob_b64;
 	cat main.wasm | base64 | sed -e "$$ ! {/./s/$$/ \\\\/}" > blob_b64;
 	./subst template.js -s -f BLOB blob_b64 -o mid.js
 	#Comment the below line out if you don't want to uglify the javascript.

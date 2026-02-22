@@ -1,16 +1,5 @@
 //Portions of code from zNoctum and redline2466
 
-//Global memory for application.
-let memory = new WebAssembly.Memory({initial:200});
-let HEAP8 = new Int8Array(memory.buffer);
-let HEAPU8 = new Uint8Array(memory.buffer);
-let HEAP16 = new Int16Array(memory.buffer);
-let HEAPU16 = new Uint16Array(memory.buffer);
-let HEAP32 = new Uint32Array(memory.buffer);
-let HEAPU32 = new Uint32Array(memory.buffer);
-let HEAPF32 = new Float32Array(memory.buffer);
-let HEAPF64 = new Float64Array(memory.buffer);
-
 let toUtf8Decoder = new TextDecoder( "utf-8" );
 function toUTF8(ptr) {
 	let len = 0|0; ptr |= 0;
@@ -134,9 +123,6 @@ function CNFGEmitBackendTrianglesJS( vertsF, colorsI, vertcount )
 //To use functions here, just call them.  Surprisingly, signatures justwork.
 let imports = {
 	env: {
-		//Mapping our array buffer into the system.
-		memory: memory,
-
 		//Various draw-functions.
 		CNFGEmitBackendTriangles : (vertsF, colorsI, vertcount )=>
 		{
@@ -150,9 +136,7 @@ let imports = {
 			SystemStart( title, w, h );
 			fullscreen = false;
 		},
-		CNFGSetupFullscreen : (title,screenno) => {
-			let w = document.documentElement.clientWidth;
-			let h = document.documentElement.clientHeight;
+		CNFGSetupFullscreen : (title,w,h ) => {
 			SystemStart( title, w, h );
 			canvas.style = "position:absolute; top:0; left:0;"
 			fullscreen = true;
@@ -166,7 +150,7 @@ let imports = {
 			HEAP16[pw>>1] = canvas.width;
 			HEAP16[ph>>1] = canvas.height;
 		},
-		OGGetAbsoluteTime : () => { return new Date().getTime()/1000.; },
+		OGGetAbsoluteTime : () => { return performance.now() * 1000;  },
 
 		Add1 : (i) => { return i+1; }, //Super simple function for speed testing.
 
@@ -177,6 +161,9 @@ let imports = {
 		sinf : Math.sin,
 		cosf : Math.cos,
 		tanf : Math.tan,
+
+		saveHighScore : (hs) => { localStorage.setItem("highScore", hs); },
+		getHighScore : () => { return localStorage.getItem("highScore"); },
 
 		//Quick-and-dirty debug.
 		print: console.log,
@@ -195,7 +182,7 @@ if( !RAWDRAW_USE_LOOP_FUNCTION )
 				// which for simplicity we can start right after the data structure itself.
 				HEAPU32[DATA_ADDR >> 2] = DATA_ADDR + 8;
 				// The end of the stack will not be reached here anyhow.
-				HEAPU32[DATA_ADDR + 4 >> 2] = 1024|0;
+				HEAPU32[DATA_ADDR + 4 >> 2] = 2048|0;
 				wasmExports.asyncify_start_unwind(DATA_ADDR);
 				rendering = true;
 				// Resume after the proper delay.
@@ -263,16 +250,34 @@ if( RAWDRAW_NEED_BLITTER )
 		};
 }
 
-{
+
+startup = async () => {
 	// Actually load the WASM blob.
-	let blob = atob('${BLOB}');
-	let array = new Uint8Array(new ArrayBuffer(blob.length));
-	for(let i = 0; i < blob.length; i++) array[i] = blob.charCodeAt(i);
+	let str = atob('${BLOB}');
+	const byteNumbers = new Array(str.length);
+	for (let i = 0; i < str.length; i++)
+		byteNumbers[i] = str.charCodeAt(i);
+	let blob = new Blob([new Uint8Array(byteNumbers)]);
+	if( COMPRESS_BLOB_AS_GZIP )
+	{
+		const ds = new DecompressionStream("deflate-raw");
+		const st = blob.stream().pipeThrough(ds);
+		response = await new Response(st);
+		blob2 = await response.blob();
+		blob = blob2;
+	}
+	let array = new Uint8Array(await blob.arrayBuffer());
+
 
 	WebAssembly.instantiate(array, imports).then(
-		function(wa) { 
+		(wa) => { 
 			instance = wa.instance;
 			wasmExports = instance.exports;
+			memory = instance.exports.memory;
+			HEAPU8 = new Uint8Array(memory.buffer);
+			HEAP16 = new Int16Array(memory.buffer);
+			HEAPU32 = new Uint32Array(memory.buffer);
+			HEAPF32 = new Float32Array(memory.buffer);
 
 			//Attach inputs.
 			if( instance.exports.HandleMotion )
@@ -281,6 +286,7 @@ if( RAWDRAW_NEED_BLITTER )
 				canvas.addEventListener('touchmove', e => { instance.exports.HandleMotion( e.touches[0].clientX, e.touches[0].clientY, 1 ); } );
 			}
 
+			console.log( instance.exports.HandleButton );
 			if( instance.exports.HandleButton )
 			{
 				canvas.addEventListener('mouseup', e => { instance.exports.HandleButton( e.offsetX, e.offsetY, e.button, 0 ); return false; } );
@@ -312,4 +318,8 @@ if( RAWDRAW_NEED_BLITTER )
 		 } );
 
 	//Code here would continue executing, but this code is executed *before* main.
+
 }
+
+startup();
+

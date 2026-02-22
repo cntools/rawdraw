@@ -1,4 +1,4 @@
-//Copyright (c) 2011 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
+//Copyright (c) 2011-2025 <>< Charles Lohr - Under the MIT/x11 or NewBSD License you choose.
 
 #include "os_generic.h"
 
@@ -6,7 +6,7 @@
 #define CNFG_IMPLEMENTATION
 //#define CNFGRASTERIZER
 
-#include "CNFG.h"
+#include "rawdraw_sf.h"
 
 void prints( const char * sdebug );
 void print( double idebug );
