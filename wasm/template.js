@@ -162,9 +162,6 @@ let imports = {
 		cosf : Math.cos,
 		tanf : Math.tan,
 
-		saveHighScore : (hs) => { localStorage.setItem("highScore", hs); },
-		getHighScore : () => { return localStorage.getItem("highScore"); },
-
 		//Quick-and-dirty debug.
 		print: console.log,
 		prints: (str) => { console.log(toUTF8(str)); },
