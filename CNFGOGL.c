@@ -11,6 +11,11 @@
 //Shader compilation errors go to stderr.
 #include <stdio.h>
 
+// For alloca in windows
+#ifdef CNFG_WINDOWS
+#include <malloc.h>
+#endif
+
 #ifndef GL_VERTEX_SHADER
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_VERTEX_SHADER                  0x8B31
